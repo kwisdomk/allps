@@ -1,0 +1,342 @@
+"""SQLite persistence layer for ALLPS.
+
+Evidence records are immutable — there is no update_evidence method.
+All timestamps are stored as ISO 8601 strings.
+JSON fields (content, supporting_evidence, etc.) are stored as TEXT.
+"""
+
+import json
+from datetime import datetime
+
+import aiosqlite
+
+from allps.models import (
+    AuditEntry,
+    Evidence,
+    EvidenceType,
+    IngestionMethod,
+    Learner,
+    Pattern,
+    PatternType,
+    ReviewItem,
+    ReviewStatus,
+)
+
+_SCHEMA = """
+CREATE TABLE IF NOT EXISTS learners (
+    learner_id TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS evidence (
+    evidence_id TEXT PRIMARY KEY,
+    learner_id TEXT NOT NULL,
+    evidence_type TEXT NOT NULL,
+    source_system TEXT NOT NULL,
+    ingestion_method TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    source_reference TEXT NOT NULL,
+    academic_year INTEGER NOT NULL,
+    term INTEGER NOT NULL,
+    subject TEXT,
+    content TEXT NOT NULL,
+    observed_at TEXT NOT NULL,
+    recorded_at TEXT NOT NULL,
+    FOREIGN KEY (learner_id) REFERENCES learners(learner_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_evidence_learner
+    ON evidence(learner_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_time
+    ON evidence(academic_year, term, observed_at);
+
+CREATE TABLE IF NOT EXISTS patterns (
+    pattern_id TEXT PRIMARY KEY,
+    learner_id TEXT NOT NULL,
+    pattern_type TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    supporting_evidence TEXT NOT NULL,
+    conflicting_evidence TEXT NOT NULL,
+    limitations TEXT NOT NULL,
+    generated_at TEXT NOT NULL,
+    FOREIGN KEY (learner_id) REFERENCES learners(learner_id)
+);
+
+CREATE TABLE IF NOT EXISTS review_items (
+    review_id TEXT PRIMARY KEY,
+    pattern_id TEXT NOT NULL,
+    assigned_to TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    teacher_notes TEXT,
+    created_at TEXT NOT NULL,
+    resolved_at TEXT,
+    FOREIGN KEY (pattern_id) REFERENCES patterns(pattern_id)
+);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+    audit_id TEXT PRIMARY KEY,
+    timestamp TEXT NOT NULL,
+    tool_name TEXT NOT NULL,
+    input_summary TEXT NOT NULL,
+    output_reference TEXT,
+    approval_state TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_time ON audit_log(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_tool ON audit_log(tool_name);
+"""
+
+
+class SQLiteStore:
+    """Async SQLite storage for ALLPS domain objects.
+
+    Evidence records are immutable — there is no update_evidence method.
+    """
+
+    def __init__(self, db_path: str = "allps.db") -> None:
+        self._db_path = db_path
+        self._db: aiosqlite.Connection | None = None
+
+    async def initialize(self) -> None:
+        """Create connection and ensure schema exists."""
+        self._db = await aiosqlite.connect(self._db_path)
+        self._db.row_factory = aiosqlite.Row
+        await self._db.executescript(_SCHEMA)
+        await self._db.commit()
+
+    async def close(self) -> None:
+        """Close the database connection."""
+        if self._db:
+            await self._db.close()
+            self._db = None
+
+    @property
+    def db(self) -> aiosqlite.Connection:
+        if self._db is None:
+            raise RuntimeError(
+                "Store not initialized. Call initialize() first."
+            )
+        return self._db
+
+    # ── Learners ──────────────────────────────────────────────────
+
+    async def add_learner(self, learner: Learner) -> Learner:
+        """Insert a new learner."""
+        await self.db.execute(
+            "INSERT INTO learners (learner_id, display_name, created_at) "
+            "VALUES (?, ?, ?)",
+            (
+                learner.learner_id,
+                learner.display_name,
+                learner.created_at.isoformat(),
+            ),
+        )
+        await self.db.commit()
+        return learner
+
+    async def get_learner(self, learner_id: str) -> Learner | None:
+        """Retrieve a learner by ID, or None if not found."""
+        async with self.db.execute(
+            "SELECT * FROM learners WHERE learner_id = ?", (learner_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return Learner(
+                learner_id=row["learner_id"],
+                display_name=row["display_name"],
+                created_at=datetime.fromisoformat(row["created_at"]),
+            )
+
+    async def learner_exists(self, learner_id: str) -> bool:
+        """Check if a learner exists."""
+        async with self.db.execute(
+            "SELECT 1 FROM learners WHERE learner_id = ?", (learner_id,)
+        ) as cursor:
+            return await cursor.fetchone() is not None
+
+    # ── Evidence (immutable — no update method) ───────────────────
+
+    async def add_evidence(self, evidence: Evidence) -> Evidence:
+        """Insert a new evidence record. Evidence is immutable."""
+        await self.db.execute(
+            """INSERT INTO evidence
+               (evidence_id, learner_id, evidence_type, source_system,
+                ingestion_method, source_type, source_reference,
+                academic_year, term, subject, content, observed_at,
+                recorded_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                evidence.evidence_id,
+                evidence.learner_id,
+                evidence.evidence_type.value,
+                evidence.source_system,
+                evidence.ingestion_method.value,
+                evidence.source_type,
+                evidence.source_reference,
+                evidence.academic_year,
+                evidence.term,
+                evidence.subject,
+                json.dumps(evidence.content),
+                evidence.observed_at.isoformat(),
+                evidence.recorded_at.isoformat(),
+            ),
+        )
+        await self.db.commit()
+        return evidence
+
+    async def get_evidence_for_learner(
+        self,
+        learner_id: str,
+        *,
+        evidence_type: str | None = None,
+        academic_year: int | None = None,
+        term: int | None = None,
+        subject: str | None = None,
+    ) -> list[Evidence]:
+        """Retrieve evidence for a learner, chronologically ordered.
+
+        Orders by academic_year ASC, term ASC, observed_at ASC.
+        """
+        query = "SELECT * FROM evidence WHERE learner_id = ?"
+        params: list = [learner_id]
+
+        if evidence_type is not None:
+            query += " AND evidence_type = ?"
+            params.append(evidence_type)
+        if academic_year is not None:
+            query += " AND academic_year = ?"
+            params.append(academic_year)
+        if term is not None:
+            query += " AND term = ?"
+            params.append(term)
+        if subject is not None:
+            query += " AND subject = ?"
+            params.append(subject)
+
+        query += " ORDER BY academic_year ASC, term ASC, observed_at ASC"
+
+        results = []
+        async with self.db.execute(query, params) as cursor:
+            async for row in cursor:
+                results.append(
+                    Evidence(
+                        evidence_id=row["evidence_id"],
+                        learner_id=row["learner_id"],
+                        evidence_type=EvidenceType(row["evidence_type"]),
+                        source_system=row["source_system"],
+                        ingestion_method=IngestionMethod(
+                            row["ingestion_method"]
+                        ),
+                        source_type=row["source_type"],
+                        source_reference=row["source_reference"],
+                        academic_year=row["academic_year"],
+                        term=row["term"],
+                        subject=row["subject"],
+                        content=json.loads(row["content"]),
+                        observed_at=datetime.fromisoformat(
+                            row["observed_at"]
+                        ),
+                        recorded_at=datetime.fromisoformat(
+                            row["recorded_at"]
+                        ),
+                    )
+                )
+        return results
+
+    # ── Patterns ──────────────────────────────────────────────────
+
+    async def add_pattern(self, pattern: Pattern) -> Pattern:
+        """Insert a new pattern."""
+        await self.db.execute(
+            """INSERT INTO patterns
+               (pattern_id, learner_id, pattern_type, summary,
+                supporting_evidence, conflicting_evidence,
+                limitations, generated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                pattern.pattern_id,
+                pattern.learner_id,
+                pattern.pattern_type.value,
+                pattern.summary,
+                json.dumps(pattern.supporting_evidence),
+                json.dumps(pattern.conflicting_evidence),
+                json.dumps(pattern.limitations),
+                pattern.generated_at.isoformat(),
+            ),
+        )
+        await self.db.commit()
+        return pattern
+
+    # ── Review Items ──────────────────────────────────────────────
+
+    async def add_review_item(self, item: ReviewItem) -> ReviewItem:
+        """Insert a new review item."""
+        await self.db.execute(
+            """INSERT INTO review_items
+               (review_id, pattern_id, assigned_to, status,
+                teacher_notes, created_at, resolved_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (
+                item.review_id,
+                item.pattern_id,
+                item.assigned_to,
+                item.status.value,
+                item.teacher_notes,
+                item.created_at.isoformat(),
+                item.resolved_at.isoformat() if item.resolved_at else None,
+            ),
+        )
+        await self.db.commit()
+        return item
+
+    # ── Audit Log ─────────────────────────────────────────────────
+
+    async def add_audit_entry(self, entry: AuditEntry) -> AuditEntry:
+        """Insert an audit log entry."""
+        await self.db.execute(
+            """INSERT INTO audit_log
+               (audit_id, timestamp, tool_name, input_summary,
+                output_reference, approval_state)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                entry.audit_id,
+                entry.timestamp.isoformat(),
+                entry.tool_name,
+                json.dumps(entry.input_summary),
+                entry.output_reference,
+                entry.approval_state,
+            ),
+        )
+        await self.db.commit()
+        return entry
+
+    async def get_audit_log(
+        self, tool_name: str | None = None
+    ) -> list[AuditEntry]:
+        """Retrieve audit log entries, optionally filtered by tool name."""
+        if tool_name:
+            query = (
+                "SELECT * FROM audit_log WHERE tool_name = ? "
+                "ORDER BY timestamp ASC"
+            )
+            params: list = [tool_name]
+        else:
+            query = "SELECT * FROM audit_log ORDER BY timestamp ASC"
+            params = []
+
+        results = []
+        async with self.db.execute(query, params) as cursor:
+            async for row in cursor:
+                results.append(
+                    AuditEntry(
+                        audit_id=row["audit_id"],
+                        timestamp=datetime.fromisoformat(row["timestamp"]),
+                        tool_name=row["tool_name"],
+                        input_summary=json.loads(row["input_summary"]),
+                        output_reference=row["output_reference"],
+                        approval_state=row["approval_state"],
+                    )
+                )
+        return results
