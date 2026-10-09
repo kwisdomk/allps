@@ -115,7 +115,15 @@ The ALLPS test suite covers 5 distinct layers (66 tests):
 
 ---
 
-## 4. How to Execute the Evaluations
+## 4. Known Technical Limitations & Scenarios
+
+- **Concurrent Ingestion Conflict**: If two processes simultaneously attempt to ingest an identical `(source_system, source_event_id)` at the exact same millisecond, both can pass the pre-check before either transaction commits. SQLite's unique constraint `UNIQUE(source_system, source_event_id)` ensures only a single record is inserted. The overlapping call fails with an `IntegrityError`, rolls back its transaction, and records a failure audit entry. Sequential retries of identical events succeed idempotently and return the existing evidence record.
+- **Data Provenance**: The learner fixtures in `data/synthetic/seed_data.py` are fictional synthetic scenarios designed to test pattern detection scenarios (trend decline, persistent strength, divergence between grades and engagement, and missing data). They are not real student records from the Tusome Early Grade Reading Activity or any school system, and Tusome field definitions have not been verified against production educational datasets.
+- **Future Work Boundaries**: Pattern analysis (`analyse_longitudinal_pattern`) and enforced teacher review sign-off (`flag_pattern_for_review`) are Phase 2 deliverables. Agent orchestration and longitudinal transitions are Phase 3 deliverables.
+
+---
+
+## 5. How to Execute the Evaluations
 
 To run the full evaluation suite:
 

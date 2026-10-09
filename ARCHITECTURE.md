@@ -71,6 +71,7 @@ The foundational unit of observation in ALLPS.
 - `evidence_type: EvidenceType` (Enum: `assessment`, `attendance`, `observation`, `learner_reflection`, `project`)
 - **System Origin & Ingestion Channel**:
   - `source_system: str`: Originating system (e.g., `"school_sis"`, `"moodle"`, `"attendance_system"`, `"allps"`, `"csv_import"`, `"synthetic_dataset"`). Captures that ALLPS is not the authoritative gradebook and preserves upstream origin.
+  - `source_event_id: str | None`: Optional upstream event identifier used for idempotency and duplicate prevention.
   - `ingestion_method: IngestionMethod` (Enum: `api`, `webhook`, `scheduled_sync`, `csv_import`, `manual_observation`, `learner_pulse`, `synthetic`)
 - **Provenance Attributes**:
   - `source_type: str`: Category of author (`"teacher"`, `"system"`, `"learner"`)
@@ -85,7 +86,7 @@ The foundational unit of observation in ALLPS.
 - **Immutability**: `model_config = {"frozen": True}`. Evidence records cannot be modified once committed.
 
 ### 3.3. `Pattern`
-A candidate longitudinal pattern discovered across evidence records (prepared for Phase 2).
+A candidate longitudinal pattern discovered across evidence records (models prepared; detection engine scheduled for Phase 2).
 - `pattern_id: str` (UUID)
 - `learner_id: str` (Foreign key to Learner)
 - `pattern_type: PatternType` (Enum: `trend`, `persistence`, `convergence`, `divergence`, `changed_from_baseline`, `insufficient_evidence`)
@@ -97,7 +98,7 @@ A candidate longitudinal pattern discovered across evidence records (prepared fo
 - **Architectural Decision**: `review_status` has been intentionally removed from `Pattern`. Human review states are separated into `ReviewItem` to maintain single-source-of-truth semantics.
 
 ### 3.4. `ReviewItem`
-The human-in-the-loop review mechanism.
+The human-in-the-loop review mechanism (model and schema defined; enforced teacher approval workflow scheduled for Phase 2).
 - `review_id: str` (UUID)
 - `pattern_id: str` (Foreign key to Pattern)
 - `assigned_to: str | None`: Teacher identifier
@@ -107,13 +108,13 @@ The human-in-the-loop review mechanism.
 - `resolved_at: datetime | None`: Resolution timestamp
 
 ### 3.5. `AuditEntry`
-Security and traceability ledger for every MCP tool invocation.
+Security and traceability ledger for every MCP tool invocation and service operation.
 - `audit_id: str` (UUID)
 - `timestamp: datetime` (UTC)
 - `tool_name: str` (e.g., `"ingest_evidence"`, `"get_learner_history"`)
 - `input_summary: dict[str, Any]`: Sanitized input arguments
 - `output_reference: str | None`: Affected entity reference (e.g., recorded `evidence_id`)
-- `approval_state: str | None`: State flags
+- `approval_state: str | None`: State flags or failure outcome status (e.g., `"success"`, `"failed: validation_error"`)
 
 ---
 
@@ -135,6 +136,7 @@ CREATE TABLE evidence (
     learner_id TEXT NOT NULL,
     evidence_type TEXT NOT NULL,
     source_system TEXT NOT NULL,
+    source_event_id TEXT,
     ingestion_method TEXT NOT NULL,
     source_type TEXT NOT NULL,
     source_reference TEXT NOT NULL,
@@ -149,6 +151,9 @@ CREATE TABLE evidence (
 
 CREATE INDEX idx_evidence_learner ON evidence(learner_id);
 CREATE INDEX idx_evidence_time ON evidence(academic_year, term, observed_at);
+CREATE UNIQUE INDEX idx_evidence_source_event 
+    ON evidence(source_system, source_event_id) 
+    WHERE source_event_id IS NOT NULL;
 ```
 
 ### Ordering Guarantees
@@ -160,32 +165,51 @@ ORDER BY academic_year ASC, term ASC, observed_at ASC;
 ```
 This guarantees deterministic sequence reconstruction across academic transitions.
 
+### Transaction Isolation & Migrations
+- **Non-destructive migration**: On initialization, existing databases lacking `source_event_id` are migrated automatically without data loss.
+- **Dedicated transaction ownership**: Ingestion operations isolate their database write transaction so that concurrent read queries or audit actions on a shared connection do not commit uncommitted ingestion records.
+
 ---
 
 ## 5. Model Context Protocol (MCP) Interface
 
-The MCP server implements the official Model Context Protocol using FastMCP / MCPServer (compatible with both MCP 1.x and 2.x SDKs).
+The MCP server implements the official Model Context Protocol using FastMCP / MCPServer (compatible with MCP 1.x and 2.x SDKs).
 
 ### Exposed Tools (Phase 1)
 
 1. `ingest_evidence` (backwards-compatible alias: `record_evidence`):
-   - Validates all fields against domain model constraints.
-   - Enforces timezone-aware dates.
-   - Writes immutable evidence to SQLite.
-   - Generates an immutable audit trail entry in `audit_log`.
+   - Validates all fields against domain model constraints and payload rules.
+   - Enforces UTC timezone-aware dates.
+   - Handles idempotent retries across all observation attributes.
+   - Writes immutable evidence and success audit records atomically to SQLite.
+   - Records audit failures if validation or storage operations fail.
 2. `get_learner_history`:
    - Retrieves all evidence matching learner ID.
    - Supports optional SQL filtering by `evidence_type`, `academic_year`, `term`, and `subject`.
    - Logs an audit query entry.
 
-### Protocol Verification
-The system includes automated tests that verify compliance with the wire protocol by running the server process via `stdio_client` and invoking tools using `ClientSession.call_tool()`.
+### Future Tools (Phase 2 & Beyond)
+- `analyse_longitudinal_pattern`: Deterministic pattern detection engine (Phase 2).
+- `flag_pattern_for_review`: Teacher review routing and sign-off workflow (Phase 2).
 
 ---
 
-## 6. Security, Safety, and Privacy Guardrails
+## 6. Known Limitations
+
+- **Simultaneous submissions of the same source event**: If two concurrent calls attempt to ingest the exact same `(source_system, source_event_id)` at the exact same millisecond, both may pass the initial existence query before either transaction commits. SQLite's `UNIQUE(source_system, source_event_id)` index constraint ensures that only one record is stored. The overlapping transaction encounters an `IntegrityError`, rolls back its write, and records a failure audit entry. Sequential retries of identical events succeed idempotently and return the existing evidence record.
+
+---
+
+## 7. Synthetic Data Disclaimer
+
+The learner records in `data/synthetic/seed_data.py` are fictional synthetic scenarios constructed for system testing (trend decline, persistent strength, score-engagement divergence, and missing reflections). They are not real student records from the Tusome Early Grade Reading Activity or any school system, and Tusome field definitions have not been verified against production educational datasets.
+
+---
+
+## 8. Security, Safety, and Privacy Guardrails
 
 1. **Observations vs. Diagnoses**: The system rejects diagnostic labels in evidence descriptions.
 2. **Provenance Accountability**: Every record is tied to an explicit `source_type` and `source_reference`.
 3. **No External Telemetry**: All data operations execute against a local SQLite database, avoiding data exfiltration of sensitive student data.
-4. **Audit Trail**: Every query and insert is committed to the immutable audit log table.
+4. **Audit Trail**: Every query, successful insert, and rejected ingestion attempt is recorded in the immutable audit log table.
+5. **Human-in-the-Loop Safeguard**: Machine learning and algorithmic pattern outputs must be gated through teacher review before entering a student's permanent profile (enforcement workflow scheduled for Phase 2).

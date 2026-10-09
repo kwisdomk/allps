@@ -1,5 +1,11 @@
 """Generate synthetic learner data for ALLPS development and testing.
 
+Note on data provenance:
+These learner fixtures are fictional synthetic scenarios created to simulate
+longitudinal patterns for testing. They are not real student records from the
+Tusome Early Grade Reading Activity or any school system, and Tusome field
+definitions have not been verified against production educational datasets.
+
 Creates 3 learners with intentionally varied evidence patterns:
 
 - Learner A (LRN-001 / Amara Obi):

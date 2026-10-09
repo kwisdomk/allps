@@ -29,7 +29,7 @@ Schools collect rich learner data — assessments, attendance, projects, teacher
 
 ## 🛠️ Phase 1 Scope & Architecture
 
-Phase 1 establishes a rock-solid, fully tested data and tool foundation:
+Phase 1 establishes the data and tool foundation for longitudinal evidence collection:
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -45,31 +45,43 @@ Phase 1 establishes a rock-solid, fully tested data and tool foundation:
 ┌───────────────────────────▼────────────────────────────┐
 │                 Evidence Service                       │
 │   • Validates models (Pydantic v2)                     │
-│   • Preserves provenance & sortable academic time      │
-│   • Writes to audit trail                              │
+│   • Enforces UTC timezones & content rules             │
+│   • Full-observation idempotency & retry handling      │
+│   • Atomic transactions & execution audit logging      │
 └───────────────────────────┬────────────────────────────┘
                             │
 ┌───────────────────────────▼────────────────────────────┐
 │               Async SQLite Store                       │
 │   • learners                                           │
-│   • evidence (immutable)                               │
+│   • evidence (immutable, append-only, indexed)         │
 │   • patterns (Phase 2 analysis models ready)           │
 │   • review_items (human-in-the-loop review state)      │
 │   • audit_log (full tool invocation audit trail)       │
 └────────────────────────────────────────────────────────┘
 ```
 
-### Phase 1 Implemented Tools
+### What Phase 1 Actually Does
 
-1. **`ingest_evidence`** *(alias: `record_evidence`)*: Ingests an immutable piece of learner evidence preserving:
-   - **System Origin & Ingestion**: `source_system` (e.g. `school_sis`, `moodle`, `attendance_system`, `allps`, `csv_import`, `synthetic_dataset`) and `ingestion_method` (`api`, `webhook`, `scheduled_sync`, `csv_import`, `manual_observation`, `learner_pulse`, `synthetic`). ALLPS is not the authoritative gradebook; external system origins are explicitly captured.
-   - **Provenance Attribution**: `source_type` (`teacher`, `system`, `learner`) and `source_reference` (e.g. `"Mr. Banda"`).
-   - **Sortable Academic Time**: `academic_year: int`, `term: int`, and timezone-aware `observed_at: datetime`.
-   - **Timestamps & Payloads**: UTC `recorded_at: datetime` and flexible JSON `content` payload.
-   Automatically writes an entry to the immutable audit log.
-2. **`get_learner_history`**: Retrieves all evidence for a learner, sorted chronologically (`academic_year ASC, term ASC, observed_at ASC`), with optional filters for `evidence_type`, `academic_year`, `term`, and `subject`.
+- **Evidence Ingestion**: The `ingest_evidence` tool (with backward-compatible alias `record_evidence`) accepts factual learner observations. It captures:
+  - **Source Provenance**: `source_system` (e.g. `school_sis`, `moodle`, `attendance_system`, `allps`, `csv_import`, `synthetic_dataset`) and `ingestion_method` (`api`, `webhook`, `scheduled_sync`, `csv_import`, `manual_observation`, `learner_pulse`, `synthetic`). ALLPS is not an authoritative gradebook; origin systems are explicitly preserved.
+  - **Attribution**: `source_type` (`teacher`, `system`, `learner`) and `source_reference` (e.g. `"Mr. Banda"`).
+  - **Academic Time**: `academic_year` (int), `term` (int), and UTC timezone-aware `observed_at`. Timezone-free timestamps are rejected.
+  - **Payload Validation**: Structured payloads are checked (e.g. assessment scores must have non-negative finite numbers with `score <= max_score`; attendance requires valid days and rates).
+- **Chronological History**: The `get_learner_history` tool returns records sorted chronologically (`academic_year ASC, term ASC, observed_at ASC`), supporting filtering by type, year, term, and subject.
+- **Idempotency & Retry Handling**: Submitting the same `(source_system, source_event_id)` with identical observation fields returns the original record and logs the retry in the audit trail. Submitting a matching event ID with modified fields raises a clear conflict error.
+- **Transactional Atomicity**: Evidence creation and audit logging commit together. If validation or audit storage fails, changes roll back and an audit failure record is preserved.
+- **Model Context Protocol (MCP)**: Runs as a standard stdio MCP server, compatible with FastMCP and standard MCP clients.
 
-*(Phase 2 tools `analyse_longitudinal_pattern` and `flag_pattern_for_review` are intentionally not exposed in Phase 1).*
+### What Remains Unfinished (Future Work)
+
+- **Pattern Analysis Engine**: The `analyse_longitudinal_pattern` tool is not implemented in Phase 1. Trend, persistence, convergence, divergence, and baseline-shift analysis are scheduled for Phase 2.
+- **Enforced Teacher Approval**: The `ReviewItem` and `Pattern` data models exist in the schema, but review gating workflows (`flag_pattern_for_review`) and enforced teacher sign-off are Phase 2 deliverables.
+- **Agent Orchestration**: Multi-agent handoffs, automated synthesis for teacher transitions, and intervention drafting are planned for Phase 3.
+- **User Interface**: Web interfaces, teacher review dashboards, and visual timeline exports are scheduled for Phase 4.
+
+### Known Limitations
+
+- **Simultaneous submissions of the same source event**: When two concurrent ingestion calls submit the exact same `(source_system, source_event_id)` at the exact same millisecond, both can pass the initial pre-transaction check before either has committed. SQLite's `UNIQUE(source_system, source_event_id)` index constraint ensures that only one evidence record is stored. The second call encounters an `IntegrityError`, rolls back its ingestion transaction, and logs a failure audit entry. Sequential retries of identical events succeed normally and return the existing evidence record.
 
 ---
 
@@ -85,7 +97,7 @@ Phase 1 establishes a rock-solid, fully tested data and tool foundation:
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/your-org/ALLPS.git
+git clone https://github.com/kwisdomk/ALLPS.git
 cd ALLPS
 
 # Install package and dependencies
@@ -105,7 +117,7 @@ Dependencies include:
 
 ## 🧪 Running Tests
 
-The test suite includes 55 automated tests covering domain models, storage queries, service business logic, direct tool functions, pipeline roundtrips, and a **real protocol-level MCP subprocess test** that spawns the server and talks over stdio:
+The test suite includes 66 automated tests covering domain models, storage queries, service business logic, direct tool functions, pipeline roundtrips, regression edge cases, and a **real protocol-level MCP subprocess test** that spawns the server and talks over stdio:
 
 ```bash
 pytest -v
@@ -113,24 +125,27 @@ pytest -v
 
 Output summary:
 ```text
-tests/test_evidence_service.py .......... [ 18%]
-tests/test_mcp_tools.py ........          [ 32%]
-tests/test_models.py .................... [ 72%]
-tests/test_storage.py ................    [100%]
-====================== 55 passed in ~4.8s ======================
+tests/test_evidence_service.py .......... [ 15%]
+tests/test_mcp_tools.py .........         [ 28%]
+tests/test_models.py .................... [ 62%]
+tests/test_regression.py ..........       [ 77%]
+tests/test_storage.py ...............     [100%]
+====================== 66 passed in ~8.2s ======================
 ```
 
 ---
 
 ## 📊 Synthetic Data & Seeding
 
-ALLPS includes 3 synthetic learners designed to stress-test future pattern detection algorithms:
+ALLPS includes 3 synthetic learners designed to test future pattern detection algorithms:
 
 | Learner | ID | Scenario | Patterns Tested |
 |---|---|---|---|
 | **Amara Obi** | `LRN-001` | Steady decline in maths over 3 terms; attendance drops; learner reflection notes difficulty | **Trend** (decline) |
 | **Thabo Mokoena** | `LRN-002` | Consistent 85–91% science scores; high attendance; extracurricular mentoring; projects | **Persistence** (strength) |
 | **Naledi Dlamini** | `LRN-003` | Strong English test scores (76–81%), but teacher observations note withdrawn behavior and low participation | **Divergence** (grades vs. engagement) & **Missing Data** (no reflection in terms 1-2) |
+
+> **Note on Data Provenance**: These fixtures are fictional synthetic scenarios created for system testing and validation. They are not real student records from the Tusome Early Grade Reading Activity or any school system, and Tusome field definitions have not been verified against production educational datasets.
 
 To seed a development database:
 
