@@ -25,11 +25,11 @@ These ten rules guide the design of ALLPS. Some are enforced in the current impl
 
 **Implemented in Phase 1:**
 
-1. **Collect observations, not identities**: ALLPS records factual, dated, attributed observations. It never assigns static labels (e.g., "slow learner", "disruptive", "gifted").
-2. **Evidence immutability**: Once recorded, evidence cannot be altered, preserving the historical record.
+1. **Collect observations, not identities**: ALLPS records factual, dated, attributed observations. It does not assign static labels itself, but diagnostic-label detection and blocking are not implemented, and the schema does not prevent labels.
+2. **Evidence immutability**: Evidence models are frozen, and the MCP server exposes no evidence editing or deletion tools. Direct database access can still modify records.
 3. **Explicit provenance**: Every piece of evidence captures *who* observed it, *when* it was observed, and *when* it was recorded in ALLPS.
-4. **Strict non-ranking**: Learners are compared solely against their own longitudinal baseline. Ranking or peer-sorting is prohibited.
-5. **Compare a learner against their own historical evidence**: Focus on personal growth and trajectories via sortable chronological history.
+4. **Strict non-ranking**: History queries accept a single learner ID. Ranking or peer-sorting is not exposed in the API.
+5. **Sortable chronological history**: History queries return records sorted chronologically by academic year, term, and observation time. Automated baseline comparisons and pattern detection are planned for Phase 2.
 
 **Planned for Phase 2 and beyond:**
 
@@ -68,7 +68,7 @@ Phase 1 establishes the data and tool foundation for longitudinal evidence colle
 ┌───────────────────────────▼────────────────────────────┐
 │               Async SQLite Store                       │
 │   • learners                                           │
-│   • evidence (immutable, append-only, indexed)         │
+│   • evidence (frozen models, append-only via MCP)      │
 │   • patterns (Phase 2 analysis models ready)           │
 │   • review_items (human-in-the-loop review state)      │
 │   • audit_log (tool invocation audit trail)            │
@@ -77,19 +77,23 @@ Phase 1 establishes the data and tool foundation for longitudinal evidence colle
 
 ### What Phase 1 Does
 
+Phase 1 stores and retrieves dated learner evidence with source information. Pattern detection and baseline comparisons are planned:
+
 - **Evidence Ingestion**: The `ingest_evidence` MCP tool accepts factual learner observations. A Python-level alias `record_evidence` exists in both the service layer and the MCP server module for backward compatibility, but only `ingest_evidence` is registered as an MCP tool. The tool captures:
   - **Source Provenance**: `source_system` (e.g. `school_sis`, `moodle`, `attendance_system`, `allps`, `csv_import`, `synthetic_dataset`) and `ingestion_method` (`api`, `webhook`, `scheduled_sync`, `csv_import`, `manual_observation`, `learner_pulse`, `synthetic`). ALLPS is not an authoritative gradebook; origin systems are explicitly preserved.
   - **Attribution**: `source_type` (`teacher`, `system`, `learner`) and `source_reference` (e.g. `"Mr. Banda"`).
   - **Academic Time**: `academic_year` (int), `term` (int), and UTC timezone-aware `observed_at`. Timezone-naive timestamps are rejected.
   - **Payload Validation**: Structured payloads are validated per evidence type. Assessment scores must be non-negative finite numbers with `score <= max_score`. Attendance requires either a daily status (`present`, `absent`, `late`) or term-level counts (`days_present` and `days_total` with `days_present <= days_total`). A supplied `rate` field is accepted in the content but is not currently validated against the counts.
-- **Chronological History**: The `get_learner_history` tool returns records sorted chronologically (`academic_year ASC, term ASC, observed_at ASC`), supporting filtering by type, year, term, and subject.
+- **Chronological History**: The `get_learner_history` tool returns records sorted chronologically (`academic_year ASC, term ASC, observed_at ASC`), supporting filtering by type, year, term, and subject. Pattern detection and baseline comparisons are planned for Phase 2.
 - **Idempotency & Retry Handling**: Requires `source_event_id`. When a submission matches an existing `(source_system, source_event_id)` with identical observation fields, the original record is returned and the retry is logged in the audit trail. If the fields differ, a conflict error is raised. Without `source_event_id`, repeated submissions can create separate records.
 - **Transactional Atomicity**: Evidence creation and its success audit entry commit together in a single transaction. If validation fails, the transaction rolls back. The service attempts to write a failure audit entry, but if audit storage is also unavailable, the error is logged and re-raised — no audit record is guaranteed in that scenario.
+- **Storage and Safeguards**: Evidence models are frozen, and the MCP server exposes no evidence editing or deletion tools. Direct database access can still modify records. SQLite provides local storage. How connected MCP clients handle returned learner data depends on those clients.
 - **Model Context Protocol (MCP)**: Runs as a standard stdio MCP server, compatible with FastMCP and standard MCP clients.
 
 ### What Remains Unfinished (Future Work)
 
-- **Pattern Detection**: The pattern detection engine (`analyse_longitudinal_pattern`) is planned for Phase 2. Trend, persistence, convergence, divergence, and baseline-shift analysis are not implemented.
+- **Pattern Detection & Baseline Comparisons**: The pattern detection engine (`analyse_longitudinal_pattern`) is planned for Phase 2. Trend, persistence, convergence, divergence, and baseline comparisons are not implemented.
+- **Diagnostic-Label Detection**: Diagnostic-label detection and blocking are not implemented. The schema does not prevent labels from being included in submitted content.
 - **AI Synthesis**: Generating sourced, verifiable summaries from longitudinal evidence is planned for a future phase.
 - **Enforced Teacher Approval**: The `ReviewItem` and `Pattern` data models exist in the schema. Review gating workflows (`flag_pattern_for_review`) and enforced teacher sign-off are Phase 2 deliverables.
 - **Agent Orchestration**: Multi-agent handoffs, automated synthesis for teacher transitions, and intervention drafting are planned for Phase 3.
@@ -226,8 +230,8 @@ Add the server to your MCP configuration file (`mcp_config.json`):
 
 ## Roadmap
 
-- **Phase 1 (Current)**: Data foundation, domain models, immutable SQLite persistence, sortable academic time, provenance tracking, synthetic test dataset, runnable MCP server (`ingest_evidence`, `get_learner_history`), full test suite.
-- **Phase 2**: Pattern detection engine (`analyse_longitudinal_pattern`), teacher review workflow (`flag_pattern_for_review`), safety rule enforcement, and rule-based checks.
+- **Phase 1 (Current)**: Data foundation, domain models, local SQLite storage, sortable academic time, provenance tracking, synthetic test dataset, runnable MCP server (`ingest_evidence`, `get_learner_history`), full test suite. Evidence models are frozen and MCP tools expose no edit or delete options, while direct database access can still modify records.
+- **Phase 2**: Pattern detection engine (`analyse_longitudinal_pattern`), baseline comparisons, teacher review workflow (`flag_pattern_for_review`), diagnostic-label detection, and safety rule enforcement.
 - **Phase 3**: Agent orchestration, context synthesis for teacher transitions, and review item management.
 - **Phase 4**: Teacher UI / web application, exportable longitudinal summaries, and evaluation suite.
 

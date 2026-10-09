@@ -11,12 +11,13 @@ ALLPS (Agentic Longitudinal Learner Profile System) is designed to solve a found
 
 ### Core Tenet: "Collect observations, not identities."
 
-Educational systems often inadvertently condense learners into static labels ("at-risk", "struggling", "gifted", "uncooperative"). These labels stigmatize students and introduce anchoring bias for subsequent teachers. 
+Educational systems often condense learners into static labels ("at-risk", "struggling", "gifted", "uncooperative"). These labels can introduce bias for subsequent teachers. 
 
-ALLPS shifts the paradigm from **identity labels** to **longitudinally situated observations**:
-1. Evidence consists of objective, timestamped records (test scores, attendance records, classroom observations, self-reflections).
-2. The system is designed to surface observable relationships across time (trends, persistence, convergence, divergence). Pattern detection is planned for Phase 2.
-3. AI interpretations are intended to have the **lowest authority** in the hierarchy, with teachers acting as essential human-in-the-loop reviewers. The `ReviewItem` data model exists; enforcement of teacher approval is a Phase 2 deliverable.
+Instead of summarizing learners with identity labels, ALLPS stores individual observations collected over time with source information:
+1. Phase 1 stores and retrieves dated learner evidence with source information (test scores, attendance records, classroom observations, self-reflections).
+2. Diagnostic-label detection and blocking are not implemented, and the schema does not prevent labels from being included in submitted content.
+3. Pattern detection and baseline comparisons are planned for Phase 2.
+4. AI interpretations are intended to have the lowest authority in the hierarchy, with teachers acting as essential human-in-the-loop reviewers. The `ReviewItem` data model exists; enforcement of teacher approval is a Phase 2 deliverable.
 
 ---
 
@@ -43,7 +44,7 @@ ALLPS shifts the paradigm from **identity labels** to **longitudinally situated 
 │  [allps.storage.sqlite_store]                                  │
 │    • Async SQLite via aiosqlite                                │
 │    • Strict relational schema with indexed queries             │
-│    • Immutable evidence append-only policy                     │
+│    • Append-only storage via MCP (frozen models)               │
 └───────────────────────────────┬────────────────────────────────┘
                                 │
 ┌───────────────────────────────▼────────────────────────────────┐
@@ -83,7 +84,7 @@ The foundational unit of observation in ALLPS.
   - `recorded_at: datetime`: Timestamp when record was ingested into ALLPS
 - `subject: str | None`: Optional academic subject (e.g., `"Mathematics"`, `"Science"`)
 - `content: dict[str, Any]`: Structured, flexible payload according to evidence type (e.g., `{"score": 82, "max_score": 100}`). There is no required instrument or assessment-tool field; the content schema depends on the evidence type.
-- **Immutability**: `model_config = {"frozen": True}`. Evidence records cannot be modified once committed.
+- **Immutability**: Evidence models are frozen in Pydantic (`model_config = {"frozen": True}`), and the MCP server exposes no evidence editing or deletion tools. Direct database access can still modify records, as SQLite tables do not enforce database-level immutability triggers.
 
 ### 3.3. `Pattern`
 A candidate longitudinal pattern discovered across evidence records (data model defined; detection engine planned for Phase 2).
@@ -120,7 +121,7 @@ Security and traceability ledger for MCP tool invocations and service operations
 
 ## 4. Storage Architecture (SQLite)
 
-The persistence layer uses asynchronous SQLite via `aiosqlite`.
+The persistence layer uses asynchronous SQLite via `aiosqlite`. SQLite provides local storage on disk. How connected MCP clients handle or transmit returned learner data depends on those clients.
 
 ### Schema & Indexing Strategy
 
@@ -198,6 +199,10 @@ The MCP server implements the official Model Context Protocol using FastMCP / MC
 ## 6. Known Limitations
 
 - **Concurrent submissions with the same source event**: When two overlapping requests submit the same `(source_system, source_event_id)`, both can pass the initial existence check before either transaction commits. SQLite's `UNIQUE(source_system, source_event_id)` index constraint ensures that only one record is stored. The second call encounters an `IntegrityError`, rolls back its write, and attempts to record a failure audit entry. Sequential retries of identical events succeed idempotently and return the existing evidence record.
+- **Diagnostic Labels**: Diagnostic-label detection and blocking are not implemented. The schema stores flexible content dictionaries and does not prevent labels from being included in submitted observations.
+- **Evidence Immutability Scope**: Evidence models are frozen, and the MCP server exposes no evidence editing or deletion tools. Direct database access can still modify records.
+- **Client Data Handling**: SQLite provides local storage. How connected MCP clients handle, store, or transmit returned learner data depends on those clients.
+- **Pattern Detection & Baseline Comparisons**: Phase 1 stores and retrieves dated learner evidence with source information. Pattern detection and baseline comparisons are planned for Phase 2.
 
 ---
 
@@ -209,8 +214,9 @@ The learner records in `data/synthetic/seed_data.py` are fictional synthetic sce
 
 ## 8. Security, Safety, and Privacy Guardrails
 
-1. **Observations vs. Diagnoses**: The system rejects diagnostic labels in evidence descriptions.
-2. **Provenance Accountability**: Every record is tied to an explicit `source_type` and `source_reference`.
-3. **No External Telemetry**: All data operations execute against a local SQLite database, avoiding exfiltration of sensitive student data.
-4. **Audit Trail**: Successful ingestion and its audit entry commit together. Query audit entries are written after retrieval. The service attempts to record failures, but if audit storage is unavailable during a failure, the error is logged rather than silently dropped.
-5. **Human-in-the-Loop Safeguard**: The `ReviewItem` data model exists to gate pattern outputs through teacher review. Enforcement of this workflow is planned for Phase 2.
+1. **Observations vs. Diagnoses**: Diagnostic-label detection and blocking are not implemented. The schema stores flexible content dictionaries and does not prevent labels from being included in submitted text. Automated label checking is planned for a future phase.
+2. **Provenance Accountability**: Every record is tied to an explicit `source_type`, `source_reference`, `source_system`, and `ingestion_method`.
+3. **Local Storage & Client Boundaries**: SQLite provides local storage. The ALLPS server runs locally and sends no telemetry, but how connected MCP clients handle, store, or transmit returned learner data depends on those clients.
+4. **Evidence Immutability Scope**: Evidence models are frozen, and the MCP server exposes no evidence editing or deletion tools. Direct database access can still modify records.
+5. **Audit Trail**: Successful ingestion and its audit entry commit together. Query audit entries are written after retrieval. The service attempts to record failures, but if audit storage is unavailable during a failure, the error is logged and re-raised.
+6. **Human-in-the-Loop Safeguard**: The `ReviewItem` data model exists to gate pattern outputs through teacher review. Enforcement of this workflow is planned for Phase 2.

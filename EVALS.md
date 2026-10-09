@@ -8,10 +8,10 @@
 
 | Criterion | Evaluation Requirement | Phase 1 Implementation Status |
 |---|---|---|
-| **Mission Alignment** | Preserve learning continuity across terms/years/teachers without labeling or diagnosing students. | **Implemented**: Domain models track timestamped observations with provenance, preventing identity labels. |
-| **System Architecture** | Modular, testable, and standards-compliant MCP integration. | **Implemented**: MCP server exposes validated tools over standard stdio transport; clean separation between models, storage, services, and MCP server. |
-| **Data Integrity & Provenance** | Immutable evidence, sortable academic time, upstream system origin, and explicit source attribution. | **Implemented**: `Evidence` frozen models with `source_system`, `ingestion_method`, `source_type`, `source_reference`, `academic_year` (int), `term` (int), and UTC timestamps. |
-| **Safety Guardrails** | Enforce human-in-the-loop review, reject peer ranking, treat missing data safely. | **Partial**: Non-ranking data architecture is implemented. `ReviewItem` data model exists. Enforcement of teacher approval (blocking patterns from entering a learner's profile) is planned for Phase 2. |
+| **Mission Alignment** | Preserve learning continuity across terms/years/teachers without labeling or diagnosing students. | **Partial**: Phase 1 stores and retrieves dated learner evidence with source information. Diagnostic-label detection and blocking are not implemented; the schema does not prevent labels. |
+| **System Architecture** | Modular, testable, and standards-compliant MCP integration. | **Implemented**: MCP server exposes validated tools over standard stdio transport; clean separation between models, storage, services, and MCP server. SQLite provides local storage; client handling of returned learner data depends on connected clients. |
+| **Data Integrity & Provenance** | Evidence integrity, sortable academic time, upstream system origin, and explicit source attribution. | **Implemented**: Evidence models are frozen, and the MCP server exposes no editing or deletion tools (direct database access can still modify records). Tracks `source_system`, `ingestion_method`, `source_type`, `source_reference`, `academic_year` (int), `term` (int), and UTC timestamps. |
+| **Safety Guardrails** | Enforce human-in-the-loop review, reject peer ranking, treat missing data safely. | **Partial**: Queries return history for a single learner without peer ranking. Baseline comparisons, pattern detection, diagnostic-label blocking, and enforced teacher approval are planned for Phase 2. |
 | **Test Verification** | Automated test coverage spanning unit, storage, service, pipeline roundtrips, regression integrity, and MCP protocol integration. | **Implemented**: 66 automated tests passing, including real subprocess MCP wire protocol testing. |
 
 ---
@@ -109,8 +109,8 @@ The ALLPS test suite covers 5 distinct layers (66 tests):
 | **Rule 5: Teacher observations are evidence, not truth** | Observation changes across teachers (e.g. Mr. Banda to Mrs. Ngcobo, Ms. Achebe to Mr. Okafor) tracked via `source_reference`. | Tested in Learner A & C fixtures. |
 | **Rule 6: AI interpretations are lowest authority** | AI outputs will route to `ReviewItem` before entering a learner's profile. | `ReviewItem` data model exists. Routing logic planned for Phase 2. |
 | **Rule 7: Never rank learners against peers** | Queries accept a single `learner_id`; no cross-learner ranking endpoints exist. | Implemented as an API constraint. |
-| **Rule 8: Compare learners against own baseline** | Sortable chronological history (`academic_year, term, observed_at`) provides longitudinal baseline. | Tested in storage & MCP layers. |
-| **Rule 9: Never generate harmful labels** | Domain models store structured evidence fields instead of freeform classification tags. | Schema-level constraint. No runtime label-blocking logic yet. |
+| **Rule 8: Compare learners against own baseline** | Chronological ordering supports history retrieval. Automated baseline comparisons and pattern detection are planned. | Retrieval tested in storage & MCP layers. Baseline comparison planned for Phase 2. |
+| **Rule 9: Never generate harmful labels** | Diagnostic-label detection and blocking are not implemented. The schema does not prevent labels in submitted content. | Not implemented. Planned for a future phase. |
 | **Rule 10: Teacher review required** | `ReviewItem` model provides the review data structure. | Data model validated. Enforcement workflow planned for Phase 2. |
 
 ---
@@ -118,6 +118,10 @@ The ALLPS test suite covers 5 distinct layers (66 tests):
 ## 4. Known Technical Limitations & Scenarios
 
 - **Concurrent Ingestion Conflict**: When two overlapping requests submit the same `(source_system, source_event_id)`, both can pass the existence check before either transaction commits. SQLite's unique constraint `UNIQUE(source_system, source_event_id)` ensures only one record is inserted. The second call fails with an `IntegrityError`, rolls back its transaction, and attempts to record a failure audit entry. Sequential retries of identical events succeed idempotently and return the existing evidence record.
+- **Diagnostic Labels**: Diagnostic-label detection and blocking are not implemented. The schema stores flexible content dictionaries and does not prevent labels from being included in submitted observations.
+- **Evidence Immutability Scope**: Evidence models are frozen, and the MCP server exposes no editing or deletion tools. Direct database access can still modify records.
+- **Client Data Handling**: SQLite provides local storage. How connected MCP clients handle, store, or transmit returned learner data depends on those clients.
+- **Pattern Detection & Baseline Comparisons**: Phase 1 stores and retrieves dated learner evidence with source information. Pattern detection and baseline comparisons are planned for Phase 2.
 - **Data Provenance**: The learner fixtures in `data/synthetic/seed_data.py` are fictional synthetic scenarios that prepare for future pattern-detection analysis (trend decline, persistent strength, divergence between grades and engagement, and missing data). They are not real student records from the Tusome Early Grade Reading Activity or any school system, and Tusome field definitions have not been verified against production educational datasets.
 - **Future Work Boundaries**: Pattern detection (`analyse_longitudinal_pattern`) and enforced teacher review sign-off (`flag_pattern_for_review`) are Phase 2 deliverables. Agent orchestration and longitudinal transitions are Phase 3 deliverables.
 
