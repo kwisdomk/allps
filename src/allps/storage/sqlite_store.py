@@ -5,6 +5,7 @@ All timestamps are stored as ISO 8601 strings.
 JSON fields (content, supporting_evidence, etc.) are stored as TEXT.
 """
 
+from contextlib import asynccontextmanager
 import json
 from datetime import datetime
 
@@ -21,6 +22,7 @@ from allps.models import (
     ReviewItem,
     ReviewStatus,
 )
+from allps.models.evidence import _deep_unfreeze
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS learners (
@@ -97,17 +99,52 @@ class SQLiteStore:
     """
 
     def __init__(self, db_path: str = "allps.db") -> None:
-        self._db_path = db_path
+        self._is_temp = False
+        if db_path == ":memory:":
+            import os, tempfile, uuid
+            self._db_path = os.path.join(tempfile.gettempdir(), f"allps_mem_{uuid.uuid4().hex}.db")
+            self._is_temp = True
+        else:
+            self._db_path = db_path
         self._db: aiosqlite.Connection | None = None
 
     async def initialize(self) -> None:
         """Create connection and ensure schema exists."""
-        self._db = await aiosqlite.connect(self._db_path)
+        self._db = await aiosqlite.connect(self._db_path, timeout=10.0)
         self._db.row_factory = aiosqlite.Row
+        await self._db.execute("PRAGMA journal_mode = WAL;")
+        await self._db.execute("PRAGMA busy_timeout = 10000;")
         await self._db.execute("PRAGMA foreign_keys = ON;")
         await self._db.executescript(_SCHEMA)
         await self.migrate()
         await self._db.commit()
+
+    async def create_connection(self) -> aiosqlite.Connection:
+        """Create a new, isolated connection to the SQLite database."""
+        conn = await aiosqlite.connect(self._db_path, timeout=10.0)
+        conn.row_factory = aiosqlite.Row
+        await conn.execute("PRAGMA busy_timeout = 10000;")
+        await conn.execute("PRAGMA foreign_keys = ON;")
+        return conn
+
+    @asynccontextmanager
+    async def transaction(self):
+        """Isolate transaction ownership with a dedicated connection.
+
+        Ensures BEGIN IMMEDIATE, atomicity, and keeps rollback strictly
+        within the transaction's ownership boundary.
+        """
+        conn = await self.create_connection()
+        try:
+            await conn.execute("BEGIN IMMEDIATE")
+            yield conn
+            await conn.commit()
+        except Exception:
+            if conn.in_transaction:
+                await conn.rollback()
+            raise
+        finally:
+            await conn.close()
 
     async def migrate(self) -> None:
         """Non-destructive migration for existing databases."""
@@ -123,6 +160,15 @@ class SQLiteStore:
         if self._db:
             await self._db.close()
             self._db = None
+        if self._is_temp:
+            import os
+            for path in [self._db_path, f"{self._db_path}-wal", f"{self._db_path}-shm"]:
+                if os.path.exists(path):
+                    try:
+                        os.remove(path)
+                    except Exception:
+                        pass
+
 
     @property
     def db(self) -> aiosqlite.Connection:
@@ -134,9 +180,15 @@ class SQLiteStore:
 
     # ── Learners ──────────────────────────────────────────────────
 
-    async def add_learner(self, learner: Learner, commit: bool = True) -> Learner:
+    async def add_learner(
+        self,
+        learner: Learner,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> Learner:
         """Insert a new learner."""
-        await self.db.execute(
+        db = conn or self.db
+        await db.execute(
             "INSERT INTO learners (learner_id, display_name, created_at) "
             "VALUES (?, ?, ?)",
             (
@@ -146,12 +198,15 @@ class SQLiteStore:
             ),
         )
         if commit:
-            await self.db.commit()
+            await db.commit()
         return learner
 
-    async def get_learner(self, learner_id: str) -> Learner | None:
+    async def get_learner(
+        self, learner_id: str, conn: aiosqlite.Connection | None = None
+    ) -> Learner | None:
         """Retrieve a learner by ID, or None if not found."""
-        async with self.db.execute(
+        db = conn or self.db
+        async with db.execute(
             "SELECT * FROM learners WHERE learner_id = ?", (learner_id,)
         ) as cursor:
             row = await cursor.fetchone()
@@ -163,18 +218,27 @@ class SQLiteStore:
                 created_at=datetime.fromisoformat(row["created_at"]),
             )
 
-    async def learner_exists(self, learner_id: str) -> bool:
+    async def learner_exists(
+        self, learner_id: str, conn: aiosqlite.Connection | None = None
+    ) -> bool:
         """Check if a learner exists."""
-        async with self.db.execute(
+        db = conn or self.db
+        async with db.execute(
             "SELECT 1 FROM learners WHERE learner_id = ?", (learner_id,)
         ) as cursor:
             return await cursor.fetchone() is not None
 
     # ── Evidence (immutable — no update method) ───────────────────
 
-    async def add_evidence(self, evidence: Evidence, commit: bool = True) -> Evidence:
+    async def add_evidence(
+        self,
+        evidence: Evidence,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> Evidence:
         """Insert a new evidence record. Evidence is immutable."""
-        await self.db.execute(
+        db = conn or self.db
+        await db.execute(
             """INSERT INTO evidence
                (evidence_id, learner_id, evidence_type, source_system,
                 ingestion_method, source_event_id, source_type, source_reference,
@@ -193,20 +257,26 @@ class SQLiteStore:
                 evidence.academic_year,
                 evidence.term,
                 evidence.subject,
-                json.dumps(dict(evidence.content)),
+                json.dumps(_deep_unfreeze(evidence.content)),
                 evidence.observed_at.isoformat(),
                 evidence.recorded_at.isoformat(),
             ),
         )
         if commit:
-            await self.db.commit()
+            await db.commit()
         return evidence
 
-    async def get_evidence_by_source_event(self, source_system: str, source_event_id: str) -> Evidence | None:
+    async def get_evidence_by_source_event(
+        self,
+        source_system: str,
+        source_event_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> Evidence | None:
         """Retrieve evidence by its idempotent system identifiers."""
-        async with self.db.execute(
+        db = conn or self.db
+        async with db.execute(
             "SELECT * FROM evidence WHERE source_system = ? AND source_event_id = ?",
-            (source_system, source_event_id)
+            (source_system, source_event_id),
         ) as cursor:
             row = await cursor.fetchone()
             if row is None:
@@ -236,6 +306,7 @@ class SQLiteStore:
         academic_year: int | None = None,
         term: int | None = None,
         subject: str | None = None,
+        conn: aiosqlite.Connection | None = None,
     ) -> list[Evidence]:
         """Retrieve evidence for a learner, chronologically ordered.
 
@@ -260,7 +331,8 @@ class SQLiteStore:
         query += " ORDER BY academic_year ASC, term ASC, observed_at ASC"
 
         results = []
-        async with self.db.execute(query, params) as cursor:
+        db = conn or self.db
+        async with db.execute(query, params) as cursor:
             async for row in cursor:
                 results.append(
                     Evidence(
@@ -290,9 +362,15 @@ class SQLiteStore:
 
     # ── Patterns ──────────────────────────────────────────────────
 
-    async def add_pattern(self, pattern: Pattern, commit: bool = True) -> Pattern:
+    async def add_pattern(
+        self,
+        pattern: Pattern,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> Pattern:
         """Insert a new pattern."""
-        await self.db.execute(
+        db = conn or self.db
+        await db.execute(
             """INSERT INTO patterns
                (pattern_id, learner_id, pattern_type, summary,
                 supporting_evidence, conflicting_evidence,
@@ -310,14 +388,20 @@ class SQLiteStore:
             ),
         )
         if commit:
-            await self.db.commit()
+            await db.commit()
         return pattern
 
     # ── Review Items ──────────────────────────────────────────────
 
-    async def add_review_item(self, item: ReviewItem, commit: bool = True) -> ReviewItem:
+    async def add_review_item(
+        self,
+        item: ReviewItem,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> ReviewItem:
         """Insert a new review item."""
-        await self.db.execute(
+        db = conn or self.db
+        await db.execute(
             """INSERT INTO review_items
                (review_id, pattern_id, assigned_to, status,
                 teacher_notes, created_at, resolved_at)
@@ -333,14 +417,20 @@ class SQLiteStore:
             ),
         )
         if commit:
-            await self.db.commit()
+            await db.commit()
         return item
 
     # ── Audit Log ─────────────────────────────────────────────────
 
-    async def add_audit_entry(self, entry: AuditEntry, commit: bool = True) -> AuditEntry:
+    async def add_audit_entry(
+        self,
+        entry: AuditEntry,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> AuditEntry:
         """Insert an audit log entry."""
-        await self.db.execute(
+        db = conn or self.db
+        await db.execute(
             """INSERT INTO audit_log
                (audit_id, timestamp, tool_name, input_summary,
                 output_reference, approval_state)
@@ -355,11 +445,13 @@ class SQLiteStore:
             ),
         )
         if commit:
-            await self.db.commit()
+            await db.commit()
         return entry
 
     async def get_audit_log(
-        self, tool_name: str | None = None
+        self,
+        tool_name: str | None = None,
+        conn: aiosqlite.Connection | None = None,
     ) -> list[AuditEntry]:
         """Retrieve audit log entries, optionally filtered by tool name."""
         if tool_name:
@@ -373,7 +465,8 @@ class SQLiteStore:
             params = []
 
         results = []
-        async with self.db.execute(query, params) as cursor:
+        db = conn or self.db
+        async with db.execute(query, params) as cursor:
             async for row in cursor:
                 results.append(
                     AuditEntry(
@@ -386,3 +479,4 @@ class SQLiteStore:
                     )
                 )
         return results
+

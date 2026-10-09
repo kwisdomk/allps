@@ -321,3 +321,78 @@ class TestMCPProtocol:
                     ev_record["source_reference"]
                     == "Protocol Test Teacher"
                 )
+
+    async def test_mcp_protocol_idempotency_retry_and_conflict(self, tmp_path):
+        """Test full-observation idempotency and conflict through real MCP wire protocol."""
+        db_file = tmp_path / "protocol_idemp.db"
+        store = SQLiteStore(str(db_file))
+        await store.initialize()
+        await store.add_learner(
+            Learner(
+                learner_id="PROTO-IDEMP-01",
+                display_name="Protocol Idempotency Learner",
+            )
+        )
+        await store.close()
+
+        env = os.environ.copy()
+        env["ALLPS_DB_PATH"] = str(db_file)
+        src_dir = str(Path(__file__).parent.parent / "src")
+        env["PYTHONPATH"] = (
+            src_dir + os.pathsep + env.get("PYTHONPATH", "")
+        )
+
+        from mcp import ClientSession
+        from mcp.client.stdio import StdioServerParameters, stdio_client
+
+        server_params = StdioServerParameters(
+            command=sys.executable,
+            args=["-m", "allps.mcp.server"],
+            env=env,
+        )
+
+        async with stdio_client(server_params) as streams:
+            async with ClientSession(*streams) as session:
+                await session.initialize()
+
+                args = {
+                    "learner_id": "PROTO-IDEMP-01",
+                    "evidence_type": "assessment",
+                    "source_system": "school_sis",
+                    "ingestion_method": "api",
+                    "source_type": "teacher",
+                    "source_reference": "Protocol Teacher",
+                    "academic_year": 2025,
+                    "term": 1,
+                    "content": {
+                        "score": 90,
+                        "max_score": 100,
+                        "tags": ["reading", "fluency"],
+                    },
+                    "observed_at": "2025-03-15T10:00:00+00:00",
+                    "source_event_id": "PROTO-EV-IDEMP-1",
+                    "subject": "Reading",
+                }
+
+                # 1. First ingest over MCP protocol
+                res1 = await session.call_tool("ingest_evidence", arguments=args)
+                assert not res1.is_error
+                data1 = json.loads(res1.content[0].text)
+                ev1_id = data1["evidence_id"]
+
+                # 2. Identical retry over MCP protocol
+                res2 = await session.call_tool("ingest_evidence", arguments=args)
+                assert not res2.is_error
+                data2 = json.loads(res2.content[0].text)
+                assert data2["evidence_id"] == ev1_id
+                assert data2["content"]["tags"] == ["reading", "fluency"]
+
+                # 3. Conflict over MCP protocol (different score)
+                conflict_args = dict(args)
+                conflict_args["content"] = {"score": 95, "max_score": 100, "tags": ["reading", "fluency"]}
+                res_conflict = await session.call_tool("ingest_evidence", arguments=conflict_args)
+                assert res_conflict.is_error
+                assert res_conflict.content
+
+
+

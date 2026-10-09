@@ -194,7 +194,7 @@ ALLPS enforces 10 non-negotiable safety guardrails across all layers:
 7. **Never rank learners against classmates** — Comparisons are only made against the learner's own baseline.
 8. **Primarily compare a learner against their own historical evidence** — Focus on personal growth and trajectories.
 9. **Never autonomously generate harmful labels** — Prohibited terminology (e.g., diagnostic or stigmatizing tags).
-10. **Consequential outputs must go through teacher review** — All patterns create a `ReviewItem` requiring human sign-off.
+10. **Consequential outputs must go through teacher review** — All patterns create a `ReviewItem` requiring human sign-off (Data model implemented; strict enforcement planned for Phase 2).
 
 ---
 

@@ -21,13 +21,22 @@ def _deep_freeze(v: Any) -> Any:
         return frozenset(_deep_freeze(val) for val in v)
     return v
 
+def _deep_unfreeze(v: Any) -> Any:
+    if isinstance(v, (MappingProxyType, dict)):
+        return {k: _deep_unfreeze(val) for k, val in v.items()}
+    if isinstance(v, (tuple, list)):
+        return [_deep_unfreeze(val) for val in v]
+    if isinstance(v, (frozenset, set)):
+        return [_deep_unfreeze(val) for val in v]
+    return v
+
 def _validate_mapping_proxy(v: Any) -> MappingProxyType:
     return _deep_freeze(v)
 
 FrozenDictType = Annotated[
     MappingProxyType[str, Any],
     PlainValidator(_validate_mapping_proxy),
-    PlainSerializer(lambda x: dict(x), return_type=dict)
+    PlainSerializer(_deep_unfreeze, return_type=dict)
 ]
 
 

@@ -11,16 +11,16 @@
 | **Mission Alignment** | Preserve learning continuity across terms/years/teachers without labeling or diagnosing students. | ✅ **Implemented**: Domain models explicitly track timestamped observations with provenance, preventing identity labels. |
 | **System Architecture** | Modular, testable, and standards-compliant MCP integration. | ✅ **Implemented**: MCP server exposes validated tools over standard stdio transport; clean separation between models, storage, services, and MCP server. |
 | **Data Integrity & Provenance** | Immutable evidence, sortable academic time, upstream system origin, and explicit source attribution. | ✅ **Implemented**: `Evidence` frozen models with `source_system`, `ingestion_method`, `source_type`, `source_reference`, `academic_year` (int), `term` (int), and UTC timestamps. |
-| **Safety Guardrails** | Enforce human-in-the-loop review, reject peer ranking, treat missing data safely. | ✅ **Implemented**: `ReviewItem` acts as isolated source of truth for approvals; non-ranking data architecture; synthetic datasets cover edge cases. |
-| **Test Verification** | Automated test coverage spanning unit, storage, service, pipeline roundtrips, and MCP protocol integration. | ✅ **Implemented**: 55 automated tests passing, including real subprocess MCP wire protocol testing. |
+| **Safety Guardrails** | Enforce human-in-the-loop review, reject peer ranking, treat missing data safely. | ✅ **Implemented**: Non-ranking data architecture; synthetic datasets cover missing data edge cases. 🚧 **Planned**: `ReviewItem` model is implemented, but strict enforcement of teacher approval (blocking downstream effects) is a Phase 2 safeguard. |
+| **Test Verification** | Automated test coverage spanning unit, storage, service, pipeline roundtrips, regression integrity, and MCP protocol integration. | ✅ **Implemented**: 66 automated tests passing, including real subprocess MCP wire protocol testing. |
 
 ---
 
 ## 2. Test Suite Matrix
 
-The ALLPS test suite covers 4 distinct layers (55 tests):
+The ALLPS test suite covers 5 distinct layers (66 tests):
 
-### 2.1. Domain Models (`tests/test_models.py` — 20 Tests)
+### 2.1. Domain Models (`tests/test_models.py` — 22 Tests)
 - `test_create_valid_learner`: Validates learner model instantiation.
 - `test_learner_requires_display_name`: Enforces minimum length validation.
 - `test_learner_is_frozen`: Verifies immutability of learner records.
@@ -60,7 +60,7 @@ The ALLPS test suite covers 4 distinct layers (55 tests):
 - `test_add_and_retrieve_audit`: Audit entry recording and retrieval.
 - `test_filter_audit_by_tool`: Tool-specific audit log filtering.
 
-### 2.3. Evidence Service Layer (`tests/test_evidence_service.py` — 11 Tests)
+### 2.3. Evidence Service Layer (`tests/test_evidence_service.py` — 10 Tests)
 - `test_record_and_retrieve`: End-to-end service cycle preserving system origin and ingestion channel.
 - `test_auto_creates_learner`: Safe auto-provisioning for unregistered learner IDs.
 - `test_creates_audit_entry`: Audit log creation on record actions with `source_system` and `ingestion_method`.
@@ -80,12 +80,21 @@ The ALLPS test suite covers 4 distinct layers (55 tests):
 - `test_get_history_with_filters`: Direct filtered queries.
 - `test_empty_history`: Direct query on non-existent learner.
 - `test_ingest_creates_audit_trail`: Verifies tool execution leaves audit footprint in store including system origin.
-- **`test_mcp_server_tools_and_calls` (Protocol-level integration test)**:
-  - Spawns the MCP server as a standalone subprocess (`allps.mcp.server`).
-  - Connects using official MCP SDK `stdio_client` and `ClientSession`.
-  - Verifies `session.list_tools()` returns exactly the 2 Phase 1 tools (`get_learner_history`, `ingest_evidence`).
-  - Dispatches `session.call_tool("ingest_evidence")` with `source_system` and `ingestion_method` over JSON-RPC stdio and validates result.
-  - Dispatches `session.call_tool("get_learner_history")` and confirms retrieved records retain `source_system` and `ingestion_method`.
+- `test_mcp_server_tools_and_calls`: Protocol-level integration smoke test over stdio JSON-RPC.
+- `test_mcp_protocol_idempotency_retry_and_conflict`: Wire-protocol test verifying idempotent retries and error reporting on conflicts.
+
+### 2.5. Regression & Integrity Layer (`tests/test_regression.py` — 10 Tests)
+- `test_migration_adds_source_event_id`: Non-destructive schema migration.
+- `test_idempotent_ingestion_retry`: Event key replay returns existing record.
+- `test_concurrent_transactions`: Multiple concurrent ingestions succeed safely.
+- `test_rollback_on_validation_failure`: Partial learner creations roll back atomically.
+- `test_seed_script`: Validates real synthetic seed data execution.
+- `test_full_observation_idempotency_conflicts`: Confirms conflicts on any difference in learner, year, term, subject, timestamp, type, provenance, or content.
+- `test_nested_serialization_round_trip_and_retry`: Round-trip equality and retry support for nested dictionaries and lists.
+- `test_transaction_ownership_deterministic_overlap`: Deterministic test verifying overlapping reads do not expose uncommitted evidence and failure rollbacks stay bounded.
+- `test_complete_outcome_logging`: Timestamp, timezone, and enum validation error auditing.
+- `test_audit_storage_failure_honest_rollback`: Atomicity and honest rollback when audit storage encounters failure.
+
 
 ---
 
@@ -102,7 +111,7 @@ The ALLPS test suite covers 4 distinct layers (55 tests):
 | **Rule 7: Never rank learners against peers** | Queries only accept a single `learner_id`; no cross-learner ranking endpoints exist. | Strict API constraint. |
 | **Rule 8: Compare learners against own baseline** | Sortable chronological history (`academic_year, term, observed_at`) provides longitudinal baseline. | Tested in storage & MCP. |
 | **Rule 9: Never generate harmful labels** | Domain models store structured evidence fields instead of freeform classification tags. | Schema validated. |
-| **Rule 10: Teacher review required** | `ReviewItem` model acts as separate source of truth for review workflow. | Model & schema validated. |
+| **Rule 10: Teacher review required** | `ReviewItem` model acts as separate source of truth for review workflow. | Model & schema validated (Enforcement planned Phase 2). |
 
 ---
 
