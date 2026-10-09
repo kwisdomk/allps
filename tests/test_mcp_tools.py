@@ -77,7 +77,7 @@ class TestMCPToolsDirect:
             source_reference="Mr. Test",
             academic_year=2025,
             term=1,
-            content={"score": 75},
+            content={"score": 75, "max_score": 100},
             observed_at="2025-03-15T10:00:00+00:00",
         )
         assert result["learner_id"] == "LRN-001"
@@ -130,7 +130,7 @@ class TestMCPToolsDirect:
             source_reference="Mr. Test",
             academic_year=2025,
             term=1,
-            content={"score": 80},
+            content={"score": 80, "max_score": 100},
             observed_at="2025-03-15T10:00:00+00:00",
         )
         await ingest_evidence(
@@ -164,7 +164,7 @@ class TestMCPToolsDirect:
             source_reference="Mr. Test",
             academic_year=2025,
             term=1,
-            content={"score": 80},
+            content={"score": 80, "max_score": 100},
             observed_at="2025-03-15T10:00:00+00:00",
             subject="Mathematics",
         )
@@ -177,7 +177,7 @@ class TestMCPToolsDirect:
             source_reference="system",
             academic_year=2025,
             term=1,
-            content={"rate": 0.95},
+            content={"status": "present"},
             observed_at="2025-03-28T10:00:00+00:00",
         )
 
@@ -206,7 +206,7 @@ class TestMCPToolsDirect:
             source_reference="Mrs. Audit",
             academic_year=2025,
             term=1,
-            content={"score": 70},
+            content={"score": 70, "max_score": 100},
             observed_at="2025-03-15T10:00:00+00:00",
         )
 

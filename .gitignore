@@ -25,5 +25,7 @@ htmlcov/
 *.swp
 *.swo
 *~
-data/
+data/*
+!data/synthetic/
+*.db
 datasets/

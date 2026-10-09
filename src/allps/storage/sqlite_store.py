@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS evidence (
     evidence_type TEXT NOT NULL,
     source_system TEXT NOT NULL,
     ingestion_method TEXT NOT NULL,
+    source_event_id TEXT,
     source_type TEXT NOT NULL,
     source_reference TEXT NOT NULL,
     academic_year INTEGER NOT NULL,
@@ -43,7 +44,8 @@ CREATE TABLE IF NOT EXISTS evidence (
     content TEXT NOT NULL,
     observed_at TEXT NOT NULL,
     recorded_at TEXT NOT NULL,
-    FOREIGN KEY (learner_id) REFERENCES learners(learner_id)
+    FOREIGN KEY (learner_id) REFERENCES learners(learner_id),
+    UNIQUE(source_system, source_event_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_evidence_learner
@@ -102,8 +104,19 @@ class SQLiteStore:
         """Create connection and ensure schema exists."""
         self._db = await aiosqlite.connect(self._db_path)
         self._db.row_factory = aiosqlite.Row
+        await self._db.execute("PRAGMA foreign_keys = ON;")
         await self._db.executescript(_SCHEMA)
+        await self.migrate()
         await self._db.commit()
+
+    async def migrate(self) -> None:
+        """Non-destructive migration for existing databases."""
+        async with self.db.execute("PRAGMA table_info(evidence)") as cursor:
+            columns = [row["name"] for row in await cursor.fetchall()]
+        
+        if "source_event_id" not in columns:
+            await self.db.execute("ALTER TABLE evidence ADD COLUMN source_event_id TEXT")
+            await self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_evidence_idemp ON evidence(source_system, source_event_id)")
 
     async def close(self) -> None:
         """Close the database connection."""
@@ -121,7 +134,7 @@ class SQLiteStore:
 
     # ── Learners ──────────────────────────────────────────────────
 
-    async def add_learner(self, learner: Learner) -> Learner:
+    async def add_learner(self, learner: Learner, commit: bool = True) -> Learner:
         """Insert a new learner."""
         await self.db.execute(
             "INSERT INTO learners (learner_id, display_name, created_at) "
@@ -132,7 +145,8 @@ class SQLiteStore:
                 learner.created_at.isoformat(),
             ),
         )
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
         return learner
 
     async def get_learner(self, learner_id: str) -> Learner | None:
@@ -158,33 +172,61 @@ class SQLiteStore:
 
     # ── Evidence (immutable — no update method) ───────────────────
 
-    async def add_evidence(self, evidence: Evidence) -> Evidence:
+    async def add_evidence(self, evidence: Evidence, commit: bool = True) -> Evidence:
         """Insert a new evidence record. Evidence is immutable."""
         await self.db.execute(
             """INSERT INTO evidence
                (evidence_id, learner_id, evidence_type, source_system,
-                ingestion_method, source_type, source_reference,
+                ingestion_method, source_event_id, source_type, source_reference,
                 academic_year, term, subject, content, observed_at,
                 recorded_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 evidence.evidence_id,
                 evidence.learner_id,
                 evidence.evidence_type.value,
                 evidence.source_system,
                 evidence.ingestion_method.value,
+                evidence.source_event_id,
                 evidence.source_type,
                 evidence.source_reference,
                 evidence.academic_year,
                 evidence.term,
                 evidence.subject,
-                json.dumps(evidence.content),
+                json.dumps(dict(evidence.content)),
                 evidence.observed_at.isoformat(),
                 evidence.recorded_at.isoformat(),
             ),
         )
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
         return evidence
+
+    async def get_evidence_by_source_event(self, source_system: str, source_event_id: str) -> Evidence | None:
+        """Retrieve evidence by its idempotent system identifiers."""
+        async with self.db.execute(
+            "SELECT * FROM evidence WHERE source_system = ? AND source_event_id = ?",
+            (source_system, source_event_id)
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return Evidence(
+                evidence_id=row["evidence_id"],
+                learner_id=row["learner_id"],
+                evidence_type=EvidenceType(row["evidence_type"]),
+                source_system=row["source_system"],
+                ingestion_method=IngestionMethod(row["ingestion_method"]),
+                source_event_id=row["source_event_id"],
+                source_type=row["source_type"],
+                source_reference=row["source_reference"],
+                academic_year=row["academic_year"],
+                term=row["term"],
+                subject=row["subject"],
+                content=json.loads(row["content"]),
+                observed_at=datetime.fromisoformat(row["observed_at"]),
+                recorded_at=datetime.fromisoformat(row["recorded_at"]),
+            )
 
     async def get_evidence_for_learner(
         self,
@@ -229,6 +271,7 @@ class SQLiteStore:
                         ingestion_method=IngestionMethod(
                             row["ingestion_method"]
                         ),
+                        source_event_id=row["source_event_id"],
                         source_type=row["source_type"],
                         source_reference=row["source_reference"],
                         academic_year=row["academic_year"],
@@ -247,7 +290,7 @@ class SQLiteStore:
 
     # ── Patterns ──────────────────────────────────────────────────
 
-    async def add_pattern(self, pattern: Pattern) -> Pattern:
+    async def add_pattern(self, pattern: Pattern, commit: bool = True) -> Pattern:
         """Insert a new pattern."""
         await self.db.execute(
             """INSERT INTO patterns
@@ -266,12 +309,13 @@ class SQLiteStore:
                 pattern.generated_at.isoformat(),
             ),
         )
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
         return pattern
 
     # ── Review Items ──────────────────────────────────────────────
 
-    async def add_review_item(self, item: ReviewItem) -> ReviewItem:
+    async def add_review_item(self, item: ReviewItem, commit: bool = True) -> ReviewItem:
         """Insert a new review item."""
         await self.db.execute(
             """INSERT INTO review_items
@@ -288,12 +332,13 @@ class SQLiteStore:
                 item.resolved_at.isoformat() if item.resolved_at else None,
             ),
         )
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
         return item
 
     # ── Audit Log ─────────────────────────────────────────────────
 
-    async def add_audit_entry(self, entry: AuditEntry) -> AuditEntry:
+    async def add_audit_entry(self, entry: AuditEntry, commit: bool = True) -> AuditEntry:
         """Insert an audit log entry."""
         await self.db.execute(
             """INSERT INTO audit_log
@@ -309,7 +354,8 @@ class SQLiteStore:
                 entry.approval_state,
             ),
         )
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
         return entry
 
     async def get_audit_log(

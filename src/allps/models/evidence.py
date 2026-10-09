@@ -2,11 +2,33 @@
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from types import MappingProxyType
+from typing import Any, Annotated
+import math
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator, PlainValidator, PlainSerializer
 
 import uuid
+
+def _deep_freeze(v: Any) -> Any:
+    if isinstance(v, MappingProxyType):
+        return v
+    if isinstance(v, dict):
+        return MappingProxyType({k: _deep_freeze(val) for k, val in v.items()})
+    if isinstance(v, list):
+        return tuple(_deep_freeze(val) for val in v)
+    if isinstance(v, set):
+        return frozenset(_deep_freeze(val) for val in v)
+    return v
+
+def _validate_mapping_proxy(v: Any) -> MappingProxyType:
+    return _deep_freeze(v)
+
+FrozenDictType = Annotated[
+    MappingProxyType[str, Any],
+    PlainValidator(_validate_mapping_proxy),
+    PlainSerializer(lambda x: dict(x), return_type=dict)
+]
 
 
 class EvidenceType(str, Enum):
@@ -65,6 +87,11 @@ class Evidence(BaseModel):
         description="Ingestion mechanism/channel, e.g. 'manual_observation', 'api'",
     )
 
+    source_event_id: str | None = Field(
+        default=None,
+        description="Stable unique identifier from the source system for idempotent ingestion.",
+    )
+
     # Provenance
     source_type: str = Field(
         ...,
@@ -90,8 +117,8 @@ class Evidence(BaseModel):
     # Optional subject
     subject: str | None = Field(default=None)
 
-    # Flexible payload
-    content: dict[str, Any] = Field(
+    # Flexible payload (Immutable)
+    content: FrozenDictType = Field(
         ..., description="Evidence-type-specific payload"
     )
 
@@ -110,6 +137,61 @@ class Evidence(BaseModel):
     def must_be_timezone_aware(cls, v: datetime) -> datetime:
         if v.tzinfo is None:
             raise ValueError("Datetime must be timezone-aware")
-        return v
+        return v.astimezone(timezone.utc)
+
+    @model_validator(mode="after")
+    def validate_content_payloads(self) -> "Evidence":
+        """Validate known evidence types (Assessment, Attendance)."""
+        if self.evidence_type == EvidenceType.ASSESSMENT:
+            has_score = "score" in self.content and "max_score" in self.content
+            has_fluency = "value" in self.content and "unit" in self.content
+
+            if not has_score and not has_fluency:
+                raise ValueError("Assessment evidence must contain either ('score' and 'max_score') or ('value' and 'unit')")
+
+            if has_score:
+                score = self.content["score"]
+                max_score = self.content["max_score"]
+                if isinstance(score, bool) or isinstance(max_score, bool) or not isinstance(score, (int, float)) or not isinstance(max_score, (int, float)):
+                    raise ValueError("'score' and 'max_score' must be numeric (not boolean)")
+                if not math.isfinite(score) or not math.isfinite(max_score):
+                    raise ValueError("Numeric fields must be finite")
+                if max_score <= 0:
+                    raise ValueError("'max_score' must be greater than 0")
+                if score < 0 or score > max_score:
+                    raise ValueError("'score' must be between 0 and 'max_score'")
+
+            if has_fluency:
+                value = self.content["value"]
+                unit = self.content["unit"]
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
+                    raise ValueError("'value' must be numeric (not boolean)")
+                if not math.isfinite(value):
+                    raise ValueError("'value' must be finite")
+                if not isinstance(unit, str) or not unit:
+                    raise ValueError("'unit' must be a non-empty string")
+
+        elif self.evidence_type == EvidenceType.ATTENDANCE:
+            has_daily = "status" in self.content
+            has_term = "days_present" in self.content and "days_total" in self.content
+
+            if not has_daily and not has_term:
+                raise ValueError("Attendance evidence must contain either 'status' or ('days_present' and 'days_total')")
+
+            if has_daily:
+                if self.content["status"] not in ("present", "absent", "late"):
+                    raise ValueError("Attendance status must be 'present', 'absent', or 'late'")
+
+            if has_term:
+                dp = self.content["days_present"]
+                dt = self.content["days_total"]
+                if isinstance(dp, bool) or isinstance(dt, bool) or not isinstance(dp, int) or not isinstance(dt, int):
+                    raise ValueError("'days_present' and 'days_total' must be integers (not boolean)")
+                if dt <= 0:
+                    raise ValueError("'days_total' must be greater than 0")
+                if dp < 0 or dp > dt:
+                    raise ValueError("'days_present' must be between 0 and 'days_total'")
+
+        return self
 
     model_config = {"frozen": True}

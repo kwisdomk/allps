@@ -85,7 +85,9 @@ class TestEvidence:
 
     def test_all_evidence_types_valid(self):
         for et in EvidenceType:
-            e = self._make_evidence(evidence_type=et)
+            content = {"score": 80, "max_score": 100} if et == EvidenceType.ASSESSMENT else \
+                      {"status": "present"} if et == EvidenceType.ATTENDANCE else {"some": "data"}
+            e = self._make_evidence(evidence_type=et, content=content)
             assert e.evidence_type == et
 
     def test_all_ingestion_methods_valid(self):

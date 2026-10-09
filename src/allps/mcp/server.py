@@ -65,6 +65,7 @@ async def ingest_evidence(
     term: int,
     content: dict[str, Any],
     observed_at: str,
+    source_event_id: str | None = None,
     subject: str | None = None,
 ) -> dict[str, Any]:
     """Ingest a new piece of learner evidence.
@@ -105,6 +106,7 @@ async def ingest_evidence(
         term=term,
         content=content,
         observed_at=observed_at,
+        source_event_id=source_event_id,
         subject=subject,
     )
     return evidence.model_dump(mode="json")

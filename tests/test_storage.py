@@ -57,7 +57,7 @@ class TestEvidenceStorage:
             "source_reference": "Mr. Test",
             "academic_year": 2025,
             "term": 1,
-            "content": {"score": 80},
+            "content": {"score": 80, "max_score": 100},
             "observed_at": datetime(2025, 3, 15, tzinfo=timezone.utc),
         }
         defaults.update(overrides)
@@ -71,7 +71,7 @@ class TestEvidenceStorage:
         results = await store.get_evidence_for_learner("LRN-001")
         assert len(results) == 1
         assert results[0].evidence_id == evidence.evidence_id
-        assert results[0].content == {"score": 80}
+        assert results[0].content == {"score": 80, "max_score": 100}
 
     async def test_evidence_chronological_order(self, store: SQLiteStore):
         await self._add_learner(store)
@@ -111,7 +111,7 @@ class TestEvidenceStorage:
             self._make_evidence(evidence_type=EvidenceType.ASSESSMENT)
         )
         await store.add_evidence(
-            self._make_evidence(evidence_type=EvidenceType.ATTENDANCE)
+            self._make_evidence(evidence_type=EvidenceType.ATTENDANCE, content={"status": "present"})
         )
 
         results = await store.get_evidence_for_learner(

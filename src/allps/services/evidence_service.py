@@ -26,6 +26,7 @@ class EvidenceService:
 
     def __init__(self, store: SQLiteStore) -> None:
         self._store = store
+        self._lock = None
 
     async def record_evidence(
         self,
@@ -40,6 +41,7 @@ class EvidenceService:
         term: int,
         content: dict,
         observed_at: str | datetime,
+        source_event_id: str | None = None,
         subject: str | None = None,
     ) -> Evidence:
         """Record a new piece of evidence with provenance.
@@ -54,9 +56,9 @@ class EvidenceService:
         else:
             obs_dt = observed_at
 
-        # Ensure timezone-aware
+        # Reject timezone-free
         if obs_dt.tzinfo is None:
-            obs_dt = obs_dt.replace(tzinfo=timezone.utc)
+            raise ValueError("Datetime must be timezone-aware")
 
         # Parse enums
         ev_type = (
@@ -70,45 +72,92 @@ class EvidenceService:
             else ingestion_method
         )
 
-        # Ensure learner exists (auto-create for Phase 1)
-        if not await self._store.learner_exists(learner_id):
-            learner = Learner(
-                learner_id=learner_id,
-                display_name=f"Learner {learner_id}",
+        import sqlite3
+        import asyncio
+        from pydantic import ValidationError
+
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+
+        try:
+            async with self._lock:
+                # Idempotency check before transaction
+                if source_event_id:
+                    existing = await self._store.get_evidence_by_source_event(source_system, source_event_id)
+                    if existing:
+                        if dict(existing.content) == content:
+                            return existing
+                        else:
+                            raise ValueError(f"Conflict: event {source_event_id} already exists with different content")
+
+                # Create evidence record (may raise ValidationError)
+                evidence = Evidence(
+                    learner_id=learner_id,
+                    evidence_type=ev_type,
+                    source_system=source_system,
+                    ingestion_method=ing_method,
+                    source_event_id=source_event_id,
+                    source_type=source_type,
+                    source_reference=source_reference,
+                    academic_year=academic_year,
+                    term=term,
+                    subject=subject,
+                    content=content,
+                    observed_at=obs_dt,
+                )
+
+                audit = AuditEntry(
+                    tool_name="ingest_evidence",
+                    input_summary={
+                        "learner_id": learner_id,
+                        "evidence_type": ev_type.value,
+                        "source_system": source_system,
+                        "ingestion_method": ing_method.value,
+                        "source_event_id": source_event_id,
+                        "evidence_id": evidence.evidence_id,
+                    },
+                    output_reference=evidence.evidence_id,
+                )
+
+                await self._store.db.execute("BEGIN IMMEDIATE")
+
+                # Ensure learner exists (auto-create for Phase 1)
+                if not await self._store.learner_exists(learner_id):
+                    learner = Learner(
+                        learner_id=learner_id,
+                        display_name=f"Learner {learner_id}",
+                    )
+                    await self._store.add_learner(learner, commit=False)
+
+                # Store evidence (immutable)
+                await self._store.add_evidence(evidence, commit=False)
+
+                # Audit log
+                await self._store.add_audit_entry(audit, commit=False)
+                
+                await self._store.db.commit()
+
+        except sqlite3.IntegrityError as e:
+            if self._store.db.in_transaction:
+                await self._store.db.rollback()
+            failure_audit = AuditEntry(
+                tool_name="ingest_evidence",
+                input_summary={"learner_id": learner_id, "source_system": source_system, "source_event_id": source_event_id},
+                output_reference=f"Failed (IntegrityError): {str(e)}",
             )
-            await self._store.add_learner(learner)
-
-        # Create evidence record
-        evidence = Evidence(
-            learner_id=learner_id,
-            evidence_type=ev_type,
-            source_system=source_system,
-            ingestion_method=ing_method,
-            source_type=source_type,
-            source_reference=source_reference,
-            academic_year=academic_year,
-            term=term,
-            subject=subject,
-            content=content,
-            observed_at=obs_dt,
-        )
-
-        # Store evidence (immutable)
-        await self._store.add_evidence(evidence)
-
-        # Audit log
-        audit = AuditEntry(
-            tool_name="ingest_evidence",
-            input_summary={
-                "learner_id": learner_id,
-                "evidence_type": ev_type.value,
-                "source_system": source_system,
-                "ingestion_method": ing_method.value,
-                "evidence_id": evidence.evidence_id,
-            },
-            output_reference=evidence.evidence_id,
-        )
-        await self._store.add_audit_entry(audit)
+            await self._store.add_audit_entry(failure_audit)
+            raise
+            
+        except Exception as e:
+            if self._store.db.in_transaction:
+                await self._store.db.rollback()
+            failure_audit = AuditEntry(
+                tool_name="ingest_evidence",
+                input_summary={"learner_id": learner_id, "source_system": source_system, "source_event_id": source_event_id},
+                output_reference=f"Failed: {str(e)}",
+            )
+            await self._store.add_audit_entry(failure_audit)
+            raise
 
         return evidence
 

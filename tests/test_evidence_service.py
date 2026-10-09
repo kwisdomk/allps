@@ -41,7 +41,7 @@ class TestRecordEvidence:
             source_reference="attendance-system",
             academic_year=2025,
             term=1,
-            content={"days_present": 45, "days_total": 50},
+            content={"status": "present"},
             observed_at="2025-03-28T00:00:00+00:00",
         )
 
@@ -102,7 +102,7 @@ class TestRecordEvidence:
                 source_reference="Mr. Test",
                 academic_year=2025,
                 term=1,
-                content={"score": 80},
+                content={"score": 80, "max_score": 100},
                 observed_at="2025-03-15T00:00:00+00:00",
             )
 
@@ -146,7 +146,7 @@ class TestGetLearnerHistory:
                 source_reference="Mr. Test",
                 academic_year=2025,
                 term=term_num,
-                content={"score": term_num * 10},
+                content={"score": term_num * 10, "max_score": 100},
                 observed_at=f"2025-{term_num * 3:02d}-15T00:00:00+00:00",
             )
 
@@ -164,7 +164,7 @@ class TestGetLearnerHistory:
             source_reference="Mr. Test",
             academic_year=2025,
             term=1,
-            content={"score": 80},
+            content={"score": 80, "max_score": 100},
             observed_at="2025-03-15T00:00:00+00:00",
             subject="Mathematics",
         )
@@ -177,7 +177,7 @@ class TestGetLearnerHistory:
             source_reference="system",
             academic_year=2025,
             term=1,
-            content={"rate": 0.95},
+            content={"status": "present"},
             observed_at="2025-03-28T00:00:00+00:00",
         )
 
