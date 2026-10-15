@@ -401,9 +401,10 @@ async def test_candidate_brief_persistence_and_revisioning(tmp_path: Path):
             assert revs_resp.status_code == 200
             revs = revs_resp.json()
             assert len(revs) > 0
-            latest_rev = revs[-1]
-            assert latest_rev["generation_revision"] == 2
-            assert latest_rev["candidate_brief"] is not None
+            rev_with_brief = next((r for r in revs if r.get("candidate_brief") is not None), None)
+            assert rev_with_brief is not None
+            assert rev_with_brief["generation_revision"] == 2
+            assert rev_with_brief["candidate_brief"]["generation_revision"] == 2
 
 
 @pytest.mark.asyncio

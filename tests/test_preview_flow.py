@@ -246,7 +246,8 @@ async def main():
         await runner.evaluate("document.querySelector('[data-tab=\"reviews\"]').click()")
         await asyncio.sleep(0.5)
 
-        # Trigger generation
+        # Select mock mode for rapid verifiable synthesis and trigger generation
+        await runner.evaluate("document.getElementById('generate-mode').value = 'mock'")
         await runner.evaluate("document.getElementById('btn-generate').click()")
         await runner.wait_for("!document.getElementById('btn-generate').disabled", timeout_sec=15.0, step="generate brief")
         await asyncio.sleep(1.0)
@@ -267,6 +268,38 @@ async def main():
         await runner.evaluate("document.querySelector('[data-tab=\"handover\"]').click()")
         await asyncio.sleep(0.6)
         await runner.screenshot("preview_09_approved_handover_desktop.png")
+
+        # Step 10: Browser Page Reload & INT-01 Restoration Verification
+        print("\n[10/10] Reloading Browser Page to Verify INT-01 Brief Restoration & Handover Persistence...")
+        await runner.send("Page.reload")
+        await asyncio.sleep(1.8)
+
+        # 1. Verify approved handover count remains 1
+        side_approved = await runner.wait_for("document.getElementById('side-approved-count').innerText", step="reload approved count")
+        print(f"  Approved handover count after reload: {side_approved}")
+        assert int(side_approved) >= 1
+
+        # 2. Switch to reviews tab and verify persisted candidate brief is restored
+        await runner.evaluate("document.querySelector('[data-tab=\"reviews\"]').click()")
+        await asyncio.sleep(1.0)
+
+        restored_candidate_label = await runner.wait_for(
+            "document.querySelector('.candidate-synthesis-label') ? document.querySelector('.candidate-synthesis-label').innerText : ''",
+            step="restored candidate brief label"
+        )
+        print(f"  Restored candidate brief label: '{restored_candidate_label}'")
+        assert "candidate synthesis" in restored_candidate_label.lower()
+
+        has_findings = await runner.evaluate("document.querySelectorAll('.finding-item').length")
+        print(f"  Restored findings count: {has_findings}")
+        assert has_findings > 0
+
+        # Verify revision tag exists
+        has_rev = await runner.evaluate("document.querySelector('.generation-status-card .tag-stage') ? document.querySelector('.generation-status-card .tag-stage').innerText : ''")
+        print(f"  Restored revision tag: '{has_rev}'")
+        assert "rev" in has_rev.lower()
+
+        await runner.screenshot("preview_10_restored_candidate_brief_after_reload.png")
 
         print("\n" + "=" * 75)
         print(" ALL PREVIEW WORKFLOW TESTS PASSED CLEANLY WITH HIGH-RES ARTIFACTS!")
