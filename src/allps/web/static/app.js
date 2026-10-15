@@ -275,6 +275,9 @@ async function loadConfig() {
   try {
     state.config = await api.getConfig();
     renderAuthStatus();
+    if (state.config.default_mode && elements.generateMode) {
+      elements.generateMode.value = state.config.default_mode;
+    }
   } catch (err) {
     console.error("Failed to load config:", err);
   }

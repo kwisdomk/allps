@@ -1067,3 +1067,34 @@ dialog::backdrop {
   font-size: 13px;
   color: var(--text-muted);
 }
+
+/* ── Mobile Responsive Refinements ──────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .top-bar {
+    height: auto;
+    min-height: 54px;
+    padding: 10px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    position: relative;
+  }
+
+  .top-telemetry {
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-pill {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .btn-primary {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+}
