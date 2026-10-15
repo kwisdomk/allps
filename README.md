@@ -1,359 +1,135 @@
 # ALLPS — Agentic Longitudinal Learner Profile System
 
-> Built for the African Agentic AI Design Challenge, education track.  
-> *"Record evidence without reducing learners to labels."*
+> **Challenge Track**: Education: The Long View — African Agentic AI Design Challenge  
+> *"Record evidence without reducing learners to labels."*  
+> **Repository**: [https://github.com/wisdomkinoti/ALLPS](https://github.com/wisdomkinoti/ALLPS)  
+> **License**: [MIT License](LICENSE) (OSI-Approved)
 
 ---
 
-## Overview
+## 1. Overview & Problem Statement
 
-Schools collect rich learner data — assessments, attendance, projects, teacher observations, participation metrics, and learner self-reflections. However, this information is almost always fragmented across terms, school years, and changing teachers. When a student transitions to a new grade or teacher, their longitudinal context is lost, forcing each educator to start from scratch or rely on informal impressions.
+In African primary and secondary schools, learner data — test marks, attendance registers, project milestones, and classroom observations — is fragmented across terms, school years, and changing teachers. When a student transitions to upper primary or a new grade, their multi-year context is lost, leaving teachers with one-term snapshots or forcing them to rely on informal hearsay.
 
-**ALLPS (Agentic Longitudinal Learner Profile System)** preserves learning continuity across terms, years, and teachers by connecting longitudinal evidence and surfacing sourced, verifiable patterns.
+**ALLPS (Agentic Longitudinal Learner Profile System)** preserves learning continuity across terms, years, and teachers. It connects atomic learner evidence, deterministically evaluates longitudinal trajectories, and uses bounded local open-weight AI to synthesize verifiable transition handovers — with sovereign human teachers holding strict approval authority.
 
-### Core Principles & Commitments
-
-These core commitments guide the design of ALLPS:
-
-**Implemented & Enforced:**
-1. **Record evidence without reducing learners to labels**: ALLPS records factual, dated, attributed observations. Learner identity connects longitudinal records across years, but the system stores atomic evidence rather than permanent diagnostic labels.
-2. **Evidence immutability**: Evidence domain models are frozen, and the MCP server exposes no editing or deletion tools. Upstream identifiers support idempotent re-ingestion.
-3. **Explicit provenance & system origin**: Every piece of evidence captures `source_system`, `ingestion_method`, `source_type`, `source_reference`, `observed_at`, and `recorded_at`.
-4. **Strict non-ranking**: History queries accept a single learner ID. Ranking or peer-sorting is prohibited and unexposed in the API.
-5. **Deterministic comparability**: Longitudinal pattern detection strictly enforces measurement compatibility (same grade, subject, measured skill, form identity & version, language, rubric scale). No invented defaults; no false equating across differing instruments.
-6. **Zero remains zero, missing remains null**: Explicit missing outcomes (`absent`, `result_unavailable`, `assessment_not_administered`) are preserved distinct from zero scores. Missing reflections are never penalized as negative evidence.
-
-**Modeled & In Progress (Disclosed Status):**
-7. **Sovereign Teacher Review Gate**: The `ReviewItem` data model exists and stores human adjudication states (`pending`, `accepted`, `rejected`, `needs_context`). Enforcement filtering—ensuring published profiles strictly expose accepted patterns—is currently being coupled to the analysis pipeline.
-8. **Prohibited diagnostic label screening**: Policy rules rejecting deficit and clinical terminology (`"slow learner"`, `"lazy"`, `"ADHD"`) are being introduced into `allps.policies`.
-9. **Bounded agent orchestration**: Gated pedagogical transition synthesis requiring explicit evidence citations, stated limitations, and explicit abstention when data is inconclusive.
+> [!IMPORTANT]
+> **Public Portal Notice**:  
+> The public website at **`https://allps.kwaix.dev`** is an **informational project documentation page**, not the local live application. It does not host the FastAPI backend, does not connect to LM Studio, and deliberately exposes zero learner records or unauthenticated approval endpoints to the open internet. The live AI application runs locally on `http://127.0.0.1:8000`.
 
 ---
 
-## Phase 1 Scope & Architecture
+## 2. Quick Start & Simple Runnable Commands
 
-Phase 1 establishes the data and tool foundation for longitudinal evidence collection:
+### ⚡ One-Line Verification (Fastest)
 
-```
-┌────────────────────────────────────────────────────────┐
-│                   MCP Client / Agent                   │
-└───────────────────────────┬────────────────────────────┘
-                            │ Model Context Protocol (stdio)
-┌───────────────────────────▼────────────────────────────┐
-│                  ALLPS MCP Server                      │
-│   • ingest_evidence(learner_id, evidence_type, ...)    │
-│   • get_learner_history(learner_id, [filters])         │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│                 Evidence Service                       │
-│   • Validates models (Pydantic v2)                     │
-│   • Enforces UTC timezones & content rules             │
-│   • Idempotency & retry handling (requires             │
-│     source_event_id)                                   │
-│   • Atomic evidence + audit commit                     │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│               Async SQLite Store                       │
-│   • learners                                           │
-│   • evidence (frozen models, append-only via MCP)      │
-│   • patterns (Phase 2 analysis models ready)           │
-│   • review_items (human-in-the-loop review state)      │
-│   • audit_log (tool invocation audit trail)            │
-└────────────────────────────────────────────────────────┘
-```
-
-### What Phase 1 Does
-
-Phase 1 stores and retrieves dated learner evidence with source information. Pattern detection and baseline comparisons are planned:
-
-- **Evidence Ingestion**: The `ingest_evidence` MCP tool accepts factual learner observations. A Python-level alias `record_evidence` exists in both the service layer and the MCP server module for backward compatibility, but only `ingest_evidence` is registered as an MCP tool. The tool captures:
-  - **Source Provenance**: `source_system` (e.g. `school_sis`, `moodle`, `attendance_system`, `allps`, `csv_import`, `synthetic_dataset`) and `ingestion_method` (`api`, `webhook`, `scheduled_sync`, `csv_import`, `manual_observation`, `learner_pulse`, `synthetic`). ALLPS is not an authoritative gradebook; origin systems are explicitly preserved.
-  - **Attribution**: `source_type` (`teacher`, `system`, `learner`) and `source_reference` (e.g. `"Mr. Banda"`).
-  - **Academic Time**: `academic_year` (int), `term` (int), and UTC timezone-aware `observed_at`. Timezone-naive timestamps are rejected.
-  - **Payload Validation**: Structured payloads are validated per evidence type. Assessment scores must be non-negative finite numbers with `score <= max_score`. Attendance requires either a daily status (`present`, `absent`, `late`) or term-level counts (`days_present` and `days_total` with `days_present <= days_total`). A supplied `rate` field is accepted in the content but is not currently validated against the counts.
-- **Chronological History**: The `get_learner_history` tool returns records sorted chronologically (`academic_year ASC, term ASC, observed_at ASC`), supporting filtering by type, year, term, and subject. Pattern detection and baseline comparisons are planned for Phase 2.
-- **Idempotency & Retry Handling**: Requires `source_event_id`. When a submission matches an existing `(source_system, source_event_id)` with identical observation fields, the original record is returned and the retry is logged in the audit trail. If the fields differ, a conflict error is raised. Without `source_event_id`, repeated submissions can create separate records.
-- **Transactional Atomicity**: Evidence creation and its success audit entry commit together in a single transaction. If validation fails, the transaction rolls back. The service attempts to write a failure audit entry, but if audit storage is also unavailable, the error is logged and re-raised — no audit record is guaranteed in that scenario.
-- **Storage and Safeguards**: Evidence models are frozen, and the MCP server exposes no evidence editing or deletion tools. Direct database access can still modify records. SQLite provides local storage. How connected MCP clients handle returned learner data depends on those clients.
-- **Model Context Protocol (MCP)**: Runs as a standard stdio MCP server, compatible with FastMCP and standard MCP clients.
-
-### What Remains Unfinished (Future Work)
-
-- **Cryptographic Teacher Authentication**: While `ReviewService` prevents automated bots from approving patterns through identifier screening and decouples agent orchestration from adjudication, the web prototype's configured reviewer ID (e.g. `--reviewer TCH-BANDA`) is a demonstration configuration, **not an authenticated identity**. A production deployment requires cryptographic teacher authentication (such as OpenID Connect / SAML SSO, signed JWT sessions, or WebAuthn).
-- **Live Open-Weight Model Verification**: Automated test suites verify AI orchestration via bounded mocks and deterministic fallback. Verification against live open-weight LLMs (e.g. Qwen 3.5 4B via LM Studio) requires a running local instance with loaded VRAM weights; when LM Studio times out during model loading, ALLPS engages deterministic fallback.
-
-### Known Limitations
-
-- **Concurrent submissions with the same source event**: When two overlapping requests submit the same `(source_system, source_event_id)`, both can pass the initial existence check before either transaction commits. SQLite's `UNIQUE(source_system, source_event_id)` index constraint ensures that only one evidence record is stored. The second call encounters an `IntegrityError`, rolls back its ingestion transaction, and attempts to log a failure audit entry. Sequential retries of identical events succeed normally and return the existing evidence record.
-- **Teacher Review Authority Prototype Boundary**: While agent tools cannot self-approve and unreviewed/rejected patterns are never surfaced in the public profile, the prototype web server supplies a reviewer ID via server configuration flag (`--reviewer TCH-BANDA`) for human-in-the-loop demonstration. This is not authentication. The prototype web interface explicitly tags this as a demonstration configuration. Full cryptographic authentication remains an unresolved roadmap requirement.
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.11+ (tested on Python 3.13 and 3.14)
-- Virtual environment or system Python
-
-### Installation
-
-Clone the repository and install dependencies:
+Run the automated test suite across all 14 test layers (252 passing tests):
 
 ```bash
-git clone https://github.com/kwisdomk/ALLPS.git
-cd ALLPS
-
-# Install package and dependencies
-pip install -e .
-
-# Or install with dev/testing dependencies
-pip install -e ".[dev]"
+python -m pytest
 ```
 
-Dependencies include:
-- `pydantic>=2.0,<3` — Type validation and serialization
-- `aiosqlite>=0.19` — Async SQLite persistence
-- `mcp>=1.0` — Model Context Protocol SDK (supports FastMCP and MCPServer)
-- `pytest>=8.0`, `pytest-asyncio>=0.23` — Asynchronous testing
+### ⚡ Run the End-to-End Multi-Outcome Demonstration (<60s)
 
----
+Demonstrates five canonical outcomes: accepted trend, accepted persistence, rejected divergence, safe abstention, and policy violation rejection:
 
-## Running Tests
-
-The test suite includes **238 automated tests** across 13 test suites covering domain models, storage queries, service business logic, direct tool functions, pipeline roundtrips, regression edge cases, protocol-level MCP subprocess tests, bounded AI orchestration, epistemic output validation, indirect peer-comparison validator screening, runtime provider discovery with graceful degradation, and audit security/governance boundaries:
-
-```bash
-pytest -v
-# or on Windows
-python -m pytest -v
-```
-
-Output summary:
-```text
-tests/test_agent_orchestration.py ..................... [  8%]
-tests/test_analysis_service.py ...................      [ 16%]
-tests/test_audit_fixes.py ....                          [ 18%]
-tests/test_demo_e2e.py .....                            [ 20%]
-tests/test_evidence_service.py ..........               [ 24%]
-tests/test_mcp_tools.py .............                   [ 30%]
-tests/test_models.py ..........................         [ 41%]
-tests/test_peer_comparison_gap.py ..................... [ 52%]
-tests/test_phase2_analysis_repairs.py ................  [ 59%]
-tests/test_phase2_governance.py ....................... [ 76%]
-tests/test_regression.py ............                   [ 82%]
-tests/test_runtime_discovery.py ......................  [ 92%]
-tests/test_storage.py ...................               [100%]
-===================== 238 passed in ~65s =====================
-```
-
----
-
-## Milestone 03 -- End-to-End Demonstration (`examples/demo_e2e.py`)
-
-The reproducible demonstration executes the complete ALLPS workflow, verifying all 5 canonical outcomes against synthetic school data on an isolated disposable database:
-
-### 1. Auto Mode (Adaptive Discovery & Fallback -- Recommended)
-Probes local providers (LM Studio $\to$ Ollama) and automatically falls back to the deterministic analysis engine if no functional AI provider is ready:
 ```bash
 python examples/demo_e2e.py --mode auto
 ```
 
-### 2. Deterministic Mode (Pure Evidence-Based Analysis, Zero AI Dependency)
-Runs genuine longitudinal evidence analysis using rule-based calculations without network or model dependencies:
+### ⚡ Run the Real MCP Wire Protocol Demonstration
+
+Exercises our 7 FastMCP tools over real stdio transport using the official Python MCP SDK:
+
 ```bash
-python examples/demo_e2e.py --mode deterministic
+python examples/demonstrate_mcp_wire_protocol.py
 ```
 
-### 3. Mock Mode (Instant Contract-Compliant Canned Responses)
-Runs completely offline in under 2 seconds using canned mock fixtures for rapid regression verification:
+### ⚡ Start the Local Teacher Workspace
+
+Launches the FastAPI backend and serves the educator Single Page Application:
+
 ```bash
-python examples/demo_e2e.py --mode mock
+python -m allps.web.app --port 8000 --mode auto --reviewer TCH-BANDA
 ```
 
-### 4. Live Mode (Strict Local LLM Inference)
-Connects directly to an open-weight model hosted locally (e.g. Qwen 3.5 4B via LM Studio) and strictly fails if the model is not ready:
-```bash
-python examples/demo_e2e.py --mode live --endpoint http://127.0.0.1:1234/v1
-```
-
-### CLI Arguments & Options:
-- `--mode {auto,live,deterministic,mock}`: Execution mode (default: `auto`).
-- `--endpoint URL`: OpenAI-compatible endpoint (default: `http://127.0.0.1:1234/v1`).
-- `--model NAME`: Target model identifier.
-- `--db-path PATH`: Custom SQLite database path (default: disposable temporary file).
-- `--keep-db`: Retain disposable database file on exit instead of deleting.
-- `--timeout SECONDS`: Inference timeout in seconds (default: 90.0).
-
-### Demonstrated Outcomes:
-| Outcome | Scenario | AI Pipeline | Simulated Teacher Review | Surfaced Profile |
-|---|---|---|---|---|
-| **1. Trend Detection** | `LRN-001` (Amara Kemboi, Math) | Validated handover brief (scores 82 -> 68 -> 51) | **ACCEPTED** by Mr. Banda | **Surfaced** with immutable SHA-256 snapshot |
-| **2. Persistent Strength** | `LRN-002` (Thabo Ndlovu, Science) | Validated handover brief (scores 88, 91, 89 + project) | **ACCEPTED** by Dr. Mensah | **Surfaced** with immutable SHA-256 snapshot |
-| **3. Divergent Evidence** | `LRN-003` (Naledi Mwangi, English) | Notes divergence between strong scores (78, 81, 76) and withdrawal | **REJECTED** by Ms. Achebe (temporary family bereavement note) | **Hidden** (Zero pattern leakage into profile) |
-| **4. Safe Abstention** | `LRN-003` (Science, sparse/damaged data) | AI cleanly abstains (fewer than 3 comparable observation points) | N/A (No review item generated) | **Hidden** (Zero noise for educators) |
-| **5. Policy Rejection** | Intentionally invalid draft | Blocks indirect peer ranking (*"falling behind peers"*, *"below grade average"*), labels, & causal links | Gated before DB insertion | **Blocked** (Audit trail records validation failure) |
+Open your browser to: **`http://127.0.0.1:8000`**
 
 ---
 
-## Synthetic Data & Seeding
+## 3. System Requirements & Environment
 
-ALLPS includes 3 synthetic learners representing synthetic Kenyan school examples (used for testing longitudinal comparability; not official curriculum validation):
+| Component | Requirement | Notes |
+| :--- | :--- | :--- |
+| **Python** | **Python 3.11+** (Tested on Python 3.13 and 3.14) | Core backend, Pydantic v2, FastMCP, SQLite store |
+| **Node.js** | **Node.js 18+** *(Optional)* | **Zero Node dependency for core ALLPS or Web SPA.** Node is only required if running the borrowed `@modelcontextprotocol/server-filesystem` via `npx`. |
+| **Local LLM Engine** | **LM Studio** (`v0.3.0+`) or **Ollama** | Running locally on `http://127.0.0.1:1234/v1` (LM Studio) or `http://127.0.0.1:11434/v1` (Ollama) |
+| **Local Model** | **`allps-qwen35-base-4b`** (`Qwen2.5-3B` / `4B` 4-bit GGUF) | Fits in **<3.5 GB VRAM**; sub-5s inference latency. If unavailable, ALLPS safely engages deterministic fallback in `auto` mode. |
+| **OS** | Linux, macOS, or Windows | Fully cross-platform; paths use standard library `pathlib.Path`. |
 
-| Learner | ID | Scenario |
-|---|---|---|
-| **Learner 001** | `LRN-001` | Steady decline in maths over 3 terms; attendance drops; learner reflection notes difficulty |
-| **Learner 002** | `LRN-002` | Consistent 85–91% science scores; high attendance; extracurricular mentoring; projects |
-| **Learner 003** | `LRN-003` | Strong English test scores (76–81%), but teacher observations note withdrawn behavior and low participation. No self-reflection in terms 1–2. |
+---
 
-> **Note on Data Provenance**: These fixtures are synthetic Kenyan school examples created for system testing and comparability verification. They are not real student records from the Kenya Institute of Curriculum Development (KICD), the Tusome Early Grade Reading Activity, or any school system, and they do not imply official curriculum validation.
+## 4. Synthetic Kenyan Demonstration Dataset
 
-To seed a development database and run the MCP server against it:
+ALLPS ships with a realistic synthetic demonstration dataset modeled on the Kenyan Competency-Based Curriculum (CBC) and Tusome literacy benchmarks (`data/synthetic/seed_data.py`).
 
-```bash
-# Seed the database
-python data/synthetic/seed_data.py allps_dev.db
+- **3 Demonstration Learners**:
+  - `LRN-001` (Amara Kemboi): Grade 3, declining Mathematics trajectory across 3 terms (82 $\to$ 68 $\to$ 51), high attendance, strong spatial reasoning.
+  - `LRN-002` (Thabo Ndlovu): Grade 3, persisting Science strength (consistent Level 4 rubric), peer study support.
+  - `LRN-003` (Naledi Mwangi): Grade 3, high exam score (88/100) diverging from acute classroom disengagement due to local family bereavement.
+- **27 Atomic Evidence Records**: Ingested with realistic messy properties (inconsistent scoring scales, missing outcomes with explicit reasons, and qualitative teacher notes).
+- **Privacy Guarantee**: No real student records or personal identifying details are hosted or transmitted.
 
-# Point the MCP server at the same database
-# Linux/macOS
-export ALLPS_DB_PATH="allps_dev.db"
-# Windows PowerShell
-$env:ALLPS_DB_PATH="allps_dev.db"
+To re-seed a database manually:
 
-# Start the MCP server
-allps-mcp
+```python
+from data.synthetic.seed_data import seed_database
+import asyncio
+
+asyncio.run(seed_database("allps_demo.db"))
 ```
 
 ---
 
-## Running the MCP Server
+## 5. Architectural Highlights
 
-You can run the MCP server directly via stdio:
-
-```bash
-# Using CLI entrypoint
-allps-mcp
-
-# Or via python module
-python -m allps.mcp.server
-```
-
-To configure the database path used by the MCP server, set `ALLPS_DB_PATH`:
-```bash
-# Linux/macOS
-export ALLPS_DB_PATH="path/to/school.db"
-# Windows PowerShell
-$env:ALLPS_DB_PATH="path/to/school.db"
-```
-
-If `ALLPS_DB_PATH` is not set, the server defaults to `allps.db` in the current directory.
-
-### Connecting via Model Context Protocol (stdio)
-
-Any standard MCP-compliant client or harness connects via stdio JSON-RPC. Example standard configuration:
-
-```json
-{
-  "mcpServers": {
-    "allps": {
-      "command": "python",
-      "args": ["-m", "allps.mcp.server"],
-      "cwd": "/path/to/ALLPS",
-      "env": {
-        "ALLPS_DB_PATH": "/path/to/ALLPS/allps_dev.db"
-      }
-    }
-  }
-}
-```
+1. **Our Seven-Tool FastMCP Server (`allps.mcp.server`)**:
+   - Standard stdio JSON-RPC 2.0 interface.
+   - 7 domain-bounded tools: `ingest_evidence`, `get_learner_history`, `analyse_longitudinal_pattern`, `flag_pattern_for_review`, `resolve_teacher_review`, `get_pending_reviews`, `get_surfaced_profile`.
+2. **Borrowed Official MCP Server (`@modelcontextprotocol/server-filesystem`)**:
+   - Reference filesystem server for reading raw local school files.
+   - Status: Disclosed honestly as **unverified** pending multi-server protocol traces from external workstreams.
+3. **Deterministic Comparability Engine (`AnalysisService`)**:
+   - Strictly enforces 9-key comparability before pattern detection.
+   - Rejects monotonic gains on mixed assessment scales; preserves true zero distinct from missing outcomes.
+4. **Bounded Pydantic AI Orchestration (`AgentOrchestrator`)**:
+   - Isolates qualitative free text in `<untrusted_evidence_payload>` XML tags.
+   - `OutputValidator` screens raw LLM drafts: enforces 100% citation grounding, checks numerical claims against cited records, and rejects peer ranking (*"bottom 10%"*, *"below grade average"*) and deficit labels (*"slow learner"*).
+5. **Human-in-the-Loop Sovereign Review Gate (`ReviewService`)**:
+   - Autonomous agents are barred from approving candidate findings (`is_error=True`).
+   - Human teacher approval generates an immutable SHA-256 snapshot. Unapproved patterns remain strictly invisible in published profiles.
+6. **Teacher Web Interface (FastAPI + Vanilla JS SPA)**:
+   - Apple HIG aesthetic; zero npm/webpack dependencies.
+   - Full candidate brief persistence across page reloads (INT-01).
 
 ---
 
-## AI Runtime Discovery & Graceful Degradation (Workstream 3)
+## 6. Known Failures & Limitations
 
-ALLPS includes a modular **Runtime Decision Layer** (`allps.runtime`) that dynamically discovers available inference providers, verifies model readiness, and selects an execution strategy without compromising governance rules or learner privacy.
-
-### Supported Providers
-1. **LM Studio** (`http://127.0.0.1:1234/v1`): OpenAI-compatible API with dynamic model discovery.
-2. **Ollama** (`http://127.0.0.1:11434/v1`): OpenAI-compatible API with dynamic model discovery.
-3. **Deterministic Engine**: Genuine evidence-based longitudinal analysis operating directly on real records without network or LLM dependencies.
-
-### Supported Execution Modes
-
-| Mode | Behavior |
-|---|---|
-| `auto` | Discovers providers in priority order (LM Studio $\to$ Ollama), verifies readiness via minimal zero-learner probe, or safely falls back to deterministic analysis. |
-| `live` | Requires a verified, functional AI provider; fails explicitly if unavailable (refuses silent fallback). |
-| `deterministic` | Executes genuine evidence-based non-AI analysis without model dependencies. |
-| `mock` | Runs deterministic mock fixtures for offline CI/CD and verification. |
-
-### Running the End-to-End Demonstration
-
-```powershell
-# Automatic discovery with graceful deterministic fallback
-python examples/demo_e2e.py --mode auto
-
-# Explicit live AI inference
-python examples/demo_e2e.py --mode live
-
-# Pure deterministic rule engine (analyzing real learner records)
-python examples/demo_e2e.py --mode deterministic
-
-# Offline reproducible mock execution
-python examples/demo_e2e.py --mode mock
-```
+- **Confirmed CUDA Allocation Failure (Unresolved)**:
+  Attempting to load unquantized 7B distilled models (`DeepSeek-R1-Distill-Qwen-7B` / `Qwen2.5-7B`) on consumer 8GB GPUs produces a CUDA out-of-memory exception (`failed to allocate 14.2 GiB on CUDA:0`). Mitigated by utilizing the 4-bit quantized base model `allps-qwen35-base-4b` (<3.5GB VRAM). See [EVALS.md](EVALS.md) for full incident details and next untried experiments.
+- **Prototype Reviewer Identity Boundary**:
+  The prototype server injects a configured reviewer identifier (e.g. `--reviewer TCH-BANDA`) for human-in-the-loop demonstration. This is a demonstration setting, **not cryptographic authentication or SSO identity**. Production deployments require OpenID Connect / SAML integration.
+- **Borrowed MCP Server Protocol Evidence**:
+  While ALLPS supports upstream provenance tracking (`source_system`, `source_event_id`, `ingestion_method`), end-to-end multi-server execution with the external filesystem MCP server has not been independently verified.
+- **Concurrent Ingestion Race**:
+  Overlapping concurrent submissions with identical `(source_system, source_event_id)` fail with SQLite `IntegrityError` on the second transaction and roll back safely; sequential retries succeed idempotently.
 
 ---
 
-## ALLPS Teacher Workspace & Web Architecture
+## 7. Project Documentation
 
-The ALLPS Teacher Workspace provides an educator-facing web interface for longitudinal evidence review, teacher observation recording, AI candidate handover brief synthesis, human adjudication, and accepted handover inspection.
-
-### Frontend Technology Stack (Real Stack)
-- **Architecture**: Single Page Application (SPA) served statically by FastAPI.
-- **Languages & Frameworks**: Pure vanilla ECMAScript (ES2022) and semantic CSS3.
-- **Explicit Clarification**: **This frontend does NOT use Next.js, React, Node.js, or complex bundler toolchains.** It requires zero Node/NPM dependencies and executes natively in modern evergreen browsers (Edge, Chrome, Firefox, Safari).
-- **Design System**: Apple Human Interface Guidelines (HIG) theme:
-  - Clean light canvas (`#f5f5f7`) with pure white card surfaces (`#ffffff`).
-  - Subtle borders (`rgba(0, 0, 0, 0.08)` to `rgba(0, 0, 0, 0.15)`), soft Apple drop-shadows, and zero neon/fluorescent accents.
-  - Native Apple system typography (`-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif`).
-  - Apple system accents (Apple Blue `#0071e3`, Apple Green `#34c759`, Apple Orange `#ff9500`, Apple Red `#ff3b30`).
-  - Compartmentalized two-column desktop workspace separating learner controls and longitudinal metrics from active views.
-
-### Web API & Security (INT-01 & SEC-02)
-- **Thin Web API Adapter (`allps.web.routes`)**: Connects web requests directly to existing ALLPS domain services (`EvidenceService`, `AnalysisService`, `ReviewService`, `AgentOrchestrator`, `SQLiteStore`).
-- **INT-01 Candidate Brief Persistence**:
-  - Full `CandidateHandoverBrief` objects (findings, citations, co-occurring context, teacher inquiries, generation revision, and runtime method) are persisted to the `candidate_briefs` table in SQLite upon synthesis.
-  - Refreshing or reloading the browser queries `GET /api/learners/{id}/brief` to restore the exact candidate handover brief rather than substituting a deterministic summary.
-  - Each brief is associated with the active pattern ID, review ID, and incrementing `generation_revision`.
-- **SEC-02 Hardened CORS**:
-  - Replaced wildcard CORS with explicit allowed origins (`http://localhost:8000`, `http://127.0.0.1:8000`, `http://localhost:3000`, `http://127.0.0.1:3000`) and allowed HTTP methods (`GET`, `POST`, `OPTIONS`).
-- **Runtime Provenance Distinguishability**:
-  - The API and UI explicitly distinguish between `MOCK`, `DETERMINISTIC`, `FALLBACK`, and `LIVE` runtime methods with distinct visual badges.
-- **Prototype Trust Limitation**:
-  - A server-configured `--reviewer TCH-BANDA` flag injects reviewer identity for prototype evaluation. This is explicitly labeled in the UI as a demonstration configuration, not authenticated identity.
-
-### Running the Teacher Workspace
-
-```powershell
-# Set PYTHONPATH and start the web server
-$env:PYTHONPATH="src;."
-python -m allps.web.app --port 8000 --db allps_web_demo.db --mode mock --reviewer TCH-BANDA
-```
-Open your browser to: `http://127.0.0.1:8000/`
-
----
-
-## Specifications & Roadmap
-
-- **Data & Behavioral Contracts**: See [docs/contracts.md](docs/contracts.md) for payload schemas, strict comparability rules, missingness semantics, and review governance.
-- **Verification Evidence**: See [EVALS.md](EVALS.md) for the 89-test verification matrix.
-- **Proposed & Deferred Work**: See [ROADMAP.md](ROADMAP.md) for upcoming milestones and completion criteria.
-
----
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Concise one-page system architecture, component breakdown, and tool call boundaries.
+- [EVALS.md](EVALS.md) — Nine real evaluation tasks, observed pass/fail outcomes, the unresolved CUDA allocation failure, and development repairs.
+- [DEVELOPMENT_RESEARCH.md](DEVELOPMENT_RESEARCH.md) — Technical research record, African classroom constraints, architectural experiments, and limitations.
+- [LICENSE](LICENSE) — OSI-Approved MIT License.

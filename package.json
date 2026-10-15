@@ -1,0 +1,8 @@
+{
+  "name": "allps-mcp-integration",
+  "version": "1.0.0",
+  "description": "ALLPS MCP Integration dependencies",
+  "dependencies": {
+    "@modelcontextprotocol/server-filesystem": "1.0.0"
+  }
+}

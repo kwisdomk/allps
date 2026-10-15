@@ -1,355 +1,126 @@
-# ALLPS — Architecture & Technical Design
+# ALLPS — System Architecture & Technical Design
 
-> **Document Status**: Canonical System Architecture  
-> **Target Audience**: Challenge Evaluators, Systems Engineers, Educators  
-> **Scope**: Component Architecture, Data Models, Comparability Engine, MCP Interface, Governance Guardrails
-
----
-
-## 1. System Mission & Philosophy
-
-ALLPS (**Agentic Longitudinal Learner Profile System**) is designed to solve a foundational friction in primary and secondary education across Africa: **the loss of learner context across terms, school years, and changing teachers**.
-
-### Core Tenet: "Record evidence without reducing learners to labels."
-
-Educational systems often condense learners into static labels (*"slow learner"*, *"at-risk"*, *"uncooperative"*). These labels introduce bias for subsequent teachers and erase developmental progress. 
-
-Instead of summarizing learners with identity labels, ALLPS stores individual observations collected over time with source attribution:
-1. **Atomic Evidence Ledger**: Stores dated learner evidence (test scores, attendance records, classroom observations, self-reflections) with full provenance.
-2. **Deterministic Comparability Engine**: Evaluates longitudinal patterns only across strictly compatible assessment instruments, preventing false trajectories.
-3. **Dual-View Approval Boundary**: AI recommends candidate insights and transition handover drafts; sovereign human teachers decide whether candidates are accepted into the learner's published profile.
+> **Challenge Track**: Education: The Long View — African Agentic AI Design Challenge  
+> **Repository**: `Q:\ALLPS`  
+> **Core Tenet**: *"Record evidence without reducing learners to labels."*
 
 ---
 
-## 2. Component Architecture
+## 1. One-Page Architecture Map
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│                       MCP Interface                            │
-│  [allps.mcp.server]                                            │
-│    • ingest_evidence                                           │
-│    • get_learner_history                                       │
-│    • analyse_longitudinal_pattern                              │
-│    • flag_pattern_for_review                                   │
-│    • resolve_teacher_review                                    │
-│    • get_pending_reviews                                       │
-│    • get_surfaced_profile                                      │
-└──────────────┬────────────────────────────────┬────────────────┘
-               │                                │
-┌──────────────▼─────────────────┐  ┌───────────▼────────────────┐
-│       Evidence Service         │  │      Analysis Service      │
-│ [allps.services.evidence_srv]  │  │ [allps.services.analysis]  │
-│  • Pydantic validation         │  │  • Strict 9-key comparability│
-│  • Provenance & idempotency    │  │  • Trend & baseline deltas │
-│  • Audit logging integration   │  │  • Ordinal rubric rules    │
-│                                │  │  • True zero / null safety │
-└──────────────┬─────────────────┘  └───────────┬────────────────┘
-               │                                │
-┌──────────────▼────────────────────────────────▼────────────────┐
-│                      Storage Layer                             │
-│  [allps.storage.sqlite_store]                                  │
-│    • Async SQLite via aiosqlite                                │
-│    • Relational schema: learners, evidence, patterns,          │
-│      review_items, audit_log                                   │
-│    • Append-only storage via MCP (frozen models)               │
-└───────────────────────────────┬────────────────────────────────┘
-                                │
-┌───────────────────────────────▼────────────────────────────────┐
-│                     Domain Data Models                         │
-│  [allps.models]                                                │
-│    • Learner, Evidence, Pattern, ReviewItem, AuditEntry        │
-└────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                               EXTERNAL AGENTS & MCP CLIENTS                            │
+│                  (Claude Desktop, Cursor, Goose, Custom Agent Scripts)                 │
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │ Standard Stdio Transport (JSON-RPC 2.0)
+┌───────────────────────────────────────────▼────────────────────────────────────────────┐
+│                    OUR SEVEN-TOOL FASTMCP SERVER [allps.mcp.server]                    │
+│   • ingest_evidence             • get_learner_history    • analyse_longitudinal_pattern│
+│   • flag_pattern_for_review     • resolve_teacher_review • get_pending_reviews         │
+│   • get_surfaced_profile        (Enforces schema, frozen models, and non-agent gates)  │
+└─────────────────────┬─────────────────────────────────────────────────────┬────────────┘
+                      │                                                     │
+┌─────────────────────▼───────────────────────┐   ┌─────────────────────────▼────────────┐
+│ BORROWED MCP SERVER: Filesystem MCP Server │   │       EDUCATOR WORKSPACE (SPA)       │
+│  [@modelcontextprotocol/server-filesystem]  │   │ Pure Vanilla JS (ES2022) + Apple HIG │
+│  • Reads raw local CSV / JSON school records│   │ • Evidence Timeline & Citation Drawer│
+│  • Status: Pending verification by Inst. 1  │   │ • Idempotent Observation Form        │
+└─────────────────────┬───────────────────────┘   └─────────────────────────┬────────────┘
+                      │ Raw records                                         │ HTTP REST API
+                      ▼                                                     ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        PREDEFINED PYTHON SERVICE PIPELINE                              │
+│                                                                                        │
+│  ┌───────────────────────┐  ┌─────────────────────────┐  ┌──────────────────────────┐  │
+│  │   EvidenceService     │  │     AnalysisService     │  │      ReviewService       │  │
+│  │ • Pydantic validation │  │ • Strict 9-key grouping │  │ • Non-agent auth check   │  │
+│  │ • Timezone enforcement│  │ • Across-term trends    │  │ • SHA-256 snapshotting   │  │
+│  │ • Idempotent retries  │  │ • Ordinal rubric scales │  │ • Dual-view filtering    │  │
+│  └──────────┬────────────┘  └───────────┬─────────────┘  └────────────┬─────────────┘  │
+└─────────────┼───────────────────────────┼─────────────────────────────┼────────────────┘
+              │                           │                             │
+┌─────────────▼───────────────────────────▼─────────────────────────────▼────────────────┐
+│                         BOUNDED PYDANTIC AI ORCHESTRATION                              │
+│                                [allps.agent.orchestrator]                              │
+│  • XML Envelopment: Untrusted text isolated in <untrusted_evidence_payload> tags       │
+│  • Context Bounding: Passes pre-computed deterministic patterns to the model           │
+│  • Strict Pydantic Contracts: CandidateHandoverBrief, SynthesizedFinding, HandoverStat │
+│  • OutputValidator: Enforces 100% citation grounding, checks numerical claims, rejects │
+│    peer ranking ("bottom 10%", "trailing classmates") and deficit labels ("slow")      │
+└─────────────────────────────────────────┬──────────────────────────────────────────────┘
+                                          │ Bounded Chat Completions API
+┌─────────────────────────────────────────▼──────────────────────────────────────────────┐
+│                    LOCAL OPEN-WEIGHT INFERENCE: LM STUDIO                              │
+│  • Model: allps-qwen35-base-4b (4-bit quantized GGUF; 3.2 GB VRAM; <5s latency)        │
+│  • Zero Data Egress: All minor records stay strictly on-premises on the local machine   │
+│  • Resilient Fallback: Auto mode safely falls back to deterministic analysis on timeout │
+└─────────────────────────────────────────┬──────────────────────────────────────────────┘
+                                          │
+┌─────────────────────────────────────────▼──────────────────────────────────────────────┐
+│                        IMMUTABLE SQLITE STORAGE & AUDIT LEDGER                         │
+│                               [allps.storage.sqlite_store]                             │
+│  • learners (frozen)               • patterns (candidate & verified)                   │
+│  • evidence (frozen, append-only)  • review_items (adjudication state & SHA-256 hash)  │
+│  • audit_log (every tool call)     • candidate_briefs (INT-01 reload persistence)      │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3. Domain Model Specifications
+## 2. Core Architectural Components
 
-### 3.1. `Learner` — [IMPLEMENTED & VERIFIED]
-Represents the student identity boundary.
-- `learner_id: str` (UUID or school ID)
-- `display_name: str` (Student display name, max 200 chars)
-- `created_at: datetime` (Timezone-aware UTC)
-- **Constraint**: `model_config = {"frozen": True}`
+### 2.1. Our Seven-Tool FastMCP Server (`allps.mcp.server`)
+Built with FastMCP over standard stdio JSON-RPC 2.0. Exposes seven domain-bounded tools:
+1. `ingest_evidence`: Atomic ingestion of dated observations with origin metadata (`source_system`, `ingestion_method`).
+2. `get_learner_history`: Chronological evidence retrieval (`academic_year ASC, term ASC, observed_at ASC`).
+3. `analyse_longitudinal_pattern`: Deterministic pattern discovery enforcing 9-key comparability.
+4. `flag_pattern_for_review`: Flags candidate patterns for sovereign teacher adjudication.
+5. `resolve_teacher_review`: Teacher adjudication gate. Strictly blocks autonomous agents (`is_error=True`).
+6. `get_pending_reviews`: Lists unreviewed items awaiting teacher action.
+7. `get_surfaced_profile`: Retrieves the public profile, strictly filtering for approved patterns.
 
-### 3.2. `Evidence` — [IMPLEMENTED & VERIFIED]
-The foundational unit of observation in ALLPS.
-- `evidence_id: str` (UUID)
-- `learner_id: str` (Foreign key to Learner)
-- `evidence_type: EvidenceType` (Enum: `assessment`, `attendance`, `observation`, `learner_reflection`, `project`)
-- **System Origin & Ingestion Channel**:
-  - `source_system: str`: Originating system (e.g., `"school_sis"`, `"moodle"`, `"attendance_system"`, `"synthetic_dataset"`). Captures that ALLPS is not the authoritative gradebook and preserves upstream origin.
-  - `source_event_id: str | None`: Optional upstream event identifier used for idempotency and duplicate prevention.
-  - `ingestion_method: IngestionMethod` (Enum: `api`, `webhook`, `scheduled_sync`, `csv_import`, `manual_observation`, `learner_pulse`, `synthetic`)
-- **Provenance Attributes**:
-  - `source_type: str`: Category of author (`"teacher"`, `"system"`, `"learner"`)
-  - `source_reference: str`: Concrete author or system identity (e.g., `"Mr. Banda"`, `"attendance-system-v2"`)
-- **Sortable Academic Time**:
-  - `academic_year: int`: Integer year (`2000 <= year <= 2100`)
-  - `term: int`: Term number (`1 <= term <= 4`)
-  - `observed_at: datetime`: Explicit timestamp when observation took place (UTC / timezone-aware required)
-  - `recorded_at: datetime`: Timestamp when record was ingested into ALLPS
-- `subject: str | None`: Optional academic subject (e.g., `"Mathematics"`, `"Science"`, `"English"`)
-- `content: MappingProxyType[str, Any]`: Structured, immutable payload per evidence type. Supports numeric marks, rubrics with versioned scales, fluency metrics (`value` and `unit`), and explicit missing outcomes with reasons.
-- **Immutability**: Evidence models are frozen in Pydantic (`model_config = {"frozen": True}`), and the MCP server exposes no evidence editing or deletion tools. Direct database access can still modify records, as SQLite tables do not enforce database-level immutability triggers.
+### 2.2. Borrowed Official MCP Server (`@modelcontextprotocol/server-filesystem`)
+- **Role**: Standard reference MCP server executed via `npx` to read local flat files (e.g. legacy school CSVs or exported register JSONs) without custom file-handling code.
+- **Why it beats writing it ourselves**: Implements standard, battle-tested path-traversal sandboxing, OS permission checks, and standard streaming file access supported by the MCP ecosystem.
+- **Verification Status**: Disclosed honestly as **UNVERIFIED / PENDING REAL TRACES FROM INSTANCE 1**.
 
-### 3.3. `Pattern` — [IMPLEMENTED & VERIFIED]
-A candidate longitudinal pattern discovered across evidence records.
-- `pattern_id: str` (UUID)
-- `learner_id: str` (Foreign key to Learner)
-- `pattern_type: PatternType` (Enum: `trend`, `persistence`, `convergence`, `divergence`, `changed_from_baseline`, `insufficient_evidence`)
-- `summary: str`: Factual statement describing the pattern
-- `supporting_evidence: list[str]`: List of `evidence_id` references
-- `conflicting_evidence: list[str]`: List of `evidence_id` references that contradict or qualify the pattern
-- `limitations: list[str]`: Known caveats (e.g., missing terms, small sample size, stage preservation, ordinal rank boundaries)
-- `generated_at: datetime`: Timestamp
-- **Architectural Decision**: `review_status` has been intentionally removed from `Pattern`. Human review states are separated into `ReviewItem` to maintain single-source-of-truth semantics.
+### 2.3. Bounded Pydantic AI Orchestration (`src/allps/agent/`)
+- Implements strict Pydantic v2 schemas: `CandidateHandoverBrief`, `SynthesizedFinding`, and `HandoverStatus`.
+- Unlike unconstrained autonomous agents that generate unverified text or execute arbitrary tool loops, ALLPS uses a **bounded orchestration pattern**:
+  - Pre-computes deterministic patterns using `AnalysisService`.
+  - Wraps student artifacts in `<untrusted_evidence_payload>` XML tags to eliminate prompt injection attacks.
+  - Submits bounded context to the local LLM.
+  - Passes raw output through `OutputValidator` before any review item or brief is written to SQLite.
 
-### 3.4. `ReviewItem` — [MODEL IMPLEMENTED; ENFORCEMENT PROPOSED]
-The human-in-the-loop review mechanism.
-- `review_id: str` (UUID)
-- `pattern_id: str` (Foreign key to Pattern)
-- `assigned_to: str | None`: Teacher identifier
-- `status: ReviewStatus` (Enum: `pending`, `accepted`, `rejected`, `needs_context`)
-- `teacher_notes: str | None`: Professional notes by the educator
-- `created_at: datetime`: Submission timestamp
-- `resolved_at: datetime | None`: Resolution timestamp
-- **Proposed for Workstream 2**:
-  - `reviewer_id: str`: Authenticated teacher identity.
-  - `approved_content_hash: str`: SHA-256 hash of the exact approved pattern summary snapshot.
-  - Automated item generation on pattern detection.
-  - Dual-view profile filter gating unapproved patterns.
+### 2.4. Existing Deterministic Backend Pipeline (`src/allps/services/`)
+- **`EvidenceService`**: Enforces timezone awareness, payload integrity, and idempotent replay on `(source_system, source_event_id)`.
+- **`AnalysisService`**: Evaluates 9-key comparability (grade, subject, measured skill, form identity & version, language, rubric scale, assessment stage). Distinguishes true zero from missing outcomes (`absent`, `not_administered`).
+- **`ReviewService`**: Enforces the human-in-the-loop review boundary, computes SHA-256 snapshots, and prevents autonomous bot approvals.
 
-### 3.5. `AuditEntry` — [IMPLEMENTED & VERIFIED]
-Security and traceability ledger for MCP tool invocations and service operations.
-- `audit_id: str` (UUID)
-- `timestamp: datetime` (UTC)
-- `tool_name: str` (e.g., `"ingest_evidence"`, `"get_learner_history"`, `"analyse_longitudinal_pattern"`)
-- `input_summary: dict[str, Any]`: Sanitized input arguments
-- `output_reference: str | None`: Affected entity reference (e.g., recorded `evidence_id`)
-- `approval_state: str | None`: State flags or failure outcome status (e.g., `"success"`, `"failed: validation_error"`)
+### 2.5. Local Open-Weight Qwen Inference
+- **Target Model**: `allps-qwen35-base-4b` (`qwen2.5-3b` / `qwen2.5-4b` 4-bit quantized GGUF) served locally via LM Studio on `http://127.0.0.1:1234/v1`.
+- **Privacy & Sovereignty**: Student records for minors never leave the local machine or host institution.
+- **Performance**: 3.2 GiB VRAM footprint, <5s per synthesis cycle. Refuses silent fallback when explicitly run in `live` mode.
+
+### 2.6. SQLite Provenance & Immutability (`src/allps/storage/sqlite_store.py`)
+- Async SQLite storage using `aiosqlite`.
+- Relational schema: `learners`, `evidence`, `patterns`, `review_items`, `audit_log`, `candidate_briefs`.
+- Domain models are frozen (`model_config = {"frozen": True}`). Evidence is append-only via MCP.
+- The `candidate_briefs` table provides INT-01 reload persistence, ensuring full candidate brief restoration upon browser refresh.
+
+### 2.7. Teacher Review and Publication Authority
+- **Dual-View Separation**: Unreviewed (`pending`), rejected, and `needs_context` patterns remain strictly isolated in the teacher review inbox.
+- **Cryptographic Snapshotting**: Upon teacher acceptance, `ReviewService` generates an immutable SHA-256 hash of the pattern text and cited evidence IDs.
+- **Published Profile**: Only patterns with verified teacher acceptance and valid hash snapshots are exposed in `get_surfaced_profile` and the web handover view.
 
 ---
 
-## 4. Storage Architecture (SQLite) — [IMPLEMENTED & VERIFIED]
+## 3. Tool Calls vs. Predefined Service Calls
 
-The persistence layer uses asynchronous SQLite via `aiosqlite`.
+A foundational principle of ALLPS is the clear architectural boundary between **model-directed tool calls** and **predefined Python service calls**:
 
-### Schema & Indexing Strategy
-
-```sql
-CREATE TABLE learners (
-    learner_id TEXT PRIMARY KEY,
-    display_name TEXT NOT NULL,
-    created_at TEXT NOT NULL
-);
-
-CREATE TABLE evidence (
-    evidence_id TEXT PRIMARY KEY,
-    learner_id TEXT NOT NULL,
-    evidence_type TEXT NOT NULL,
-    source_system TEXT NOT NULL,
-    source_event_id TEXT,
-    ingestion_method TEXT NOT NULL,
-    source_type TEXT NOT NULL,
-    source_reference TEXT NOT NULL,
-    academic_year INTEGER NOT NULL,
-    term INTEGER NOT NULL,
-    subject TEXT,
-    content TEXT NOT NULL,       -- JSON serialized
-    observed_at TEXT NOT NULL,   -- ISO 8601 UTC
-    recorded_at TEXT NOT NULL,   -- ISO 8601 UTC
-    FOREIGN KEY (learner_id) REFERENCES learners(learner_id)
-);
-
-CREATE INDEX idx_evidence_learner ON evidence(learner_id);
-CREATE INDEX idx_evidence_time ON evidence(academic_year, term, observed_at);
-CREATE UNIQUE INDEX idx_evidence_source_event 
-    ON evidence(source_system, source_event_id) 
-    WHERE source_event_id IS NOT NULL;
-```
-
-### Ordering Guarantees
-Learner evidence is consistently returned in strict chronological order:
-```sql
-SELECT ... FROM evidence 
-WHERE learner_id = ? 
-ORDER BY academic_year ASC, term ASC, observed_at ASC;
-```
-
-### Transaction Isolation & Migrations
-- **Non-destructive migration**: On initialization, existing databases lacking `source_event_id` are migrated automatically without data loss.
-- **Dedicated transaction ownership**: Ingestion operations isolate their database write transaction so that concurrent read queries or audit actions do not commit uncommitted ingestion records.
-
----
-
-## 5. Model Context Protocol (MCP) Interface — [IMPLEMENTED & VERIFIED]
-
-The MCP server implements the official Model Context Protocol via standard stdio transport:
-
-### Active MCP Tools
-1. `ingest_evidence`:
-   - Validates all fields against domain model constraints and payload rules.
-   - Enforces UTC timezone-aware dates.
-   - Handles idempotent retries when `source_event_id` is provided. Without it, repeated submissions create separate records.
-   - Evidence and its success audit entry commit together in a single transaction. If validation fails, the transaction rolls back.
-2. `get_learner_history`:
-   - Retrieves all evidence matching learner ID in chronological order.
-   - Supports optional SQL filtering by `evidence_type`, `academic_year`, `term`, and `subject`.
-   - Logs an audit query entry.
-3. `analyse_longitudinal_pattern`:
-   - Runs deterministic longitudinal pattern detection across compatible evidence streams.
-   - Enforces strict comparability across grade, subject, skill, form, form version, language, measure, scale, and assessment stage.
-   - Requires explicit comparison authorization (`comparison_authorized: True`).
-   - Requires at least 3 distinct academic periods for across-term trends.
-   - Logs an audit query entry.
-
-### Governance & Human Review Tools (Workstream 2)
-- `flag_pattern_for_review`: Manually or automatically routes candidate patterns to teacher inbox in PENDING state.
-- `resolve_teacher_review`: Teacher adjudication tool (`accepted`, `rejected`, `needs_context`) with human reviewer identity and approval hash.
-- `get_pending_reviews`: Lists candidate patterns awaiting human educator review.
-- `get_surfaced_profile`: Returns strictly accepted patterns, preventing unreviewed AI leakage.
-
----
-
-## 6. Known Limitations & Concurrency Boundaries
-
-- **Concurrent Write Access**: ALLPS uses embedded SQLite (`aiosqlite`). Sequential operations from MCP clients execute safely within transaction boundaries. Highly concurrent multi-process or multi-threaded bulk writers can encounter database-level locking (`sqlite3.OperationalError: database is locked`) unless serialized at the client.
-- **Concurrent Submissions with the Same Source Event**: When two overlapping requests submit the same `(source_system, source_event_id)`, SQLite's unique index constraint ensures that only one record is stored. The second call encounters an `IntegrityError`, rolls back its write, and records a failure audit entry. Sequential retries of identical events succeed idempotently.
-- **Teacher Review Authority Boundary**: While `ReviewService` screens known automated bot strings (`'agent'`, `'bot'`, `'llm'`) and the agent orchestrator is prohibited from resolving reviews, caller-supplied `reviewer_id` remains an unauthenticated prototype parameter without cryptographic proof or SSO session tokens. A production deployment requires cryptographic teacher authentication.
-- **Direct Database Access**: Evidence immutability is enforced at the model and MCP protocol layer. Direct filesystem access to SQLite can still modify records.
-- **Client Data Handling**: SQLite stores records locally. How connected open-source MCP harnesses or client agents handle or transmit returned data depends on those client configurations.
-
----
-
-## 7. Synthetic Data Disclaimer
-
-The learner records in `data/synthetic/seed_data.py` are synthetic Kenyan school examples constructed for testing longitudinal comparability and provenance integrity. They are not real student records from the Kenya Institute of Curriculum Development (KICD), the Tusome Early Grade Reading Activity, or any school system, and they do not imply official curriculum validation.
-
----
-
-## 8. Runtime Decision Layer & Graceful Degradation (Workstream 3)
-
-Workstream 3 introduces a modular **Runtime Decision Layer** (`allps.runtime`) that decouples model inference from educational orchestration and deterministic analysis.
-
-```
-┌────────────────────────────────────────────────────────┐
-│                   AgentOrchestrator                    │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│                    RuntimeRegistry                     │
-│  • Manages prioritized provider configs                │
-│  • Coordinates discovery and health probes             │
-└──────────────┬────────────────────────────┬────────────┘
-               │ (AI Available)             │ (AI Offline / Fallback)
-┌──────────────▼────────────────┐ ┌─────────▼────────────────────┐
-│     LocalOpenAIClient         │ │  DeterministicAnalysisClient │
-│   (LM Studio / Ollama)        │ │  • Zero network dependency   │
-│   • Bounded probe timeout     │ │  • Analyzes real records     │
-│   • Model discovery (/models) │ │  • 100% cited evidence       │
-│   • Zero-learner test probe   │ │  • Contract-compliant brief  │
-└───────────────────────────────┘ └──────────────────────────────┘
-```
-
-### 8.1. Discovery & Zero-Learner Readiness Probing
-- **Dynamic Model Discovery**: Queries `/v1/models` with bounded timeouts (default: 2.0s).
-- **Preference Matching**:
-  - **Explicit Model Selection**: When a specific model is explicitly requested, requires the exact provider model ID, case-insensitive exact match, or an explicitly configured alias. Automatically stripping namespaces (e.g. `approved-publisher/<model>`) or quantization suffixes is forbidden on this path.
-  - **General Discovery Preferences**: Matches configured default models using exact, case-insensitive, normalized basename, or configured alias. Unrestricted substring or containment matching is strictly rejected to prevent hijacking by third-party fine-tunes.
-- **Readiness Verification**: Probes model readiness using a minimal prompt (`{"role": "user", "content": "ping"}`) with zero learner information. Models that time out or return HTTP errors during the probe are rejected. (No speculative hardware or VRAM assertions are made; failure is logged as an HTTP/inference timeout).
-- **Endpoint Trust**: Probes are restricted to explicitly configured and trusted endpoints. Learner context is never sent to unverified or untrusted endpoints.
-
-### 8.2. Execution Modes
-- **`auto`**: Probes LM Studio $\to$ Ollama in priority order. If a verified model is ready, selects `LIVE_AI` wrapped in a `ResilientInferenceClient`. If all AI providers are unavailable, safely falls back to `DETERMINISTIC`. If an AI runtime fails mid-execution, safely falls back to `DETERMINISTIC` with the original error logged in the audit trail.
-- **`live`**: Requires a ready, verified AI provider. Refuses silent fallback; raises `RuntimeSelectionError` immediately if unavailable.
-- **`deterministic`**: Bypasses network and model discovery entirely; performs genuine rule-based longitudinal synthesis using `AnalysisService` on real learner evidence.
-- **`mock`**: Preserves deterministic offline mock fixtures for reproducible testing and CI/CD.
-
-### 8.3. Governance Invariants
-1. **No Silent Fallback in Live Mode**: Live mode strictly fails when AI inference cannot be guaranteed.
-2. **No Fallback on Governance Violations**: If an AI model produces output rejected by `OutputValidator` (e.g. peer ranking, causal claims, deficit labels), fallback is prohibited. The validation error stands.
-3. **Disclosed Runtime Execution**: Terminal output, return payloads, and database audit entries explicitly record `runtime_method` (`live_ai`, `deterministic`, `deterministic_fallback`, or `mock`).
-
-### 8.4. Request-Scoped Provenance & Website Integration Handoff
-- **Provenance Isolation**: `GenerationResult` subclasses `str` to carry immutable per-generation metadata (`used_fallback`, `fallback_error`, `runtime_method`). Overlapping or concurrent asynchronous requests on a shared client do not overwrite each other's audit records or return metadata. `AgentOrchestrator.orchestrate_handover` also supports request-scoped client injection via the optional `inference_client` parameter.
----
-
-## 9. Teacher Workspace & Web Architecture
-
-Workstream 4 establishes an educator-facing web application that connects directly to ALLPS services without bypassing governance or analysis boundaries.
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Browser (Modern Desktop)                     │
-│  Vanilla JavaScript SPA (ES2022) + Apple HIG CSS3 (No Next.js)  │
-│  • Evidence Timeline & Citation Drawer                          │
-│  • Idempotent Teacher Observation Form                          │
-│  • Candidate Review & Adjudication                              │
-│  • Sovereign Approved Handover Profile                          │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │ HTTP / JSON (Restricted CORS)
-┌────────────────────────────────▼────────────────────────────────┐
-│                   Thin Web API (FastAPI)                        │
-│  [allps.web.app] & [allps.web.routes]                           │
-│  • Routes: /api/learners, /evidence, /generate, /reviews,       │
-│    /brief, /handover, /config                                   │
-│  • Explicit allowed origins (SEC-02)                            │
-│  • Server-configured reviewer injection (demo authority)        │
-└──────────────┬──────────────────┬──────────────┬────────────────┘
-               │                  │              │
-┌──────────────▼──────┐    ┌──────▼───────┐    ┌─▼────────────────┐
-│  EvidenceService    │    │ ReviewService│    │AgentOrchestrator │
-└──────────────┬──────┘    └──────┬───────┘    └─┬────────────────┘
-               │                  │              │
-┌──────────────▼──────────────────▼──────────────▼────────────────┐
-│                       SQLiteStore                               │
-│  • learners, evidence, patterns, review_items, audit_log        │
-│  • candidate_briefs (INT-01 full brief persistence across reload)│
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 9.1. Frontend Technology Stack (Real Stack)
-- **Framework & Runtime**: Pure Vanilla ECMAScript (ES2022) Single Page Application served statically via FastAPI's `StaticFiles`.
-- **Zero Node/Bundler Dependency**: **The frontend does NOT use Next.js, React, Vue, Webpack, or Node.js.** There are no `node_modules` or JavaScript build steps required. The application loads natively via `<script type="module" src="/static/app.js">`.
-- **Styling**: Native CSS3 adhering strictly to Apple Human Interface Guidelines (HIG):
-  - Canvas: `#f5f5f7`
-  - Cards & Surfaces: `#ffffff`
-  - Accents: Apple Blue (`#0071e3`), Green (`#34c759`), Orange (`#ff9500`), Red (`#ff3b30`)
-  - Typography: `-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif`
-  - Two-column compartmentalized layout separating learner contextual metrics from the active task view.
-
-### 9.2. Candidate Handover Persistence (INT-01)
-To ensure candidate handover briefs survive browser reloads without regressing to deterministic summaries:
-- **`candidate_briefs` Schema**:
-  ```sql
-  CREATE TABLE candidate_briefs (
-      brief_id TEXT PRIMARY KEY,
-      learner_id TEXT NOT NULL,
-      pattern_id TEXT,
-      review_id TEXT,
-      generation_revision INTEGER NOT NULL DEFAULT 1,
-      status TEXT NOT NULL,
-      summary TEXT NOT NULL,
-      findings TEXT NOT NULL,       -- JSON serialized
-      contradictions TEXT,          -- JSON serialized
-      limitations TEXT,             -- JSON serialized
-      abstention_reason TEXT,
-      runtime_method TEXT NOT NULL,
-      generated_at TEXT NOT NULL,
-      FOREIGN KEY (learner_id) REFERENCES learners(learner_id)
-  );
-  ```
-- **Lifecycle & Revisioning**:
-  - `AgentOrchestrator.orchestrate_handover` increments `generation_revision = count + 1` for the target learner and commits the full structured brief atomically.
-  - The frontend queries `GET /api/learners/{id}/brief` on workspace load to faithfully re-hydrate the synthesis view, findings, and citation links.
-  - Each review item returned by `GET /api/learners/{id}/reviews` is enriched with its associated `candidate_brief` and `generation_revision`.
-
-### 9.3. Security & Trust Boundaries (SEC-02)
-- **Restricted CORS Policy**:
-  - Replaced credentialed wildcard CORS (`allow_origins=["*"]`) with an explicit whitelist (`http://localhost:8000`, `http://127.0.0.1:8000`, `http://localhost:3000`, `http://127.0.0.1:3000`).
-  - Allowed methods are strictly constrained to `["GET", "POST", "OPTIONS"]`.
-- **Prototype Reviewer Identity Limitation**:
-  - The prototype server injects a configured reviewer identity (e.g. `--reviewer TCH-BANDA`) to enable human adjudication demonstration.
-  - **Explicit Trust Notice**: This configured string is NOT authenticated identity. The frontend status pill explicitly alerts users that the reviewer identity is a demonstration configuration and not a cryptographic credential.
-
+| Execution Mechanism | Where It Occurs | Purpose & Scope | Governance Guarantee |
+| :--- | :--- | :--- | :--- |
+| **Model-Directed Tool Calls** *(External)* | Over MCP stdio JSON-RPC transport | External agents (e.g. Claude Desktop, Cursor) inspect learner history, trigger analysis, and flag candidate findings. | Strictly limited to the 7 registered FastMCP tools. Autonomous self-approval is actively blocked by `ReviewService.is_autonomous_agent()`. |
+| **Predefined Python Service Calls** *(Internal)* | Inside `AgentOrchestrator` and `allps.web.routes` | The backend directly executes `AnalysisService.compute_longitudinal_patterns()`, `OutputValidator.validate()`, and `store.add_candidate_brief()`. | The LLM **never** directly calls internal SQLite methods or mutates state. All LLM output must survive deterministic validation before any database write occurs. |

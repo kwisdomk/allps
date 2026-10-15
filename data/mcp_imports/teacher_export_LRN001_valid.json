@@ -1,0 +1,32 @@
+{
+  "export_meta": {
+    "source_system": "school_evidence_portal",
+    "export_batch_id": "BATCH-2025-T3-LRN001-VALID",
+    "exported_at": "2025-10-08T14:15:00Z",
+    "originating_teacher": "Mrs. Ngcobo",
+    "school_id": "SCH-MSA-042",
+    "academic_year": 2025,
+    "term": 3,
+    "description": "Synthetic Grade 3 teacher classroom observation export for LRN-001"
+  },
+  "records": [
+    {
+      "source_event_id": "EVT-2025-T3-LRN001-OBS-01",
+      "learner_id": "LRN-001",
+      "evidence_type": "observation",
+      "source_system": "school_evidence_portal",
+      "ingestion_method": "api",
+      "source_type": "teacher",
+      "source_reference": "Mrs. Ngcobo",
+      "academic_year": 2025,
+      "term": 3,
+      "subject": "Mathematics",
+      "observed_at": "2025-10-06T10:30:00Z",
+      "content": {
+        "note": "During practical geometry work, LRN-001 demonstrated focused engagement with physical manipulatives, showing strong grasp of 3D solids despite earlier arithmetic struggles.",
+        "context": "Grade 3 Mathematics practical session",
+        "learning_area": "Mathematics - Shapes and Space"
+      }
+    }
+  ]
+}

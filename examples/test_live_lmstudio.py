@@ -11,8 +11,10 @@ import os
 import sys
 from pathlib import Path
 
-# Ensure src/ is on sys.path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+# Ensure repo root and src/ are on sys.path
+repo_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(repo_root))
+sys.path.insert(0, str(repo_root / "src"))
 
 from allps.agent.adapter import LocalOpenAIClient
 from allps.agent.orchestrator import AgentOrchestrator, OrchestrationResult
@@ -29,10 +31,21 @@ async def main():
     print("Endpoint: http://127.0.0.1:1234/v1")
     print("=" * 70)
 
-    db_path = os.environ.get("ALLPS_DB_PATH", "allps_dev.db")
+    import tempfile
+    from data.synthetic.seed_data import seed_database
+
+    temp_dir = None
+    if "ALLPS_DB_PATH" in os.environ:
+        db_path = os.environ["ALLPS_DB_PATH"]
+    else:
+        temp_dir = tempfile.TemporaryDirectory()
+        db_path = os.path.join(temp_dir.name, "allps_live_test.db")
+
     print(f"\n[1] Connecting to database: {db_path}...")
     store = SQLiteStore(db_path)
     await store.initialize()
+    if temp_dir is not None:
+        await seed_database(store)
 
     ev_srv = EvidenceService(store)
     an_srv = AnalysisService(ev_srv, store)
@@ -130,6 +143,8 @@ async def main():
     print("=" * 70)
 
     await store.close()
+    if temp_dir is not None:
+        temp_dir.cleanup()
 
 
 if __name__ == "__main__":
