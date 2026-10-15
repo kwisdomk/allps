@@ -34,4 +34,7 @@ datasets/
 *.db-shm
 *.db-wal
 .vs/
+# Codebase export bundles
+allps_full_codebase.txt
+allps_code_bundle.txt
 allps_*.txt
