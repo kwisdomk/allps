@@ -401,7 +401,7 @@ async def test_candidate_brief_persistence_and_revisioning(tmp_path: Path):
             assert revs_resp.status_code == 200
             revs = revs_resp.json()
             assert len(revs) > 0
-            latest_rev = revs[-1]
+            latest_rev = next((r for r in revs if r["pattern_id"] == data2["pattern_id"]), revs[0])
             assert latest_rev["generation_revision"] == 2
             assert latest_rev["candidate_brief"] is not None
 

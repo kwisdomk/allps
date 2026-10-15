@@ -124,6 +124,10 @@ async def get_system_config(request: Request) -> dict[str, Any]:
         "default_mode": getattr(app.state, "default_mode", "auto"),
         "is_synthetic_demonstration": True,
         "authentication_type": "prototype_server_configured",
+        "trust_notice": (
+            "Prototype Trust Limitation: The server reviewer ID is a demonstration setting, "
+            "not a verified authentication token or SSO identity."
+        ),
         "trust_limitation_notice": (
             "Prototype Trust Limitation: The server reviewer ID is a demonstration setting, "
             "not a verified authentication token or SSO identity."
