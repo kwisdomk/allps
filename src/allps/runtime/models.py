@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Sequence
@@ -44,7 +45,7 @@ class ProviderConfig:
     preferred_models: list[str] = field(default_factory=list)
     model_aliases: dict[str, list[str]] = field(default_factory=dict)
     discovery_timeout_seconds: float = 2.0
-    probe_timeout_seconds: float = 5.0
+    probe_timeout_seconds: float = float(os.environ.get("ALLPS_PROBE_TIMEOUT", "15.0"))
     inference_timeout_seconds: float = 60.0
     is_trusted: bool = True
     api_key: str = "not-needed"

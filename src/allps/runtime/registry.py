@@ -7,6 +7,7 @@ safe fallback selection in accordance with governance policies.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Callable, Sequence
 
 import httpx
@@ -127,7 +128,7 @@ class RuntimeRegistry:
 
     @staticmethod
     def _default_providers() -> list[ProviderConfig]:
-        """Default prioritized providers: LM Studio -> Ollama."""
+        probe_timeout = float(os.environ.get("ALLPS_PROBE_TIMEOUT", "15.0"))
         return [
             ProviderConfig(
                 name="LM Studio",
@@ -135,23 +136,24 @@ class RuntimeRegistry:
                 base_url="http://127.0.0.1:1234/v1",
                 preferred_models=[
                     "allps-qwen35-base-4b",
-                    "qwen3.5-4b-claude-4.6-opus-reasoning-distilled",
                     "qwen3.5-4b",
                     "qwen2.5-7b-instruct",
                     "mistral-7b-instruct",
                 ],
+                # Documented provenance: 'allps-qwen35-base-4b' is the local instance identifier
+                # for the base 'qwen3.5-4b' model loaded in LM Studio. Distilled variants
+                # (e.g. qwen3.5-4b-claude-4.6-opus-reasoning-distilled) are distinct models and
+                # are NOT aliased here to prevent silent model substitution.
                 model_aliases={
                     "allps-qwen35-base-4b": [
-                        "qwen3.5-4b-claude-4.6-opus-reasoning-distilled",
                         "qwen3.5-4b",
                     ],
-                    "qwen3.5-4b-claude-4.6-opus-reasoning-distilled": [
+                    "qwen3.5-4b": [
                         "allps-qwen35-base-4b",
-                        "qwen3.5-4b",
                     ],
                 },
                 discovery_timeout_seconds=2.0,
-                probe_timeout_seconds=5.0,
+                probe_timeout_seconds=probe_timeout,
                 inference_timeout_seconds=90.0,
                 is_trusted=True,
             ),
@@ -165,7 +167,7 @@ class RuntimeRegistry:
                     "llama3:8b",
                 ],
                 discovery_timeout_seconds=2.0,
-                probe_timeout_seconds=5.0,
+                probe_timeout_seconds=probe_timeout,
                 inference_timeout_seconds=90.0,
                 is_trusted=True,
             ),
@@ -237,7 +239,7 @@ class RuntimeRegistry:
                 base_url=custom_endpoint,
                 preferred_models=cand_preferred,
                 discovery_timeout_seconds=2.0,
-                probe_timeout_seconds=5.0,
+                probe_timeout_seconds=float(os.environ.get("ALLPS_PROBE_TIMEOUT", "15.0")),
                 inference_timeout_seconds=custom_timeout or 90.0,
                 is_trusted=True,
                 is_explicit_selection=bool(preferred_model),

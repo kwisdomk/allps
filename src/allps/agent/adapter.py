@@ -105,7 +105,7 @@ class LocalOpenAIClient:
         payload: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
-            "temperature": 0.1,  # Low temperature for factual consistency
+            "temperature": 0.0,  # Greedy deterministic decoding for factual consistency and reproducibility
         }
         if response_format:
             payload["response_format"] = response_format
