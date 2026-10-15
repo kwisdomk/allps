@@ -1,0 +1,14 @@
+{
+  "source": "User-supplied attachment received during post-submission closure; original timezone not embedded",
+  "sha256": "47b626d28b95319bf73b8bef448971467de22d39becbbc3d741997c049b4cad8",
+  "lines": 1433,
+  "first_timestamp": "2026-10-15 06:06:43",
+  "last_timestamp": "2026-10-15 07:53:42",
+  "completed_timing_entries": 25,
+  "min_total_ms": 535.16,
+  "max_total_ms": 33248.04,
+  "over_5000_ms": 10,
+  "tool_names_hidden": true,
+  "errors": [],
+  "correlation": "03:08:54 UTC trace start corresponds to 06:08:54 Nairobi if server log timestamps use Nairobi; hidden payloads prevent exact call/content correlation."
+}

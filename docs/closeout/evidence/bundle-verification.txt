@@ -1,0 +1,16 @@
+The bundle contains these 12 refs:
+f3022e0605e67f6a2fbf6d0af1fd0cc9c64ca4b0 refs/heads/docs-submission-evals
+b504e0c647f14718d062b186ab8613af189ea29f refs/heads/docs/post-submission-closeout
+03b6f8b1c1b1b7ce992328437510f2133c82cb8e refs/heads/feature/agentic-mcp-import
+efbad6ed84193f38894506fcfeef04641d191ecd refs/heads/live-verification-demo
+b504e0c647f14718d062b186ab8613af189ea29f refs/heads/master
+2fa3d6b24da0ee54dd4a5fde21c242f402b60bc7 refs/heads/teacher-website
+03b6f8b1c1b1b7ce992328437510f2133c82cb8e refs/heads/verify-live-ai-runtime
+b504e0c647f14718d062b186ab8613af189ea29f refs/remotes/origin/master
+c13db9772dbe09f16bb824d32c440ce09f8b0855 refs/tags/v1.0.0-challenge-submission
+b504e0c647f14718d062b186ab8613af189ea29f HEAD
+b504e0c647f14718d062b186ab8613af189ea29f worktrees/ALLPS-closeout-20261015/HEAD
+efbad6ed84193f38894506fcfeef04641d191ecd worktrees/ALLPS-web/HEAD
+The bundle records a complete history.
+The bundle uses this hash algorithm: sha1
+Q:/ALLPS-closeout-20261015/.audit-runtime/preservation/allps-all-refs.bundle is okay

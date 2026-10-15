@@ -1,0 +1,847 @@
+[
+  {
+    "path": ".gitignore",
+    "bytes": 446,
+    "tracked": true
+  },
+  {
+    "path": "ALLPS AI Education System Architecture.png",
+    "bytes": 1521386,
+    "tracked": true
+  },
+  {
+    "path": "ALLPS Architecture Workflow Diagram.png",
+    "bytes": 1925165,
+    "tracked": true
+  },
+  {
+    "path": "ALLPS — Agentic AI & MCP Education Demo  African Agentic AI Design Challenge..mp4",
+    "bytes": 3677140,
+    "tracked": false
+  },
+  {
+    "path": "allps_architecture_map.md",
+    "bytes": 13970,
+    "tracked": true
+  },
+  {
+    "path": "allps_code_bundle.txt",
+    "bytes": 731271,
+    "tracked": false
+  },
+  {
+    "path": "allps_demo_clean.db",
+    "bytes": 98304,
+    "tracked": false
+  },
+  {
+    "path": "allps_dev.db",
+    "bytes": 77824,
+    "tracked": false
+  },
+  {
+    "path": "allps_dev.db-shm",
+    "bytes": 32768,
+    "tracked": false
+  },
+  {
+    "path": "allps_dev.db-wal",
+    "bytes": 482072,
+    "tracked": false
+  },
+  {
+    "path": "allps_full_codebase.txt",
+    "bytes": 872223,
+    "tracked": false
+  },
+  {
+    "path": "allps_mcp_demo.db",
+    "bytes": 98304,
+    "tracked": false
+  },
+  {
+    "path": "allps_web_demo.db",
+    "bytes": 98304,
+    "tracked": false
+  },
+  {
+    "path": "allps_web_demo.db-shm",
+    "bytes": 32768,
+    "tracked": false
+  },
+  {
+    "path": "allps_web_demo.db-wal",
+    "bytes": 271952,
+    "tracked": false
+  },
+  {
+    "path": "ARCHITECTURE.md",
+    "bytes": 14327,
+    "tracked": true
+  },
+  {
+    "path": "DEVELOPMENT_RESEARCH.md",
+    "bytes": 11712,
+    "tracked": true
+  },
+  {
+    "path": "EVALS.md",
+    "bytes": 21103,
+    "tracked": true
+  },
+  {
+    "path": "LICENSE",
+    "bytes": 1075,
+    "tracked": true
+  },
+  {
+    "path": "package-lock.json",
+    "bytes": 46823,
+    "tracked": true
+  },
+  {
+    "path": "package.json",
+    "bytes": 195,
+    "tracked": true
+  },
+  {
+    "path": "pyproject.toml",
+    "bytes": 768,
+    "tracked": true
+  },
+  {
+    "path": "README.md",
+    "bytes": 24740,
+    "tracked": true
+  },
+  {
+    "path": "ROADMAP.md",
+    "bytes": 4448,
+    "tracked": true
+  },
+  {
+    "path": "test_allps_dev.db",
+    "bytes": 4096,
+    "tracked": false
+  },
+  {
+    "path": "test_allps_dev.db-shm",
+    "bytes": 32768,
+    "tracked": false
+  },
+  {
+    "path": "test_allps_dev.db-wal",
+    "bytes": 135992,
+    "tracked": false
+  },
+  {
+    "path": "assets/screenshots/01_evidence_stream_loaded.png",
+    "bytes": 22083,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/02_observation_form_filled.png",
+    "bytes": 22577,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/03_observation_preview_modal.png",
+    "bytes": 25868,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/04_observation_saved_in_stream.png",
+    "bytes": 22083,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/05_side_panel_citation_drawer.png",
+    "bytes": 14715,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/06_candidate_generation_and_reviews.png",
+    "bytes": 22083,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/07_review_decision_accepted.png",
+    "bytes": 22084,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/08_approved_handover_view.png",
+    "bytes": 22116,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/09_approved_handover_after_reload.png",
+    "bytes": 22116,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_01_evidence_stream_loaded.png",
+    "bytes": 134797,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_02_observation_form_entry.png",
+    "bytes": 161127,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_03_observation_preview_modal.png",
+    "bytes": 157569,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_04_observation_saved_in_stream.png",
+    "bytes": 135031,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_05_side_panel_citation_drawer.png",
+    "bytes": 176409,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_06_live_ai_candidate_generation.png",
+    "bytes": 173386,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_07_review_decision_accepted.png",
+    "bytes": 173386,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_08_approved_handover_view.png",
+    "bytes": 88139,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_09_refresh_persistence_verified.png",
+    "bytes": 173057,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_10_repeat_synthesis_no_inherited_approval.png",
+    "bytes": 173386,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/live_11_mobile_viewport_workspace.png",
+    "bytes": 55966,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_01_workspace_desktop.png",
+    "bytes": 135165,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_02_validation_error.png",
+    "bytes": 158351,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_03_form_completed.png",
+    "bytes": 161321,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_04_preview_modal_desktop.png",
+    "bytes": 157658,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_05_updated_preview_modal.png",
+    "bytes": 160937,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_06_observation_saved.png",
+    "bytes": 135008,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_07_side_panel_drawer.png",
+    "bytes": 176066,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_08_candidate_review_desktop.png",
+    "bytes": 157492,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_09_approved_handover_desktop.png",
+    "bytes": 77074,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/preview_10_restored_candidate_brief_after_reload.png",
+    "bytes": 156382,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/public_01_desktop_kwaix_dev.png",
+    "bytes": 46902,
+    "tracked": true
+  },
+  {
+    "path": "assets/screenshots/public_02_mobile_kwaix_dev.png",
+    "bytes": 32284,
+    "tracked": true
+  },
+  {
+    "path": "data/allps_mcp_demo.db",
+    "bytes": 98304,
+    "tracked": false
+  },
+  {
+    "path": "data/allps_mcp_demo.db-shm",
+    "bytes": 32768,
+    "tracked": false
+  },
+  {
+    "path": "data/allps_mcp_demo.db-wal",
+    "bytes": 197792,
+    "tracked": false
+  },
+  {
+    "path": "data/allps_mcp_live.db",
+    "bytes": 98304,
+    "tracked": false
+  },
+  {
+    "path": "data/allps_mcp_live.db-shm",
+    "bytes": 32768,
+    "tracked": false
+  },
+  {
+    "path": "data/allps_mcp_live.db-wal",
+    "bytes": 103032,
+    "tracked": false
+  },
+  {
+    "path": "data/allps_mcp_test.db",
+    "bytes": 98304,
+    "tracked": false
+  },
+  {
+    "path": "data/allps_mcp_test.db-shm",
+    "bytes": 32768,
+    "tracked": false
+  },
+  {
+    "path": "data/allps_mcp_test.db-wal",
+    "bytes": 70072,
+    "tracked": false
+  },
+  {
+    "path": "data/mcp_wire_protocol_demonstration.json",
+    "bytes": 20080,
+    "tracked": false
+  },
+  {
+    "path": "data/test_mcp_ingest.db",
+    "bytes": 98304,
+    "tracked": false
+  },
+  {
+    "path": "data/test_mcp_ingest.db-shm",
+    "bytes": 32768,
+    "tracked": false
+  },
+  {
+    "path": "data/test_mcp_ingest.db-wal",
+    "bytes": 103032,
+    "tracked": false
+  },
+  {
+    "path": "data/test_seeded.db",
+    "bytes": 98304,
+    "tracked": false
+  },
+  {
+    "path": "data/trace_agentic_mcp_run.json",
+    "bytes": 13928,
+    "tracked": true
+  },
+  {
+    "path": "data/injection_test/teacher_export_LRN001_injection.json",
+    "bytes": 1118,
+    "tracked": false
+  },
+  {
+    "path": "data/mcp_imports/teacher_export_LRN001_malformed.json",
+    "bytes": 1091,
+    "tracked": true
+  },
+  {
+    "path": "data/mcp_imports/teacher_export_LRN001_valid.json",
+    "bytes": 1144,
+    "tracked": true
+  },
+  {
+    "path": "data/synthetic/seed_data.py",
+    "bytes": 20850,
+    "tracked": true
+  },
+  {
+    "path": "data/synthetic/__init__.py",
+    "bytes": 64,
+    "tracked": true
+  },
+  {
+    "path": "datasets/237644-V2.zip",
+    "bytes": 63137775,
+    "tracked": false
+  },
+  {
+    "path": "datasets/Kenya_Tusome_Study_on_Pupil_Learning_Outcomes_in_2021_Dataset.csv",
+    "bytes": 19519999,
+    "tracked": false
+  },
+  {
+    "path": "datasets/USING ASSESSMENT FOR LEARNING TO ENHANCE NUMERACY INSTRUCTION ddi-documentation-english-2.pdf",
+    "bytes": 41543,
+    "tracked": false
+  },
+  {
+    "path": "docs/AI_CONTRACT.md",
+    "bytes": 10709,
+    "tracked": true
+  },
+  {
+    "path": "docs/contracts.md",
+    "bytes": 12673,
+    "tracked": true
+  },
+  {
+    "path": "docs/DATA_QUALITY.md",
+    "bytes": 10663,
+    "tracked": true
+  },
+  {
+    "path": "docs/evidence_format.md",
+    "bytes": 11951,
+    "tracked": true
+  },
+  {
+    "path": "docs/phase2_plan.md",
+    "bytes": 11705,
+    "tracked": true
+  },
+  {
+    "path": "docs/SUBMISSION.md",
+    "bytes": 5956,
+    "tracked": true
+  },
+  {
+    "path": "examples/demonstrate_mcp_wire_protocol.py",
+    "bytes": 14731,
+    "tracked": true
+  },
+  {
+    "path": "examples/demo_e2e.py",
+    "bytes": 30493,
+    "tracked": true
+  },
+  {
+    "path": "examples/run_agentic_mcp_import.py",
+    "bytes": 5000,
+    "tracked": true
+  },
+  {
+    "path": "examples/test_live_lmstudio.py",
+    "bytes": 5670,
+    "tracked": true
+  },
+  {
+    "path": "scripts/generate_demo_video.py",
+    "bytes": 31346,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/__init__.py",
+    "bytes": 206,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/agent/adapter.py",
+    "bytes": 8304,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/agent/contracts.py",
+    "bytes": 4913,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/agent/mcp_agent.py",
+    "bytes": 30758,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/agent/orchestrator.py",
+    "bytes": 18247,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/agent/validator.py",
+    "bytes": 13667,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/agent/__init__.py",
+    "bytes": 1282,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/api/__init__.py",
+    "bytes": 83,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/mcp/server.py",
+    "bytes": 8886,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/mcp/__init__.py",
+    "bytes": 23,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/models/audit.py",
+    "bytes": 793,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/models/evidence.py",
+    "bytes": 29465,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/models/learner.py",
+    "bytes": 655,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/models/pattern.py",
+    "bytes": 1529,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/models/review.py",
+    "bytes": 2683,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/models/__init__.py",
+    "bytes": 786,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/policies/label_policy.py",
+    "bytes": 2992,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/policies/__init__.py",
+    "bytes": 1032,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/runtime/deterministic.py",
+    "bytes": 9691,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/runtime/discovery.py",
+    "bytes": 14171,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/runtime/models.py",
+    "bytes": 2261,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/runtime/registry.py",
+    "bytes": 15044,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/runtime/__init__.py",
+    "bytes": 935,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/services/analysis_service.py",
+    "bytes": 40197,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/services/evidence_service.py",
+    "bytes": 9459,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/services/review_service.py",
+    "bytes": 7818,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/services/__init__.py",
+    "bytes": 28,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/storage/sqlite_store.py",
+    "bytes": 36027,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/storage/__init__.py",
+    "bytes": 27,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/web/app.py",
+    "bytes": 6121,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/web/routes.py",
+    "bytes": 23493,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/web/__init__.py",
+    "bytes": 67,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/web/static/app.js",
+    "bytes": 44870,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/web/static/index.html",
+    "bytes": 11975,
+    "tracked": true
+  },
+  {
+    "path": "src/allps/web/static/style.css",
+    "bytes": 25115,
+    "tracked": true
+  },
+  {
+    "path": "temp_audio/concat_list.txt",
+    "bytes": 276,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/ffmpeg_encode.log",
+    "bytes": 14512,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/full_voiceover.mp3",
+    "bytes": 3308684,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt10_scene_1.mp3",
+    "bytes": 174816,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt10_scene_2.mp3",
+    "bytes": 164880,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt10_scene_3.mp3",
+    "bytes": 154656,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt10_scene_4.mp3",
+    "bytes": 168480,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt10_scene_5.mp3",
+    "bytes": 151200,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt10_scene_6.mp3",
+    "bytes": 178128,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt_scene_1.mp3",
+    "bytes": 181296,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt_scene_2.mp3",
+    "bytes": 171216,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt_scene_3.mp3",
+    "bytes": 160560,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt_scene_4.mp3",
+    "bytes": 174816,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt_scene_5.mp3",
+    "bytes": 156816,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/opt_scene_6.mp3",
+    "bytes": 184896,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/scene_1.mp3",
+    "bytes": 260928,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/scene_2.mp3",
+    "bytes": 233856,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/scene_3.mp3",
+    "bytes": 239328,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/scene_4.mp3",
+    "bytes": 227808,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/scene_5.mp3",
+    "bytes": 222912,
+    "tracked": false
+  },
+  {
+    "path": "temp_audio/scene_6.mp3",
+    "bytes": 232272,
+    "tracked": false
+  },
+  {
+    "path": "tests/capture_remaining_tabs.py",
+    "bytes": 1812,
+    "tracked": true
+  },
+  {
+    "path": "tests/conftest.py",
+    "bytes": 508,
+    "tracked": true
+  },
+  {
+    "path": "tests/exercise_browser_workflow.py",
+    "bytes": 12458,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_agent_orchestration.py",
+    "bytes": 25477,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_analysis_service.py",
+    "bytes": 57145,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_audit_fixes.py",
+    "bytes": 9837,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_demo_e2e.py",
+    "bytes": 5831,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_evidence_service.py",
+    "bytes": 7180,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_mcp_tools.py",
+    "bytes": 36087,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_models.py",
+    "bytes": 12003,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_peer_comparison_gap.py",
+    "bytes": 5671,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_phase2_analysis_repairs.py",
+    "bytes": 27320,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_phase2_governance.py",
+    "bytes": 27406,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_preview_flow.py",
+    "bytes": 14048,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_regression.py",
+    "bytes": 26562,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_runtime_discovery.py",
+    "bytes": 38227,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_storage.py",
+    "bytes": 12718,
+    "tracked": true
+  },
+  {
+    "path": "tests/test_web_api.py",
+    "bytes": 20485,
+    "tracked": true
+  },
+  {
+    "path": "tests/verify_live_teacher_workflow.py",
+    "bytes": 19634,
+    "tracked": true
+  },
+  {
+    "path": "tests/__init__.py",
+    "bytes": 19,
+    "tracked": true
+  }
+]

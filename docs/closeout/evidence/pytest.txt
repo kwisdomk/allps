@@ -1,0 +1,3004 @@
+................EEEEEEEEEEEEEEEEEEEEEEEEEEEEE.......................EEEE [ 28%]
+.........................................................EE.....EEEEE... [ 57%]
+..............E..................EEEEEEEEEEEEEEEEEEEE..........E..E...EE [ 85%]
+E.E...................EEEEEEEEEEEEEE                                     [100%]
+=================================== ERRORS ====================================
+_ ERROR at setup of TestAgentOrchestrationPipeline.test_end_to_end_grounded_handover _
+
+self = <Coroutine test_end_to_end_grounded_handover>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestAgentOrchestrationPipeline.test_prompt_injection_inside_reflection_resisted _
+
+self = <Coroutine test_prompt_injection_inside_reflection_resisted>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestAgentOrchestrationPipeline.test_abstention_on_sparse_history _
+
+self = <Coroutine test_abstention_on_sparse_history>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestAgentOrchestrationPipeline.test_inference_timeout_fails_safely_without_state_corruption _
+
+self = <Coroutine test_inference_timeout_fails_safely_without_state_corruption>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestAgentOrchestrationPipeline.test_duplicate_orchestration_does_not_create_duplicate_reviews _
+
+self = <Coroutine test_duplicate_orchestration_does_not_create_duplicate_reviews>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_____ ERROR at setup of test_same_term_different_scales_no_trend_no_gain ______
+
+self = <Coroutine test_same_term_different_scales_no_trend_no_gain>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_______ ERROR at setup of test_compatible_three_term_shows_improvement ________
+
+self = <Coroutine test_compatible_three_term_shows_improvement>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_______ ERROR at setup of test_three_term_fluctuating_remains_variable ________
+
+self = <Coroutine test_three_term_fluctuating_remains_variable>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of test_missing_results_stay_null_zero_stays_zero _______
+
+self = <Coroutine test_missing_results_stay_null_zero_stays_zero>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_separate_subjects_grades_forms_rubrics_remain_separate _
+
+self = <Coroutine test_separate_subjects_grades_forms_rubrics_remain_separate>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+________ ERROR at setup of test_rubric_progression_across_three_terms _________
+
+self = <Coroutine test_rubric_progression_across_three_terms>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_insufficiently_described_records_excluded_from_numerical_comparison _
+
+self = <Coroutine test_insufficiently_described_records_excluded_from_numerical_comparison>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_missing_comparison_metadata_excluded_no_invented_standard_defaults _
+
+self = <Coroutine test_missing_comparison_metadata_excluded_no_invented_standard_defaults>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_____ ERROR at setup of test_form_version_skill_and_authorization_barrier _____
+
+self = <Coroutine test_form_version_skill_and_authorization_barrier>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_distinguish_unchanged_and_declining_marks_trajectories _
+
+self = <Coroutine test_distinguish_unchanged_and_declining_marks_trajectories>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_rubric_unchanged_declining_fluctuating_not_blind_progression _
+
+self = <Coroutine test_rubric_unchanged_declining_fluctuating_not_blind_progression>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+____ ERROR at setup of test_rubric_scale_validation_against_defined_scale _____
+
+self = <Coroutine test_rubric_scale_validation_against_defined_scale>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_reject_contradictory_outcomes_and_non_finite_numeric_fields _
+
+self = <Coroutine test_reject_contradictory_outcomes_and_non_finite_numeric_fields>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_stage_reconciliation_and_separation_from_school_level _
+
+self = <Coroutine test_stage_reconciliation_and_separation_from_school_level>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_distinct_missing_statuses_result_unavailable_vs_not_administered _
+
+self = <Coroutine test_distinct_missing_statuses_result_unavailable_vs_not_administered>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_different_rubric_scales_do_not_produce_shared_trend __
+
+self = <Coroutine test_different_rubric_scales_do_not_produce_shared_trend>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+___________ ERROR at setup of test_equivalent_scales_group_together ___________
+
+self = <Coroutine test_equivalent_scales_group_together>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+________ ERROR at setup of test_preserve_assessment_stage_distinctions ________
+
+self = <Coroutine test_preserve_assessment_stage_distinctions>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+___ ERROR at setup of test_ordinal_rubric_ranks_not_averaged_within_period ____
+
+self = <Coroutine test_ordinal_rubric_ranks_not_averaged_within_period>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+__ ERROR at setup of test_be01_pattern_deduplication_preserves_persisted_id ___
+
+self = <Coroutine test_be01_pattern_deduplication_preserves_persisted_id>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_________ ERROR at setup of test_gov01_prevent_accepted_review_reuse __________
+
+self = <Coroutine test_gov01_prevent_accepted_review_reuse>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_______ ERROR at setup of test_sec01_untrusted_observation_xml_encoding _______
+
+self = <Coroutine test_sec01_untrusted_observation_xml_encoding>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_________ ERROR at setup of test_gov02_mcp_client_cannot_self_approve _________
+
+self = <Coroutine test_gov02_mcp_client_cannot_self_approve>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestEndToEndDemonstration.test_run_demonstration_mock_outcomes _
+
+self = <Coroutine test_run_demonstration_mock_outcomes>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestMCPToolsDirect.test_analyse_pattern_on_seeded_learners _
+
+self = <Coroutine test_analyse_pattern_on_seeded_learners>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of TestMCPProtocol.test_mcp_server_tools_and_calls ______
+
+self = <Coroutine test_mcp_server_tools_and_calls>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestMCPProtocol.test_mcp_protocol_idempotency_retry_and_conflict _
+
+self = <Coroutine test_mcp_protocol_idempotency_retry_and_conflict>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestMCPProtocol.test_mcp_protocol_wire_rich_marks_rubric_and_missing_analysis _
+
+self = <Coroutine test_mcp_protocol_wire_rich_marks_rubric_and_missing_analysis>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_ingestion_service_and_sqlite_stage_conflict_and_equal_control _
+
+self = <Coroutine test_ingestion_service_and_sqlite_stage_conflict_and_equal_control>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+__ ERROR at setup of test_mcp_wire_protocol_stage_conflict_and_equal_control __
+
+self = <Coroutine test_mcp_wire_protocol_stage_conflict_and_equal_control>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of test_longitudinal_trend_with_zero_level_rubrics ______
+
+self = <Coroutine test_longitudinal_trend_with_zero_level_rubrics>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of test_valid_trend_accompanied_by_missing_result _______
+
+self = <Coroutine test_valid_trend_accompanied_by_missing_result>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_empty_history_returns_explicit_insufficient_evidence _
+
+self = <Coroutine test_empty_history_returns_explicit_insufficient_evidence>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_______ ERROR at setup of test_fluency_analysis_contract_three_periods ________
+
+self = <Coroutine test_fluency_analysis_contract_three_periods>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+____ ERROR at setup of test_two_period_baseline_summary_prints_term_number ____
+
+self = <Coroutine test_two_period_baseline_summary_prints_term_number>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestLabelPolicy.test_evidence_service_rejects_prohibited_labels _
+
+self = <Coroutine test_evidence_service_rejects_prohibited_labels>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestReviewServiceGovernance.test_agent_cannot_self_approve_pattern _
+
+self = <Coroutine test_agent_cannot_self_approve_pattern>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestReviewServiceGovernance.test_human_teacher_can_accept_and_generates_sha256_hash _
+
+self = <Coroutine test_human_teacher_can_accept_and_generates_sha256_hash>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestReviewServiceGovernance.test_flag_pattern_deduplicates_pending_items _
+
+self = <Coroutine test_flag_pattern_deduplicates_pending_items>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestDualViewProfileSurfacing.test_get_surfaced_profile_strictly_includes_accepted_only _
+
+self = <Coroutine test_get_surfaced_profile_strictly_includes_accepted_only>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestDualViewProfileSurfacing.test_detects_post_approval_tampering_or_drift _
+
+self = <Coroutine test_detects_post_approval_tampering_or_drift>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestDualViewProfileSurfacing.test_surfaced_profile_excludes_finding_when_hash_fails _
+
+self = <Coroutine test_surfaced_profile_excludes_finding_when_hash_fails>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestAnalysisIntegrationWithReview.test_analysis_generates_and_deduplicates_review_items _
+
+self = <Coroutine test_analysis_generates_and_deduplicates_review_items>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of TestMCPPhase2WireProtocol.test_mcp_phase2_tools_wire_protocol _
+
+self = <Coroutine test_mcp_phase2_tools_wire_protocol>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+____________ ERROR at setup of test_migration_adds_source_event_id ____________
+
+self = <Coroutine test_migration_adds_source_event_id>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______________ ERROR at setup of test_idempotent_ingestion_retry ______________
+
+self = <Coroutine test_idempotent_ingestion_retry>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_______________ ERROR at setup of test_concurrent_transactions ________________
+
+self = <Coroutine test_concurrent_transactions>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+____________ ERROR at setup of test_rollback_on_validation_failure ____________
+
+self = <Coroutine test_rollback_on_validation_failure>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_____________________ ERROR at setup of test_seed_script ______________________
+
+self = <Coroutine test_seed_script>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+________ ERROR at setup of test_full_observation_idempotency_conflicts ________
+
+self = <Coroutine test_full_observation_idempotency_conflicts>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of test_nested_serialization_round_trip_and_retry _______
+
+self = <Coroutine test_nested_serialization_round_trip_and_retry>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_____ ERROR at setup of test_transaction_ownership_deterministic_overlap ______
+
+self = <Coroutine test_transaction_ownership_deterministic_overlap>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_______________ ERROR at setup of test_complete_outcome_logging _______________
+
+self = <Coroutine test_complete_outcome_logging>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+________ ERROR at setup of test_audit_storage_failure_honest_rollback _________
+
+self = <Coroutine test_audit_storage_failure_honest_rollback>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_sqlite_round_trip_and_replay_rich_marks_rubric_missing _
+
+self = <Coroutine test_sqlite_round_trip_and_replay_rich_marks_rubric_missing>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_sqlite_round_trip_and_conflict_handling_workstream_1_defects _
+
+self = <Coroutine test_sqlite_round_trip_and_conflict_handling_workstream_1_defects>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_______ ERROR at setup of test_case_10_auto_mode_selects_deterministic ________
+
+self = <Coroutine test_case_10_auto_mode_selects_deterministic>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_case_13_deterministic_fallback_preserves_governance __
+
+self = <Coroutine test_case_13_deterministic_fallback_preserves_governance>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+___ ERROR at setup of test_case_17_failure_followed_by_recovery_provenance ____
+
+self = <Coroutine test_case_17_failure_followed_by_recovery_provenance>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+____ ERROR at setup of test_case_18_validation_rejection_refuses_fallback _____
+
+self = <Coroutine test_case_18_validation_rejection_refuses_fallback>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of test_case_19_teacher_review_authority_boundary _______
+
+self = <Coroutine test_case_19_teacher_review_authority_boundary>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_case_21_overlapping_concurrent_requests_provenance_isolation _
+
+self = <Coroutine test_case_21_overlapping_concurrent_requests_provenance_isolation>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_____________________ ERROR at setup of test_get_learners _____________________
+
+self = <Coroutine test_get_learners>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+___________ ERROR at setup of test_get_learner_evidence_and_stages ____________
+
+self = <Coroutine test_get_learner_evidence_and_stages>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_______________ ERROR at setup of test_evidence_citation_lookup _______________
+
+self = <Coroutine test_evidence_citation_lookup>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_____ ERROR at setup of test_create_teacher_observation_success_and_retry _____
+
+self = <Coroutine test_create_teacher_observation_success_and_retry>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of test_create_observation_rejects_unknown_learner ______
+
+self = <Coroutine test_create_observation_rejects_unknown_learner>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of test_create_observation_rejects_deficit_labels _______
+
+self = <Coroutine test_create_observation_rejects_deficit_labels>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+___________ ERROR at setup of test_generate_candidate_handover_mock ___________
+
+self = <Coroutine test_generate_candidate_handover_mock>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_____ ERROR at setup of test_review_decision_and_approved_handover_gating _____
+
+self = <Coroutine test_review_decision_and_approved_handover_gating>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_ ERROR at setup of test_review_decision_disabled_when_authority_unconfigured _
+
+self = <Coroutine test_review_decision_disabled_when_authority_unconfigured>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of test_rejected_findings_remain_strictly_excluded ______
+
+self = <Coroutine test_rejected_findings_remain_strictly_excluded>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+__________ ERROR at setup of test_approval_survives_database_reload ___________
+
+self = <Coroutine test_approval_survives_database_reload>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_____ ERROR at setup of test_candidate_brief_persistence_and_revisioning ______
+
+self = <Coroutine test_candidate_brief_persistence_and_revisioning>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+_______ ERROR at setup of test_cors_policy_rejects_unauthorized_origins _______
+
+self = <Coroutine test_cors_policy_rejects_unauthorized_origins>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+______ ERROR at setup of test_config_reports_prototype_trust_limitation _______
+
+self = <Coroutine test_config_reports_prototype_trust_limitation>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('Q:/ALLPS-closeout-20261015/.audit-runtime/pytest')
+mode = 448, parents = False, exist_ok = False
+
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+        """
+        Create a new directory at this given path.
+        """
+        try:
+>           os.mkdir(self, mode)
+E           FileNotFoundError: [WinError 3] The system cannot find the path specified: 'Q:\\ALLPS-closeout-20261015\\.audit-runtime\\pytest'
+
+C:\Users\wisdo\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:1011: FileNotFoundError
+=========================== short test summary info ===========================
+ERROR tests/test_agent_orchestration.py::TestAgentOrchestrationPipeline::test_end_to_end_grounded_handover
+ERROR tests/test_agent_orchestration.py::TestAgentOrchestrationPipeline::test_prompt_injection_inside_reflection_resisted
+ERROR tests/test_agent_orchestration.py::TestAgentOrchestrationPipeline::test_abstention_on_sparse_history
+ERROR tests/test_agent_orchestration.py::TestAgentOrchestrationPipeline::test_inference_timeout_fails_safely_without_state_corruption
+ERROR tests/test_agent_orchestration.py::TestAgentOrchestrationPipeline::test_duplicate_orchestration_does_not_create_duplicate_reviews
+ERROR tests/test_analysis_service.py::test_same_term_different_scales_no_trend_no_gain
+ERROR tests/test_analysis_service.py::test_compatible_three_term_shows_improvement
+ERROR tests/test_analysis_service.py::test_three_term_fluctuating_remains_variable
+ERROR tests/test_analysis_service.py::test_missing_results_stay_null_zero_stays_zero
+ERROR tests/test_analysis_service.py::test_separate_subjects_grades_forms_rubrics_remain_separate
+ERROR tests/test_analysis_service.py::test_rubric_progression_across_three_terms
+ERROR tests/test_analysis_service.py::test_insufficiently_described_records_excluded_from_numerical_comparison
+ERROR tests/test_analysis_service.py::test_missing_comparison_metadata_excluded_no_invented_standard_defaults
+ERROR tests/test_analysis_service.py::test_form_version_skill_and_authorization_barrier
+ERROR tests/test_analysis_service.py::test_distinguish_unchanged_and_declining_marks_trajectories
+ERROR tests/test_analysis_service.py::test_rubric_unchanged_declining_fluctuating_not_blind_progression
+ERROR tests/test_analysis_service.py::test_rubric_scale_validation_against_defined_scale
+ERROR tests/test_analysis_service.py::test_reject_contradictory_outcomes_and_non_finite_numeric_fields
+ERROR tests/test_analysis_service.py::test_stage_reconciliation_and_separation_from_school_level
+ERROR tests/test_analysis_service.py::test_distinct_missing_statuses_result_unavailable_vs_not_administered
+ERROR tests/test_analysis_service.py::test_different_rubric_scales_do_not_produce_shared_trend
+ERROR tests/test_analysis_service.py::test_equivalent_scales_group_together
+ERROR tests/test_analysis_service.py::test_preserve_assessment_stage_distinctions
+ERROR tests/test_analysis_service.py::test_ordinal_rubric_ranks_not_averaged_within_period
+ERROR tests/test_audit_fixes.py::test_be01_pattern_deduplication_preserves_persisted_id
+ERROR tests/test_audit_fixes.py::test_gov01_prevent_accepted_review_reuse - F...
+ERROR tests/test_audit_fixes.py::test_sec01_untrusted_observation_xml_encoding
+ERROR tests/test_audit_fixes.py::test_gov02_mcp_client_cannot_self_approve - ...
+ERROR tests/test_demo_e2e.py::TestEndToEndDemonstration::test_run_demonstration_mock_outcomes
+ERROR tests/test_mcp_tools.py::TestMCPToolsDirect::test_analyse_pattern_on_seeded_learners
+ERROR tests/test_mcp_tools.py::TestMCPProtocol::test_mcp_server_tools_and_calls
+ERROR tests/test_mcp_tools.py::TestMCPProtocol::test_mcp_protocol_idempotency_retry_and_conflict
+ERROR tests/test_mcp_tools.py::TestMCPProtocol::test_mcp_protocol_wire_rich_marks_rubric_and_missing_analysis
+ERROR tests/test_phase2_analysis_repairs.py::test_ingestion_service_and_sqlite_stage_conflict_and_equal_control
+ERROR tests/test_phase2_analysis_repairs.py::test_mcp_wire_protocol_stage_conflict_and_equal_control
+ERROR tests/test_phase2_analysis_repairs.py::test_longitudinal_trend_with_zero_level_rubrics
+ERROR tests/test_phase2_analysis_repairs.py::test_valid_trend_accompanied_by_missing_result
+ERROR tests/test_phase2_analysis_repairs.py::test_empty_history_returns_explicit_insufficient_evidence
+ERROR tests/test_phase2_analysis_repairs.py::test_fluency_analysis_contract_three_periods
+ERROR tests/test_phase2_analysis_repairs.py::test_two_period_baseline_summary_prints_term_number
+ERROR tests/test_phase2_governance.py::TestLabelPolicy::test_evidence_service_rejects_prohibited_labels
+ERROR tests/test_phase2_governance.py::TestReviewServiceGovernance::test_agent_cannot_self_approve_pattern
+ERROR tests/test_phase2_governance.py::TestReviewServiceGovernance::test_human_teacher_can_accept_and_generates_sha256_hash
+ERROR tests/test_phase2_governance.py::TestReviewServiceGovernance::test_flag_pattern_deduplicates_pending_items
+ERROR tests/test_phase2_governance.py::TestDualViewProfileSurfacing::test_get_surfaced_profile_strictly_includes_accepted_only
+ERROR tests/test_phase2_governance.py::TestDualViewProfileSurfacing::test_detects_post_approval_tampering_or_drift
+ERROR tests/test_phase2_governance.py::TestDualViewProfileSurfacing::test_surfaced_profile_excludes_finding_when_hash_fails
+ERROR tests/test_phase2_governance.py::TestAnalysisIntegrationWithReview::test_analysis_generates_and_deduplicates_review_items
+ERROR tests/test_phase2_governance.py::TestMCPPhase2WireProtocol::test_mcp_phase2_tools_wire_protocol
+ERROR tests/test_regression.py::test_migration_adds_source_event_id - FileNot...
+ERROR tests/test_regression.py::test_idempotent_ingestion_retry - FileNotFoun...
+ERROR tests/test_regression.py::test_concurrent_transactions - FileNotFoundEr...
+ERROR tests/test_regression.py::test_rollback_on_validation_failure - FileNot...
+ERROR tests/test_regression.py::test_seed_script - FileNotFoundError: [WinErr...
+ERROR tests/test_regression.py::test_full_observation_idempotency_conflicts
+ERROR tests/test_regression.py::test_nested_serialization_round_trip_and_retry
+ERROR tests/test_regression.py::test_transaction_ownership_deterministic_overlap
+ERROR tests/test_regression.py::test_complete_outcome_logging - FileNotFoundE...
+ERROR tests/test_regression.py::test_audit_storage_failure_honest_rollback - ...
+ERROR tests/test_regression.py::test_sqlite_round_trip_and_replay_rich_marks_rubric_missing
+ERROR tests/test_regression.py::test_sqlite_round_trip_and_conflict_handling_workstream_1_defects
+ERROR tests/test_runtime_discovery.py::test_case_10_auto_mode_selects_deterministic
+ERROR tests/test_runtime_discovery.py::test_case_13_deterministic_fallback_preserves_governance
+ERROR tests/test_runtime_discovery.py::test_case_17_failure_followed_by_recovery_provenance
+ERROR tests/test_runtime_discovery.py::test_case_18_validation_rejection_refuses_fallback
+ERROR tests/test_runtime_discovery.py::test_case_19_teacher_review_authority_boundary
+ERROR tests/test_runtime_discovery.py::test_case_21_overlapping_concurrent_requests_provenance_isolation
+ERROR tests/test_web_api.py::test_get_learners - FileNotFoundError: [WinError...
+ERROR tests/test_web_api.py::test_get_learner_evidence_and_stages - FileNotFo...
+ERROR tests/test_web_api.py::test_evidence_citation_lookup - FileNotFoundErro...
+ERROR tests/test_web_api.py::test_create_teacher_observation_success_and_retry
+ERROR tests/test_web_api.py::test_create_observation_rejects_unknown_learner
+ERROR tests/test_web_api.py::test_create_observation_rejects_deficit_labels
+ERROR tests/test_web_api.py::test_generate_candidate_handover_mock - FileNotF...
+ERROR tests/test_web_api.py::test_review_decision_and_approved_handover_gating
+ERROR tests/test_web_api.py::test_review_decision_disabled_when_authority_unconfigured
+ERROR tests/test_web_api.py::test_rejected_findings_remain_strictly_excluded
+ERROR tests/test_web_api.py::test_approval_survives_database_reload - FileNot...
+ERROR tests/test_web_api.py::test_candidate_brief_persistence_and_revisioning
+ERROR tests/test_web_api.py::test_cors_policy_rejects_unauthorized_origins - ...
+ERROR tests/test_web_api.py::test_config_reports_prototype_trust_limitation
+171 passed, 81 errors in 103.88s (0:01:43)

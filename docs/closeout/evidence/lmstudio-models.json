@@ -1,0 +1,77 @@
+{
+  "url": "http://127.0.0.1:1234/api/v0/models",
+  "http_status": 200,
+  "body": {
+    "data": [
+      {
+        "id": "allps-qwen35-base-4b",
+        "object": "model",
+        "type": "vlm",
+        "publisher": "lmstudio-community",
+        "arch": "qwen35",
+        "compatibility_type": "gguf",
+        "quantization": "Q4_K_M",
+        "state": "loaded",
+        "max_context_length": 262144,
+        "loaded_context_length": 8192,
+        "capabilities": [
+          "tool_use"
+        ]
+      },
+      {
+        "id": "qwen3.5-4b",
+        "object": "model",
+        "type": "vlm",
+        "publisher": "lmstudio-community",
+        "arch": "qwen35",
+        "compatibility_type": "gguf",
+        "quantization": "Q4_K_M",
+        "state": "not-loaded",
+        "max_context_length": 262144,
+        "capabilities": [
+          "tool_use"
+        ]
+      },
+      {
+        "id": "qwen3.5-4b-claude-4.6-opus-reasoning-distilled",
+        "object": "model",
+        "type": "vlm",
+        "publisher": "Jackrong",
+        "arch": "qwen35",
+        "compatibility_type": "gguf",
+        "quantization": "Q4_K_S",
+        "state": "not-loaded",
+        "max_context_length": 262144,
+        "capabilities": [
+          "tool_use"
+        ]
+      },
+      {
+        "id": "google/gemma-4-12b-qat",
+        "object": "model",
+        "type": "vlm",
+        "publisher": "google",
+        "arch": "gemma4",
+        "compatibility_type": "gguf",
+        "quantization": "Q4_0",
+        "state": "not-loaded",
+        "max_context_length": 262144,
+        "capabilities": [
+          "tool_use"
+        ]
+      },
+      {
+        "id": "text-embedding-nomic-embed-text-v1.5",
+        "object": "model",
+        "type": "embeddings",
+        "publisher": "nomic-ai",
+        "arch": "nomic-bert",
+        "compatibility_type": "gguf",
+        "quantization": "Q4_K_M",
+        "state": "not-loaded",
+        "max_context_length": 2048
+      }
+    ],
+    "object": "list"
+  }
+}

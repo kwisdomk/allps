@@ -1,0 +1,42 @@
+[
+  {
+    "name": "seed-positional",
+    "args": [
+      "-m",
+      "data.synthetic.seed_data",
+      "Q:\\ALLPS-closeout-20261015\\.audit-runtime\\seed.db"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.75
+  },
+  {
+    "name": "web-help",
+    "args": [
+      "-m",
+      "allps.web.app",
+      "--help"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 15.04
+  },
+  {
+    "name": "mcp-wire-rerun",
+    "args": [
+      "examples/demonstrate_mcp_wire_protocol.py"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 11.49
+  },
+  {
+    "name": "live-mcp-rerun",
+    "args": [
+      "examples/run_agentic_mcp_import.py",
+      "--db",
+      ".audit-runtime/live-mcp.db",
+      "--trace-out",
+      "docs/closeout/evidence/live-mcp-rerun.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 99.0
+  }
+]

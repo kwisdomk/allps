@@ -1,0 +1,94 @@
+===========================================================================
+ALLPS — FINAL AGENTIC MCP INTEGRATION RUNNER
+===========================================================================
+Target Learner     : LRN-001
+Local Model ID     : allps-qwen35-base-4b
+LM Studio Endpoint : http://127.0.0.1:1234/v1
+Database File      : Q:\ALLPS-closeout-20261015\.audit-runtime\live-mcp.db
+MCP Imports Dir    : Q:\ALLPS-closeout-20261015\data\mcp_imports
+Trace Output File  : Q:\ALLPS-closeout-20261015\docs\closeout\evidence\live-mcp-rerun.json
+---------------------------------------------------------------------------
+[Setup] Seeding initial database with baseline learner data...
+  Added learner: Learner 001 (LRN-001)
+  Added learner: Learner 002 (LRN-002)
+  Added learner: Learner 003 (LRN-003)
+  Added 27 evidence records
+
+Database seeded at: Q:\ALLPS-closeout-20261015\.audit-runtime\live-mcp.db
+
+[Executing] Launching Pydantic AI Agent with dual MCP servers...
+[Task Prompt] Execute the evidence import workflow for learner LRN-001 in Q:\ALLPS-closeout-20261015\data\mcp_imports: 1. List the directory and read the export files once. 2. Ingest the valid observation record into ALLPS while noting the validation error on the malformed record. 3. Retrieve the learner's history and run longitudinal pattern analysis on Mathematics assessments (evidence_type='assessment'). 4. Flag the resulting pattern for teacher review and summarize your findings.
+
+===========================================================================
+VERDICT: REAL TWO-SERVER AGENTIC RUN: PASS
+===========================================================================
+Trace ID                      : 938462af-28b0-4e94-893e-03c8ea4d8bb4
+Total Tool Calls Executed     : 7
+Persisted Evidence Count      : 1
+Candidate Reviews Flagged     : 1
+Failed Steps / Safe Recoveries: 0
+Governance Verified (Pending) : True
+Human Sovereign Acceptance    : True
+---------------------------------------------------------------------------
+CHRONOLOGICAL TOOL EXECUTION LOG:
+  01. [FILESYSTEM] list_directory               [SUCCESS]    ( 273.6ms)
+       args: {'path': 'Q:\\ALLPS-closeout-20261015\\data\\mcp_imports'}
+  02. [FILESYSTEM] read_text_file               [SUCCESS]    (  24.1ms)
+       args: {'path': 'Q:\\ALLPS-closeout-20261015\\data\\mcp_imports\\teacher_export_LRN001_malformed.json'}
+  03. [FILESYSTEM] read_text_file               [SUCCESS]    (  19.6ms)
+       args: {'path': 'Q:\\ALLPS-closeout-20261015\\data\\mcp_imports\\teacher_export_LRN001_valid.json'}
+  04. [ALLPS     ] ingest_evidence              [SUCCESS]    ( 361.3ms)
+       args: {'learner_id': 'LRN-001', 'evidence_type': 'observation', 'source_system': 'school_evidence_portal', 'ingestion_method': 'api', 'source_type': 'teacher', 'source_reference': 'Mrs. Ngcobo', 'academic_year': 2025, 'term': 3, 'observed_at': '2025-10-06T10:30:00Z', 'source_event_id': 'EVT-2025-T3-LRN001-OBS-01', 'subject': 'Mathematics', 'content': '{...}'}
+  05. [ALLPS     ] get_learner_history          [SUCCESS]    (  58.1ms)
+       args: {'learner_id': 'LRN-001'}
+  06. [ALLPS     ] analyse_longitudinal_pattern [SUCCESS]    (  57.8ms)
+       args: {'learner_id': 'LRN-001', 'evidence_type': 'assessment', 'subject': 'Mathematics'}
+  07. [ALLPS     ] flag_pattern_for_review      [SUCCESS]    (  14.1ms)
+       args: {'pattern_id': '765b9189-6e2d-4060-a35a-eb6679a2dc90'}
+---------------------------------------------------------------------------
+AGENT FINAL SUMMARY:
+The pattern has been flagged for review with review_id "1b61b6c9-f070-4f7a-8f9a-3505f280d387" and status "pending". Now I need to write the final pedagogical summary:
+
+---
+
+## FINAL PEDAGOGICAL SUMMARY - LRN-001 (Grade 3 Mathematics)
+
+### Evidence Import Summary
+**Valid Record Ingested:** One observation record from Mrs. Ngcobo (EVT-2025-T3-LRN001-OBS-01) documenting focused engagement with physical manipulatives during practical geometry work, showing strong grasp of 3D solids despite earlier arithmetic struggles.
+
+**Malformed Records Not Ingested:** Two records from teacher_export_LRN001_malformed.json were rejected due to validation errors:
+- EVT-2025-T3-LRN001-OBS-ERR01: Invalid academic_year (string instead of integer), incorrect term value, non-ISO timestamp, and invalid content format.
+- EVT-2025-T3-LRN001-OBS-INCOMPLETE02: Missing required fields including evidence_type, source_system, ingestion_method, source_reference, academic_year, term, observed_at, and content.
+
+### Learner History Overview
+Learner LRN-001 has 10 total records in the system, including assessments from Term 1 (March), Term 2 (June), and Term 3 (September) of Academic Year 2025.
+
+### Longitudinal Pattern Analysis - Mathematics Assessments
+**Pattern Detected:** Declining across-term trend in Grade 3 Mathematics performance:
+- **Term 1:** 82/100 (multiplication_and_division)
+- **Term 2:** 68/100 (multiplication_and_division)  
+- **Term 3:** 51/100 (multiplication_and_division)
+
+**Pattern ID:** 765b9189-6e2d-4060-a35a-eb6679a2dc90
+**Review Status:** FLAGGED FOR TEACHER REVIEW (pending)
+
+### Pedagogical Interpretation
+The longitudinal analysis reveals a concerning downward trajectory in LRN-001's Mathematics performance across three consecutive terms, with a 31-point decline from baseline. This pattern warrants immediate teacher review to:
+1. Investigate the root causes of declining performance
+2. Determine if intervention strategies are effective
+3. Assess whether the observed struggles relate to specific skill areas (multiplication/division)
+
+**Supporting Context:** The newly ingested observation from Mrs. Ngcobo provides valuable qualitative insight, noting that while LRN-001 demonstrates strong grasp of 3D solids during practical geometry work, there were earlier arithmetic struggles. This suggests the declining assessment scores may be specifically related to foundational arithmetic skills rather than overall mathematical ability.
+
+**Limitations Noted:** The analysis was evaluated across three distinct academic periods within Grade 3 with a uniform 100-mark scale, but assessments have not been equated across different instruments or grades. Percentage conversion alone was not used to establish comparability.
+
+### Action Required
+The pattern has been entered into the teacher review inbox (review_id: 1b61b6c9-f070-4f7a-8f9a-3505f280d387) awaiting sovereign human teacher approval and resolution.
+---------------------------------------------------------------------------
+
+Trace written to: Q:\ALLPS-closeout-20261015\docs\closeout\evidence\live-mcp-rerun.json
+===========================================================================
+
+STDERR:
+Secure MCP Filesystem Server running on stdio
+Client does not support MCP Roots, using allowed directories set from server args: [ 'Q:\\ALLPS-closeout-20261015\\data\\mcp_imports' ]
