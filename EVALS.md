@@ -1,8 +1,8 @@
 # ALLPS — Evaluation Framework & Technical Research Evaluations
 
 > **Track**: Education: The Long View — African Agentic AI Design Challenge  
-> **Repository**: `Q:\ALLPS`  
-> **Branch**: `docs-submission-evals`  
+> **Repository**: [https://github.com/wisdomkinoti/ALLPS](https://github.com/wisdomkinoti/ALLPS)  
+> **Target**: `master`  
 > **Status**: Official Evaluation Record (252/252 automated tests passing, 100% pass rate)
 
 ---
@@ -144,15 +144,27 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
 
 ---
 
-### Task 9: Cross-Server Evidence Import (Borrowed MCP Server Status)
-* **Evaluation Dimension**: Inter-server MCP composability using a third-party server.
-* **Input**: Import of external student records via the official `@modelcontextprotocol/server-filesystem` server, passing file content into ALLPS `ingest_evidence`.
-* **Expected Behavior**: Borrowed filesystem MCP server runs via `npx`; reads raw observation CSV/JSON files from disk; client passes data to ALLPS `ingest_evidence` with `source_system="filesystem_mcp"` and `ingestion_method="scheduled_sync"`.
-* **Actual Observed Behavior**: **UNVERIFIED / PENDING REAL RESULTS FROM INSTANCE 1**. While ALLPS fully supports upstream provenance tracking (`source_system`, `source_event_id`, `ingestion_method`), real end-to-end multi-server execution involving the borrowed filesystem MCP server has not been independently verified with real protocol traces from Instance 1.
-* **Status**: **Disclosed limitation**; not claimed as verified.
-* **Execution Method**: Pending multi-server orchestration.
-* **Runtime Provenance**: `unverified_external`
-* **Evidence Reference**: Documented in [`README.md`](file:///Q:/ALLPS/README.md) and [`DEVELOPMENT_RESEARCH.md`](file:///Q:/ALLPS/DEVELOPMENT_RESEARCH.md).
+### Task 9: Cross-Server Evidence Import & Model-Directed Tool Use (Dual MCP Architecture)
+* **Evaluation Dimension**: Inter-server MCP composability and open-weights model-directed tool selection across two independent servers.
+* **Input**: Directory `data/mcp_imports/` containing school export files:
+  - Valid teacher observation: `teacher_export_LRN001_valid.json` (Mrs. Ngcobo, Term 3 practical geometry engagement).
+  - Malformed teacher export: `teacher_export_LRN001_malformed.json` (invalid non-integer year `"INVALID_YEAR_STR"`, invalid timestamp `"not-an-iso-timestamp"`).
+* **Expected Behavior**: Pydantic AI agent connects to both the official Filesystem MCP server (`@modelcontextprotocol/server-filesystem`) and the custom ALLPS FastMCP server (`allps.mcp.server`) over stdio transport; autonomously lists and reads filesystem files; isolates and catches validation errors on malformed records (safe recovery); ingests valid records into ALLPS; retrieves learner longitudinal history; runs longitudinal pattern analysis; flags candidate pattern for teacher review in `PENDING` state; sovereign human approval remains strictly required.
+* **Actual Observed Behavior**: **PASS (VERIFIED ON OPEN-WEIGHTS QWEN 3.5 4B)**. Real execution of `examples/run_agentic_mcp_import.py` against local LM Studio (`allps-qwen35-base-4b`):
+  - **Trace ID**: `1cb86194-619c-43ce-a079-95f8cd791d60` (persisted in `data/trace_agentic_mcp_run.json`).
+  - **Tool Call Sequence**:
+    1. `filesystem.list_directory` (`Q:\ALLPS\data\mcp_imports`) $\to$ `[SUCCESS]` (387.0ms)
+    2. `filesystem.read_text_file` (`teacher_export_LRN001_malformed.json`) $\to$ `[SUCCESS]` (27.5ms)
+    3. `filesystem.read_text_file` (`teacher_export_LRN001_valid.json`) $\to$ `[SUCCESS]` (23.8ms)
+    4. `allps.ingest_evidence` (Learner `LRN-001`, `observation`, Mrs. Ngcobo) $\to$ `[SUCCESS]` (139.9ms)
+    5. `allps.get_learner_history` (`LRN-001`) $\to$ `[SUCCESS]` (39.3ms)
+    6. `allps.analyse_longitudinal_pattern` (`LRN-001`, `assessment`, `Mathematics`) $\to$ `[SUCCESS]` (62.9ms)
+    7. `allps.flag_pattern_for_review` (`pattern_id="85818a91-1f4d-4f7e-b912-5a8694265fa9"`) $\to$ `[SUCCESS]` (17.1ms)
+  - **Governance Verification**: Flagged review item confirmed in SQLite `review_items` strictly in `status="pending"`. Autonomous self-approval blocked.
+* **Status**: **Fully Verified & Reproducible**.
+* **Execution Method**: Open-source orchestration via Pydantic AI (`mcp_agent.py`) + official Filesystem MCP server (Node.js) + custom ALLPS FastMCP server (Python stdio) + local LM Studio (`allps-qwen35-base-4b`).
+* **Runtime Provenance**: `live_local_qwen_mcp`
+* **Evidence Reference**: [`examples/run_agentic_mcp_import.py`](file:///Q:/ALLPS/examples/run_agentic_mcp_import.py), [`src/allps/agent/mcp_agent.py`](file:///Q:/ALLPS/src/allps/agent/mcp_agent.py), [`data/trace_agentic_mcp_run.json`](file:///Q:/ALLPS/data/trace_agentic_mcp_run.json).
 
 ---
 
