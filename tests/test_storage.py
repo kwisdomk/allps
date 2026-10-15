@@ -207,6 +207,117 @@ class TestEvidenceStorage:
         assert results[0].source_system == "attendance_system"
         assert results[0].ingestion_method == IngestionMethod.SCHEDULED_SYNC
 
+    async def test_rich_marks_comparability_roundtrip(self, store: SQLiteStore):
+        """Verifies full comparability metadata survives SQLite serialization and deserialization."""
+        await self._add_learner(store, learner_id="LRN-COMP-01")
+        content = {
+            "grade": "Grade 3",
+            "score": 85,
+            "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": True,
+        }
+        evidence = self._make_evidence(
+            learner_id="LRN-COMP-01",
+            subject="Mathematics",
+            content=content,
+        )
+        await store.add_evidence(evidence)
+
+        retrieved = await store.get_evidence_for_learner("LRN-COMP-01")
+        assert len(retrieved) == 1
+        rec = retrieved[0]
+        assert rec.grade == "Grade 3"
+        assert rec.measured_skill == "multiplication_and_division"
+        assert rec.form == "Term Test"
+        assert rec.form_version == "v1.0"
+        assert rec.language == "English"
+        assert rec.comparison_authorized is True
+        assert rec.is_marks is True
+        assert rec.content["score"] == 85
+        assert rec.content["max_score"] == 100
+
+    async def test_rubric_scale_list_roundtrip(self, store: SQLiteStore):
+        """Verifies rubric scale lists survive SQLite text storage and load back as structured data."""
+        await self._add_learner(store, learner_id="LRN-RUB-01")
+        content = {
+            "grade": "Grade 3",
+            "rubric": "Reading Competency",
+            "rubric_version": "v1.0",
+            "scale": [
+                "Below Expectation",
+                "Approaching Expectation",
+                "Meeting Expectation",
+                "Exceeding Expectation",
+            ],
+            "level": "Exceeding Expectation",
+            "form": "Oral Assessment",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "oral_reading_fluency",
+            "comparison_authorized": True,
+        }
+        evidence = self._make_evidence(
+            learner_id="LRN-RUB-01",
+            subject="English",
+            content=content,
+        )
+        await store.add_evidence(evidence)
+
+        retrieved = await store.get_evidence_for_learner("LRN-RUB-01")
+        assert len(retrieved) == 1
+        rec = retrieved[0]
+        assert rec.is_rubric is True
+        assert list(rec.content["scale"]) == [
+            "Below Expectation",
+            "Approaching Expectation",
+            "Meeting Expectation",
+            "Exceeding Expectation",
+        ]
+        assert rec.content["level"] == "Exceeding Expectation"
+
+    async def test_missing_outcome_status_roundtrip(self, store: SQLiteStore):
+        """Verifies missing outcome statuses survive roundtrip distinct from zero scores."""
+        await self._add_learner(store, learner_id="LRN-MISS-01")
+        content = {
+            "grade": "Grade 3",
+            "status": "result_unavailable",
+            "reason": "Damaged lab sheet",
+            "max_score": 50,
+        }
+        evidence = self._make_evidence(
+            learner_id="LRN-MISS-01",
+            subject="Science",
+            content=content,
+        )
+        await store.add_evidence(evidence)
+
+        retrieved = await store.get_evidence_for_learner("LRN-MISS-01")
+        assert len(retrieved) == 1
+        rec = retrieved[0]
+        assert rec.is_missing_outcome is True
+        assert rec.content["status"] == "result_unavailable"
+        assert rec.content["reason"] == "Damaged lab sheet"
+        assert rec.content["max_score"] == 50
+        assert "score" not in rec.content
+
+    async def test_retrieved_evidence_content_is_immutable(self, store: SQLiteStore):
+        """Verifies that evidence content remains frozen after retrieval from SQLite."""
+        await self._add_learner(store, learner_id="LRN-IMMUT-01")
+        evidence = self._make_evidence(
+            learner_id="LRN-IMMUT-01",
+            content={"score": 80, "max_score": 100},
+        )
+        await store.add_evidence(evidence)
+
+        retrieved = await store.get_evidence_for_learner("LRN-IMMUT-01")
+        rec = retrieved[0]
+        with pytest.raises(TypeError):
+            rec.content["score"] = 99  # MappingProxyType cannot be modified
+
 
 @pytest.mark.asyncio
 class TestAuditStorage:

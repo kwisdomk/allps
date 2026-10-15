@@ -1,24 +1,25 @@
 """Generate synthetic learner data for ALLPS development and testing.
 
 Note on data provenance:
-These learner fixtures are fictional synthetic scenarios created to simulate
-longitudinal patterns for testing. They are not real student records from the
-Tusome Early Grade Reading Activity or any school system, and Tusome field
-definitions have not been verified against production educational datasets.
+These learner fixtures are synthetic Kenyan school examples created to simulate
+longitudinal patterns for testing comparability and provenance integrity.
+They are not official curriculum validation records from the Kenya Institute of
+Curriculum Development (KICD), the Tusome Early Grade Reading Activity, or any
+government educational authority.
 
 Creates 3 learners with intentionally varied evidence patterns:
 
-- Learner A (LRN-001 / Amara Obi):
+- Learner 001 (LRN-001):
     Steady decline in maths over 3 terms.
     Attendance also drops. Learner reflection mentions difficulty.
     → Designed to test TREND detection.
 
-- Learner B (LRN-002 / Thabo Mokoena):
+- Learner 002 (LRN-002):
     Consistently strong in science across all 3 terms.
     High attendance, positive observations, strong projects.
     → Designed to test PERSISTENCE detection.
 
-- Learner C (LRN-003 / Naledi Dlamini):
+- Learner 003 (LRN-003):
     Good assessment scores in English BUT teacher observations
     consistently note low engagement / withdrawn behaviour.
     Learner self-reflection says "I'm doing okay."
@@ -47,9 +48,9 @@ from allps.storage.sqlite_store import SQLiteStore
 # ── Learners ──────────────────────────────────────────────────────
 
 LEARNERS = [
-    Learner(learner_id="LRN-001", display_name="Amara Obi"),
-    Learner(learner_id="LRN-002", display_name="Thabo Mokoena"),
-    Learner(learner_id="LRN-003", display_name="Naledi Dlamini"),
+    Learner(learner_id="LRN-001", display_name="Learner 001"),
+    Learner(learner_id="LRN-002", display_name="Learner 002"),
+    Learner(learner_id="LRN-003", display_name="Learner 003"),
 ]
 
 
@@ -76,8 +77,14 @@ LEARNER_A_EVIDENCE = [
         term=1,
         subject="Mathematics",
         content={
+            "grade": "Grade 3",
             "score": 82,
             "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": True,
             "assessment_name": "Term 1 Test",
         },
         observed_at=_dt(2025, 3, 15),
@@ -107,7 +114,7 @@ LEARNER_A_EVIDENCE = [
         subject="Mathematics",
         content={
             "note": (
-                "Amara participates actively and helps classmates "
+                "Learner 001 participates actively and helps classmates "
                 "with problem-solving."
             )
         },
@@ -125,8 +132,14 @@ LEARNER_A_EVIDENCE = [
         term=2,
         subject="Mathematics",
         content={
+            "grade": "Grade 3",
             "score": 68,
             "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": True,
             "assessment_name": "Term 2 Test",
         },
         observed_at=_dt(2025, 6, 10),
@@ -174,8 +187,14 @@ LEARNER_A_EVIDENCE = [
         term=3,
         subject="Mathematics",
         content={
+            "grade": "Grade 3",
             "score": 51,
             "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": True,
             "assessment_name": "Term 3 Test",
         },
         observed_at=_dt(2025, 9, 12),
@@ -205,7 +224,7 @@ LEARNER_A_EVIDENCE = [
         subject="Mathematics",
         content={
             "note": (
-                "Amara is quieter in class this term. Submits homework "
+                "Learner 001 is quieter in class this term. Submits homework "
                 "late but work quality shows understanding of core "
                 "concepts."
             )
@@ -229,8 +248,14 @@ LEARNER_B_EVIDENCE = [
         term=1,
         subject="Science",
         content={
+            "grade": "Grade 3",
             "score": 88,
             "max_score": 100,
+            "form": "Practical & Theory",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "scientific_investigation",
+            "comparison_authorized": True,
             "assessment_name": "Term 1 Practical + Theory",
         },
         observed_at=_dt(2025, 3, 14),
@@ -247,7 +272,7 @@ LEARNER_B_EVIDENCE = [
         subject="Science",
         content={
             "note": (
-                "Thabo shows excellent scientific reasoning. "
+                "Learner 002 shows excellent scientific reasoning. "
                 "Designs thoughtful experiments."
             )
         },
@@ -282,8 +307,14 @@ LEARNER_B_EVIDENCE = [
         term=2,
         subject="Science",
         content={
+            "grade": "Grade 3",
             "score": 91,
             "max_score": 100,
+            "form": "Practical & Theory",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "scientific_investigation",
+            "comparison_authorized": True,
             "assessment_name": "Term 2 Practical + Theory",
         },
         observed_at=_dt(2025, 6, 11),
@@ -331,8 +362,14 @@ LEARNER_B_EVIDENCE = [
         term=3,
         subject="Science",
         content={
-            "score": 85,
+            "grade": "Grade 3",
+            "score": 89,
             "max_score": 100,
+            "form": "Practical & Theory",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "scientific_investigation",
+            "comparison_authorized": True,
             "assessment_name": "Term 3 Practical + Theory",
         },
         observed_at=_dt(2025, 9, 13),
@@ -349,7 +386,7 @@ LEARNER_B_EVIDENCE = [
         subject="Science",
         content={
             "note": (
-                "Thabo mentors younger students in the science club. "
+                "Learner 002 mentors younger students in the science club. "
                 "Consistent effort and curiosity."
             )
         },
@@ -372,8 +409,14 @@ LEARNER_C_EVIDENCE = [
         term=1,
         subject="English",
         content={
+            "grade": "Grade 3",
             "score": 78,
             "max_score": 100,
+            "form": "Comprehension & Writing",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "reading_comprehension",
+            "comparison_authorized": True,
             "assessment_name": "Term 1 Comprehension & Writing",
         },
         observed_at=_dt(2025, 3, 16),
@@ -390,7 +433,7 @@ LEARNER_C_EVIDENCE = [
         subject="English",
         content={
             "note": (
-                "Naledi produces good written work but rarely "
+                "Learner 003 produces good written work but rarely "
                 "participates in class discussion."
             )
         },
@@ -408,8 +451,14 @@ LEARNER_C_EVIDENCE = [
         term=2,
         subject="English",
         content={
+            "grade": "Grade 3",
             "score": 81,
             "max_score": 100,
+            "form": "Comprehension & Writing",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "reading_comprehension",
+            "comparison_authorized": True,
             "assessment_name": "Term 2 Comprehension & Writing",
         },
         observed_at=_dt(2025, 6, 9),
@@ -426,7 +475,7 @@ LEARNER_C_EVIDENCE = [
         subject="English",
         content={
             "note": (
-                "Naledi seems withdrawn. Sits alone at break. "
+                "Learner 003 seems withdrawn. Sits alone at break. "
                 "Assessment scores remain strong but classroom "
                 "engagement is low."
             )
@@ -458,8 +507,14 @@ LEARNER_C_EVIDENCE = [
         term=3,
         subject="English",
         content={
+            "grade": "Grade 3",
             "score": 76,
             "max_score": 100,
+            "form": "Comprehension & Writing",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "reading_comprehension",
+            "comparison_authorized": True,
             "assessment_name": "Term 3 Comprehension & Writing",
         },
         observed_at=_dt(2025, 9, 11),
@@ -476,7 +531,7 @@ LEARNER_C_EVIDENCE = [
         subject="English",
         content={
             "note": (
-                "New teacher this term. Naledi does well on tests but "
+                "New teacher this term. Learner 003 does well on tests but "
                 "does not volunteer in class. No issues with behaviour."
             )
         },
@@ -502,6 +557,48 @@ LEARNER_C_EVIDENCE = [
     ),
     # Note: No learner reflection in Terms 1 & 2.
     # Missing data is NOT negative evidence (safety rule #3).
+    # Secondary subject stream: Science (testing insufficient evidence handling)
+    Evidence(
+        source_system="synthetic_dataset",
+        ingestion_method=IngestionMethod.SYNTHETIC,
+        learner_id="LRN-003",
+        evidence_type=EvidenceType.ASSESSMENT,
+        source_type="teacher",
+        source_reference="Dr. Mensah",
+        academic_year=2025,
+        term=2,
+        subject="Science",
+        content={
+            "grade": "Grade 3",
+            "status": "result_unavailable",
+            "reason": "Assessment paper water-damaged during field trip",
+            "max_score": 50,
+        },
+        observed_at=_dt(2025, 6, 12),
+    ),
+    Evidence(
+        source_system="synthetic_dataset",
+        ingestion_method=IngestionMethod.SYNTHETIC,
+        learner_id="LRN-003",
+        evidence_type=EvidenceType.ASSESSMENT,
+        source_type="teacher",
+        source_reference="Dr. Mensah",
+        academic_year=2025,
+        term=3,
+        subject="Science",
+        content={
+            "grade": "Grade 3",
+            "score": 38,
+            "max_score": 50,
+            "form": "Practical & Theory",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "scientific_investigation",
+            "comparison_authorized": True,
+            "assessment_name": "Term 3 Science Practical",
+        },
+        observed_at=_dt(2025, 9, 14),
+    ),
 ]
 
 ALL_EVIDENCE = LEARNER_A_EVIDENCE + LEARNER_B_EVIDENCE + LEARNER_C_EVIDENCE

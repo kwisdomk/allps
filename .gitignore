@@ -29,3 +29,6 @@ data/*
 !data/synthetic/
 *.db
 datasets/
+*.db-shm
+*.db-wal
+.vs/

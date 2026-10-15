@@ -29,6 +29,11 @@ class EvidenceService:
         self._after_insert_hook = None
         self._force_audit_fail = False
 
+    @property
+    def store(self) -> SQLiteStore:
+        """Underlying storage engine."""
+        return self._store
+
     @staticmethod
     def _find_observation_difference(e1: Evidence, e2: Evidence) -> str | None:
         """Find the differing field between validated observations, or None if identical."""
