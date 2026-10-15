@@ -34,3 +34,4 @@ datasets/
 *.db-shm
 *.db-wal
 .vs/
+allps_*.txt
