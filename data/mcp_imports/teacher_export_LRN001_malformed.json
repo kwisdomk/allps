@@ -1,0 +1,34 @@
+{
+  "export_meta": {
+    "source_system": "school_evidence_portal",
+    "export_batch_id": "BATCH-2025-T3-LRN001-MALFORMED",
+    "exported_at": "2025-10-08T14:20:00Z",
+    "originating_teacher": "Mr. Banda",
+    "school_id": "SCH-MSA-042",
+    "academic_year": 2025,
+    "term": 3,
+    "description": "Synthetic malformed and incomplete teacher observation records for test handling and recovery"
+  },
+  "records": [
+    {
+      "source_event_id": "EVT-2025-T3-LRN001-OBS-ERR01",
+      "learner_id": "LRN-001",
+      "evidence_type": "observation",
+      "source_system": "school_evidence_portal",
+      "ingestion_method": "api",
+      "source_type": "teacher",
+      "source_reference": "Mr. Banda",
+      "academic_year": "INVALID_YEAR_STR",
+      "term": 99,
+      "subject": "Mathematics",
+      "observed_at": "not-an-iso-timestamp",
+      "content": "INVALID_STRING_CONTENT_NOT_DICT"
+    },
+    {
+      "source_event_id": "EVT-2025-T3-LRN001-OBS-INCOMPLETE02",
+      "learner_id": "LRN-001",
+      "source_system": "school_evidence_portal",
+      "subject": "Mathematics"
+    }
+  ]
+}

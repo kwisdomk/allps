@@ -27,7 +27,8 @@ htmlcov/
 *~
 data/*
 !data/synthetic/
-*.db
+!data/mcp_imports/
+node_modules/
 datasets/
 *.db-shm
 *.db-wal

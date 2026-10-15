@@ -13,6 +13,7 @@ dependencies = [
     "pydantic>=2.0,<3",
     "aiosqlite>=0.19",
     "mcp>=1.0",
+    "pydantic-ai>=2.56.0,<3",
 ]
 
 [project.optional-dependencies]
@@ -23,6 +24,7 @@ dev = [
 
 [project.scripts]
 allps-mcp = "allps.mcp.server:main"
+allps-mcp-import = "allps.agent.mcp_agent:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

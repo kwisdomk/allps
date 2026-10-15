@@ -25,6 +25,13 @@ from allps.agent.orchestrator import (
     AgentOrchestrator,
     OrchestrationResult,
 )
+from allps.agent.mcp_agent import (
+    AgentMCPConfig,
+    MCPExecutionTrace,
+    ToolCallRecord,
+    build_pydantic_ai_agent,
+    run_agentic_workflow,
+)
 
 __all__ = [
     "CandidateHandoverBrief",
@@ -40,4 +47,9 @@ __all__ = [
     "ValidationResult",
     "AgentOrchestrator",
     "OrchestrationResult",
+    "AgentMCPConfig",
+    "MCPExecutionTrace",
+    "ToolCallRecord",
+    "build_pydantic_ai_agent",
+    "run_agentic_workflow",
 ]
