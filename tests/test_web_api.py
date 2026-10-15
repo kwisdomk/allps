@@ -342,3 +342,109 @@ async def test_approval_survives_database_reload(tmp_path: Path):
             assert handover["patterns"][0]["review"]["reviewer_id"] == "TCH-PERSIST"
             assert handover["patterns"][0]["review"]["hash_verified"] is True
 
+
+@pytest.mark.asyncio
+async def test_candidate_brief_persistence_and_revisioning(tmp_path: Path):
+    """Verify INT-01:
+    1. Persist complete CandidateHandoverBrief (findings, citations, limitations, provenance).
+    2. Refreshing/restarting restores the exact candidate brief via GET /api/learners/{id}/brief.
+    3. Re-generation increments generation_revision without mutating prior accepted reviews.
+    """
+    db_file = str(tmp_path / "brief_persist.db")
+
+    # Instance 1: Generate initial candidate brief (Revision 1)
+    app1 = create_app(db_path=db_file, mode="mock", trusted_reviewer_id="TCH-PERSIST", seed_demo_data=True)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app1), base_url="http://testserver") as client1:
+        async with app1.router.lifespan_context(app1):
+            gen1 = await client1.post("/api/learners/LRN-001/generate", json={"subject": "Mathematics", "mode": "mock"})
+            assert gen1.status_code == 200
+            data1 = gen1.json()
+            assert data1["generation_revision"] == 1
+            assert data1["brief"] is not None
+            assert len(data1["brief"]["findings"]) > 0
+
+            # Query GET /api/learners/LRN-001/brief
+            brief_resp = await client1.get("/api/learners/LRN-001/brief")
+            assert brief_resp.status_code == 200
+            persisted_brief = brief_resp.json()["brief"]
+            assert persisted_brief is not None
+            assert persisted_brief["generation_revision"] == 1
+            assert persisted_brief["runtime_method"] == data1["runtime_method"]
+            assert len(persisted_brief["findings"]) == len(data1["brief"]["findings"])
+
+            # Re-generate (Revision 2)
+            gen2 = await client1.post("/api/learners/LRN-001/generate", json={"subject": "Mathematics", "mode": "mock"})
+            assert gen2.status_code == 200
+            data2 = gen2.json()
+            assert data2["generation_revision"] == 2
+
+            brief_resp2 = await client1.get("/api/learners/LRN-001/brief")
+            persisted_brief2 = brief_resp2.json()["brief"]
+            assert persisted_brief2["generation_revision"] == 2
+
+    # Instance 2: Brand new server process reading same DB (simulates page refresh / server restart)
+    app2 = create_app(db_path=db_file, mode="mock", trusted_reviewer_id="TCH-PERSIST", seed_demo_data=False)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app2), base_url="http://testserver") as client2:
+        async with app2.router.lifespan_context(app2):
+            restored_resp = await client2.get("/api/learners/LRN-001/brief")
+            assert restored_resp.status_code == 200
+            restored = restored_resp.json()["brief"]
+            assert restored is not None
+            assert restored["generation_revision"] == 2
+            assert restored["learner_id"] == "LRN-001"
+            assert len(restored["findings"]) > 0
+            assert "findings" in restored
+            assert "supporting_evidence_ids" in restored["findings"][0]
+
+            # Verify reviews are also enriched with candidate_brief and generation_revision
+            revs_resp = await client2.get("/api/learners/LRN-001/reviews")
+            assert revs_resp.status_code == 200
+            revs = revs_resp.json()
+            assert len(revs) > 0
+            latest_rev = revs[-1]
+            assert latest_rev["generation_revision"] == 2
+            assert latest_rev["candidate_brief"] is not None
+
+
+@pytest.mark.asyncio
+async def test_cors_policy_rejects_unauthorized_origins(test_client: httpx.AsyncClient):
+    """Verify SEC-02:
+    Allowed origins receive Access-Control-Allow-Origin, unauthorized origins do NOT.
+    """
+    # 1. Whitelisted origin: http://localhost:8000
+    headers_allowed = {
+        "Origin": "http://localhost:8000",
+        "Access-Control-Request-Method": "GET",
+    }
+    resp_allowed = await test_client.options("/api/learners", headers=headers_allowed)
+    assert resp_allowed.headers.get("access-control-allow-origin") == "http://localhost:8000"
+
+    # 2. Whitelisted origin: http://127.0.0.1:8000
+    headers_allowed2 = {
+        "Origin": "http://127.0.0.1:8000",
+        "Access-Control-Request-Method": "GET",
+    }
+    resp_allowed2 = await test_client.options("/api/learners", headers=headers_allowed2)
+    assert resp_allowed2.headers.get("access-control-allow-origin") == "http://127.0.0.1:8000"
+
+    # 3. Disallowed origin: https://untrusted-hacker.com
+    headers_disallowed = {
+        "Origin": "https://untrusted-hacker.com",
+        "Access-Control-Request-Method": "GET",
+    }
+    resp_disallowed = await test_client.options("/api/learners", headers=headers_disallowed)
+    assert "access-control-allow-origin" not in resp_disallowed.headers
+
+
+@pytest.mark.asyncio
+async def test_config_reports_prototype_trust_limitation(test_client: httpx.AsyncClient):
+    """Verify GET /api/config explicitly tags authentication type as prototype."""
+    resp = await test_client.get("/api/config")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["review_authority_available"] is True
+    assert data["server_reviewer_id"] == "TCH-TEST-BANDA"
+    assert data["authentication_type"] == "prototype_server_configured"
+    assert "prototype" in data["trust_notice"].lower()
+
+

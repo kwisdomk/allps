@@ -2,10 +2,9 @@
 
 from datetime import datetime, timezone
 from enum import Enum
-
-from pydantic import BaseModel, Field
-
 import uuid
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class ReviewStatus(str, Enum):
@@ -33,3 +32,36 @@ class ReviewItem(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc)
     )
     resolved_at: datetime | None = Field(default=None)
+
+    # Workstream 2 Governance Attributes
+    reviewer_id: str | None = Field(
+        default=None,
+        description="Explicit identifier of the human teacher reviewer who resolved this item.",
+    )
+    approved_content_hash: str | None = Field(
+        default=None,
+        description="SHA-256 hash of the exact approved pattern summary snapshot at time of approval.",
+    )
+
+    @model_validator(mode="after")
+    def validate_resolution_metadata(self) -> "ReviewItem":
+        """Ensure human authority and content snapshot hash are recorded on acceptance."""
+        if self.status == ReviewStatus.ACCEPTED:
+            if not self.reviewer_id or not self.reviewer_id.strip():
+                raise ValueError(
+                    "Review resolution to 'accepted' requires an explicit human reviewer_id."
+                )
+            if not self.approved_content_hash or not self.approved_content_hash.strip():
+                raise ValueError(
+                    "Review resolution to 'accepted' requires an approved_content_hash snapshot."
+                )
+            if self.resolved_at is None:
+                self.resolved_at = datetime.now(timezone.utc)
+        elif self.status in (ReviewStatus.REJECTED, ReviewStatus.NEEDS_CONTEXT):
+            if not self.reviewer_id or not self.reviewer_id.strip():
+                raise ValueError(
+                    f"Review resolution to '{self.status.value}' requires an explicit human reviewer_id."
+                )
+            if self.resolved_at is None:
+                self.resolved_at = datetime.now(timezone.utc)
+        return self

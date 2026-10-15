@@ -140,6 +140,126 @@ class TestEvidence:
         e = self._make_evidence(term=3)
         assert isinstance(e.term, int)
 
+    def test_reject_conflicting_comparison_authorized_aliases(self):
+        """Conflicting comparison-authorization aliases must be rejected; explicit false never overridden by true."""
+        # Conflicting aliases: comparison_authorized=True, comparable=False
+        with pytest.raises(ValueError, match="Conflicting comparison-authorization aliases"):
+            self._make_evidence(
+                content={
+                    "score": 15,
+                    "max_score": 20,
+                    "comparison_authorized": True,
+                    "comparable": False,
+                }
+            )
+
+        # Conflicting aliases: comparison_authorized=False, is_comparable=True
+        with pytest.raises(ValueError, match="Conflicting comparison-authorization aliases"):
+            self._make_evidence(
+                content={
+                    "score": 15,
+                    "max_score": 20,
+                    "comparison_authorized": False,
+                    "is_comparable": True,
+                }
+            )
+
+        # Non-conflicting false alias must result in comparison_authorized=False
+        e_false = self._make_evidence(
+            content={
+                "score": 15,
+                "max_score": 20,
+                "comparison_authorized": False,
+            }
+        )
+        assert e_false.comparison_authorized is False
+
+    def test_reject_booleans_and_non_numerics_in_marks_and_fluency(self):
+        """Booleans and non-numeric values must be rejected in marks and fluency fields."""
+        # Booleans in marks
+        with pytest.raises(ValueError, match="'score' must be a numeric value, not boolean or non-numeric"):
+            self._make_evidence(content={"score": True, "max_score": 20})
+
+        with pytest.raises(ValueError, match="'max_score' must be a numeric value, not boolean or non-numeric"):
+            self._make_evidence(content={"score": 15, "max_score": False})
+
+        # Non-numeric in marks
+        with pytest.raises(ValueError, match="'score' must be a numeric value"):
+            self._make_evidence(content={"score": "15", "max_score": 20})
+
+        # Booleans in fluency
+        with pytest.raises(ValueError, match="Fluency 'value' must be a numeric value, not boolean or non-numeric"):
+            self._make_evidence(content={"value": True, "unit": "cwpm"})
+
+        # Non-numeric in fluency
+        with pytest.raises(ValueError, match="Fluency 'value' must be a numeric value"):
+            self._make_evidence(content={"value": "fast", "unit": "cwpm"})
+
+        # Valid fluency
+        e_fluency = self._make_evidence(content={"value": 45.5, "unit": "cwpm"})
+        assert e_fluency.is_fluency is True
+
+    def test_treat_null_outcome_fields_as_absent(self):
+        """Treat null outcome fields as absent when checking contradictions."""
+        # Missing assessment status with explicit null score/level/value fields must not raise contradiction
+        e_missing = self._make_evidence(
+            content={
+                "status": "absent",
+                "reason": "Illness verified by parent",
+                "score": None,
+                "max_score": None,
+                "level": None,
+                "value": None,
+            }
+        )
+        assert e_missing.is_missing_outcome is True
+        assert e_missing.content["score"] is None
+
+        # Result unavailable with null level
+        e_unavail = self._make_evidence(
+            content={
+                "status": "result_unavailable",
+                "reason": "Exam script misplaced",
+                "level": None,
+            }
+        )
+        assert e_unavail.is_missing_outcome is True
+
+    def test_rubric_scale_validation_targeted(self):
+        """Use complete rubric scale definition consistently in validation."""
+        # Unrecognized scale identifier
+        with pytest.raises(ValueError, match="Unrecognized rubric scale identifier"):
+            self._make_evidence(
+                content={
+                    "rubric": "Reading",
+                    "rubric_version": "v1.0",
+                    "scale": "unknown_scale_v99",
+                    "level": "Level 1",
+                }
+            )
+
+        # Invalid level against valid registered scale
+        with pytest.raises(ValueError, match="is invalid against defined scale"):
+            self._make_evidence(
+                content={
+                    "rubric": "Reading",
+                    "rubric_version": "v1.0",
+                    "scale": "cbc_4_level_v1",
+                    "level": "Invalid Tier",
+                }
+            )
+
+        # Valid registered scale
+        e_rubric = self._make_evidence(
+            content={
+                "rubric": "Reading",
+                "rubric_version": "v1.0",
+                "scale": "cbc_4_level_v1",
+                "level": "Meeting Expectation",
+            }
+        )
+        assert e_rubric.is_rubric is True
+
 
 class TestPattern:
     def test_create_pattern(self):
@@ -179,7 +299,12 @@ class TestReviewItem:
 
     def test_review_statuses(self):
         for status in ReviewStatus:
-            r = ReviewItem(pattern_id="pat-001", status=status)
+            kwargs = {"pattern_id": "pat-001", "status": status}
+            if status in (ReviewStatus.ACCEPTED, ReviewStatus.REJECTED, ReviewStatus.NEEDS_CONTEXT):
+                kwargs["reviewer_id"] = "teacher:mrs_ngcobo"
+            if status == ReviewStatus.ACCEPTED:
+                kwargs["approved_content_hash"] = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            r = ReviewItem(**kwargs)
             assert r.status == status
 
 

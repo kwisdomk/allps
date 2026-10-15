@@ -441,4 +441,283 @@ async def test_audit_storage_failure_honest_rollback(service, store):
     # Assert honest rollback: neither learner nor evidence exist
     assert not await store.learner_exists("LRN-AUD-CRASH")
     assert len(await store.get_evidence_for_learner("LRN-AUD-CRASH")) == 0
+
+
+@pytest.mark.asyncio
+async def test_sqlite_round_trip_and_replay_rich_marks_rubric_missing(service, store):
+    """Verify rich marks, rubric, and missing outcomes through SQLite round-trip and replay/idempotency."""
+    learner_id = "LRN-SQLITE-ROUNDTRIP"
+
+    # 1. Rich marks record
+    marks_content = {
+        "grade": "Grade 2",
+        "score": 15,
+        "max_score": 20,
+        "form": "Form A",
+        "form_version": "v1.0",
+        "language": "English",
+        "measured_skill": "addition",
+        "comparison_authorized": True,
+        "assessment_stage": "end_term",
+        "school_level": "lower_primary",
+    }
+    ev_marks = await service.record_evidence(
+        learner_id=learner_id,
+        evidence_type="assessment",
+        source_system="school_sis",
+        ingestion_method="api",
+        source_type="teacher",
+        source_reference="Mr. Banda",
+        academic_year=2025,
+        term=1,
+        subject="Mathematics",
+        content=marks_content,
+        observed_at="2025-03-20T10:00:00+00:00",
+        source_event_id="EV-RT-MARKS-01",
+    )
+    assert ev_marks.is_marks is True
+    assert ev_marks.comparison_authorized is True
+
+    # 2. Rubric record with versioned scale
+    rubric_content = {
+        "grade": "Grade 2",
+        "rubric": "Reading Rubric",
+        "rubric_version": "v1.0",
+        "scale": ["Below Expectation", "Approaching Expectation", "Meeting Expectation", "Exceeding Expectation"],
+        "level": "Meeting Expectation",
+        "measured_skill": "reading_fluency",
+        "comparison_authorized": True,
+    }
+    ev_rubric = await service.record_evidence(
+        learner_id=learner_id,
+        evidence_type="assessment",
+        source_system="school_sis",
+        ingestion_method="api",
+        source_type="teacher",
+        source_reference="Mrs. Achebe",
+        academic_year=2025,
+        term=1,
+        subject="English",
+        content=rubric_content,
+        observed_at="2025-03-21T10:00:00+00:00",
+        source_event_id="EV-RT-RUB-01",
+    )
+    assert ev_rubric.is_rubric is True
+
+    # 3. Missing outcome: result_unavailable
+    unavail_content = {
+        "grade": "Grade 2",
+        "status": "result_unavailable",
+        "reason": "Courier lost script",
+        "max_score": 50,
+    }
+    ev_unavail = await service.record_evidence(
+        learner_id=learner_id,
+        evidence_type="assessment",
+        source_system="school_sis",
+        ingestion_method="api",
+        source_type="teacher",
+        source_reference="Mr. Courier",
+        academic_year=2025,
+        term=1,
+        subject="Science",
+        content=unavail_content,
+        observed_at="2025-03-22T10:00:00+00:00",
+        source_event_id="EV-RT-UNAVAIL-01",
+    )
+    assert ev_unavail.is_missing_outcome is True
+    assert ev_unavail.content["status"] == "result_unavailable"
+
+    # 4. Missing outcome: assessment_not_administered
+    notadmin_content = {
+        "grade": "Grade 2",
+        "status": "assessment_not_administered",
+        "reason": "School flood cancellation",
+        "max_score": 50,
+    }
+    ev_notadmin = await service.record_evidence(
+        learner_id=learner_id,
+        evidence_type="assessment",
+        source_system="school_sis",
+        ingestion_method="api",
+        source_type="teacher",
+        source_reference="Principal",
+        academic_year=2025,
+        term=1,
+        subject="Social Studies",
+        content=notadmin_content,
+        observed_at="2025-03-23T10:00:00+00:00",
+        source_event_id="EV-RT-NOTADMIN-01",
+    )
+    assert ev_notadmin.is_missing_outcome is True
+    assert ev_notadmin.content["status"] == "assessment_not_administered"
+
+    # 5. SQLite Store Round-Trip Verification
+    all_stored = await store.get_evidence_for_learner(learner_id)
+    assert len(all_stored) == 4
+
+    stored_marks = [e for e in all_stored if e.source_event_id == "EV-RT-MARKS-01"][0]
+    assert stored_marks.content == marks_content
+    assert stored_marks.assessment_stage == "end_term"
+    assert stored_marks.school_level == "lower_primary"
+    assert stored_marks.comparison_authorized is True
+
+    stored_rubric = [e for e in all_stored if e.source_event_id == "EV-RT-RUB-01"][0]
+    assert list(stored_rubric.content["scale"]) == rubric_content["scale"]
+    assert stored_rubric.model_dump()["content"]["scale"] == rubric_content["scale"]
+    assert stored_rubric.content["level"] == "Meeting Expectation"
+
+    stored_unavail = [e for e in all_stored if e.source_event_id == "EV-RT-UNAVAIL-01"][0]
+    assert stored_unavail.content["status"] == "result_unavailable"
+    assert stored_unavail.content["reason"] == "Courier lost script"
+
+    stored_notadmin = [e for e in all_stored if e.source_event_id == "EV-RT-NOTADMIN-01"][0]
+    assert stored_notadmin.content["status"] == "assessment_not_administered"
+    assert stored_notadmin.content["reason"] == "School flood cancellation"
+
+    # 6. Replay Idempotency Verification
+    replay_marks = await service.record_evidence(
+        learner_id=learner_id,
+        evidence_type="assessment",
+        source_system="school_sis",
+        ingestion_method="api",
+        source_type="teacher",
+        source_reference="Mr. Banda",
+        academic_year=2025,
+        term=1,
+        subject="Mathematics",
+        content=marks_content,
+        observed_at="2025-03-20T10:00:00+00:00",
+        source_event_id="EV-RT-MARKS-01",
+    )
+    assert replay_marks.evidence_id == ev_marks.evidence_id
+
+    # 7. Conflict Detection on Changed Content
+    conflict_marks_content = dict(marks_content)
+    conflict_marks_content["score"] = 18
+    with pytest.raises(ValueError, match="Conflict: event EV-RT-MARKS-01 already exists with different content"):
+        await service.record_evidence(
+            learner_id=learner_id,
+            evidence_type="assessment",
+            source_system="school_sis",
+            ingestion_method="api",
+            source_type="teacher",
+            source_reference="Mr. Banda",
+            academic_year=2025,
+            term=1,
+            subject="Mathematics",
+            content=conflict_marks_content,
+            observed_at="2025-03-20T10:00:00+00:00",
+            source_event_id="EV-RT-MARKS-01",
+        )
+
+
+@pytest.mark.asyncio
+async def test_sqlite_round_trip_and_conflict_handling_workstream_1_defects(service, store):
+    """Targeted regression test verifying fluency round-trip, null outcome tolerance, and conflict detection."""
+    learner_id = "LRN-TARGET-RT"
+
+    # 1. Fluency assessment round-trip with stage
+    fluency_content = {
+        "grade": "Grade 2",
+        "value": 45.0,
+        "unit": "cwpm",
+        "form": "Oral Fluency Form A",
+        "form_version": "v1.0",
+        "language": "English",
+        "measured_skill": "oral_reading_fluency",
+        "comparison_authorized": True,
+        "assessment_stage": "opener",
+    }
+    ev_fl = await service.record_evidence(
+        learner_id=learner_id,
+        evidence_type="assessment",
+        source_system="school_sis",
+        ingestion_method="api",
+        source_type="teacher",
+        source_reference="Mrs. Achebe",
+        academic_year=2025,
+        term=1,
+        subject="English",
+        content=fluency_content,
+        observed_at="2025-01-15T09:00:00+00:00",
+        source_event_id="EV-FL-01",
+    )
+    assert ev_fl.is_fluency is True
+    assert ev_fl.assessment_stage == "opener"
+
+    # 2. Missing outcome with explicit null outcome fields tolerated
+    missing_content = {
+        "status": "absent",
+        "reason": "Family bereavement",
+        "score": None,
+        "max_score": None,
+        "level": None,
+        "value": None,
+    }
+    ev_miss = await service.record_evidence(
+        learner_id=learner_id,
+        evidence_type="assessment",
+        source_system="school_sis",
+        ingestion_method="api",
+        source_type="teacher",
+        source_reference="Mr. Banda",
+        academic_year=2025,
+        term=1,
+        subject="English",
+        content=missing_content,
+        observed_at="2025-01-20T09:00:00+00:00",
+        source_event_id="EV-MISS-01",
+    )
+    assert ev_miss.is_missing_outcome is True
+
+    # 3. SQLite Storage Roundtrip Verification
+    stored = await store.get_evidence_for_learner(learner_id)
+    assert len(stored) == 2
+    stored_fl = [e for e in stored if e.source_event_id == "EV-FL-01"][0]
+    assert stored_fl.is_fluency is True
+    assert stored_fl.assessment_stage == "opener"
+    assert stored_fl.content["value"] == 45.0
+    assert stored_fl.content["unit"] == "cwpm"
+
+    stored_miss = [e for e in stored if e.source_event_id == "EV-MISS-01"][0]
+    assert stored_miss.is_missing_outcome is True
+    assert stored_miss.content["status"] == "absent"
+
+    # 4. Idempotent replay
+    replay_fl = await service.record_evidence(
+        learner_id=learner_id,
+        evidence_type="assessment",
+        source_system="school_sis",
+        ingestion_method="api",
+        source_type="teacher",
+        source_reference="Mrs. Achebe",
+        academic_year=2025,
+        term=1,
+        subject="English",
+        content=fluency_content,
+        observed_at="2025-01-15T09:00:00+00:00",
+        source_event_id="EV-FL-01",
+    )
+    assert replay_fl.evidence_id == ev_fl.evidence_id
+
+    # 5. Conflict rejection on changed fluency value
+    conflict_fl_content = dict(fluency_content)
+    conflict_fl_content["value"] = 52.0
+    with pytest.raises(ValueError, match="Conflict: event EV-FL-01 already exists with different content"):
+        await service.record_evidence(
+            learner_id=learner_id,
+            evidence_type="assessment",
+            source_system="school_sis",
+            ingestion_method="api",
+            source_type="teacher",
+            source_reference="Mrs. Achebe",
+            academic_year=2025,
+            term=1,
+            subject="English",
+            content=conflict_fl_content,
+            observed_at="2025-01-15T09:00:00+00:00",
+            source_event_id="EV-FL-01",
+        )
+
     

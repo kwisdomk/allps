@@ -16,6 +16,7 @@ import pytest
 import pytest_asyncio
 
 from allps.mcp.server import (
+    analyse_longitudinal_pattern,
     get_learner_history,
     ingest_evidence,
     record_evidence,
@@ -24,6 +25,7 @@ from allps.mcp.server import (
 from allps.models import IngestionMethod, Learner
 from allps.services.evidence_service import EvidenceService
 from allps.storage.sqlite_store import SQLiteStore
+from data.synthetic.seed_data import seed_database
 
 
 @pytest_asyncio.fixture
@@ -216,6 +218,238 @@ class TestMCPToolsDirect:
         assert logs[0].input_summary["source_system"] == "csv_import"
         assert logs[0].input_summary["ingestion_method"] == "csv_import"
 
+    async def test_mcp_direct_rich_marks_rubric_and_missing(
+        self, mcp_service, store
+    ):
+        """Verify rich marks, rubric, and missing outcomes through direct MCP calls."""
+        learner_id = "LRN-MCP-RICH-01"
+
+        # 1. Ingest rich marks across 3 terms
+        scores = [10, 14, 18]
+        for t_idx, s in enumerate(scores, start=1):
+            await ingest_evidence(
+                learner_id=learner_id,
+                evidence_type="assessment",
+                source_system="school_sis",
+                ingestion_method="api",
+                source_type="teacher",
+                source_reference="Mr. Banda",
+                academic_year=2025,
+                term=t_idx,
+                subject="Mathematics",
+                content={
+                    "grade": "Grade 2",
+                    "score": s,
+                    "max_score": 20,
+                    "form": "Form A",
+                    "form_version": "v1.0",
+                    "language": "English",
+                    "measured_skill": "addition",
+                    "comparison_authorized": True,
+                },
+                observed_at=f"2025-{t_idx * 3:02d}-15T10:00:00+00:00",
+                source_event_id=f"MCP-MARK-{t_idx}",
+            )
+
+        # 2. Ingest rubric assessment
+        await ingest_evidence(
+            learner_id=learner_id,
+            evidence_type="assessment",
+            source_system="school_sis",
+            ingestion_method="api",
+            source_type="teacher",
+            source_reference="Mrs. Achebe",
+            academic_year=2025,
+            term=1,
+            subject="English",
+            content={
+                "grade": "Grade 2",
+                "rubric": "Reading Rubric",
+                "rubric_version": "v1.0",
+                "scale": ["Below Expectation", "Approaching Expectation", "Meeting Expectation", "Exceeding Expectation"],
+                "level": "Meeting Expectation",
+            },
+            observed_at="2025-03-20T10:00:00+00:00",
+            source_event_id="MCP-RUB-1",
+        )
+
+        # 3. Ingest missing outcome: result_unavailable
+        await ingest_evidence(
+            learner_id=learner_id,
+            evidence_type="assessment",
+            source_system="school_sis",
+            ingestion_method="api",
+            source_type="teacher",
+            source_reference="Mrs. Achebe",
+            academic_year=2025,
+            term=2,
+            subject="Science",
+            content={
+                "grade": "Grade 2",
+                "status": "result_unavailable",
+                "reason": "Damaged lab sheet",
+                "max_score": 30,
+            },
+            observed_at="2025-06-20T10:00:00+00:00",
+            source_event_id="MCP-UNAVAIL-1",
+        )
+
+        # 4. Ingest missing outcome: assessment_not_administered
+        await ingest_evidence(
+            learner_id=learner_id,
+            evidence_type="assessment",
+            source_system="school_sis",
+            ingestion_method="api",
+            source_type="teacher",
+            source_reference="Mrs. Achebe",
+            academic_year=2025,
+            term=3,
+            subject="Science",
+            content={
+                "grade": "Grade 2",
+                "status": "assessment_not_administered",
+                "reason": "School closure",
+                "max_score": 30,
+            },
+            observed_at="2025-09-20T10:00:00+00:00",
+            source_event_id="MCP-NOTADMIN-1",
+        )
+
+        # Retrieve history via MCP tool
+        hist = await get_learner_history(learner_id=learner_id)
+        assert hist["record_count"] == 6
+
+        # Check distinct missing statuses survived
+        unavail = [e for e in hist["evidence"] if e["source_event_id"] == "MCP-UNAVAIL-1"][0]
+        notadmin = [e for e in hist["evidence"] if e["source_event_id"] == "MCP-NOTADMIN-1"][0]
+        assert unavail["content"]["status"] == "result_unavailable"
+        assert notadmin["content"]["status"] == "assessment_not_administered"
+
+        # Check analysis tool
+        analysis_patterns = await analyse_longitudinal_pattern(
+            learner_id=learner_id,
+            subject="Mathematics",
+        )
+        assert len(analysis_patterns) >= 1
+        trend_p = [p for p in analysis_patterns if p["pattern_type"] == "trend"][0]
+        assert "Improving across-term trend" in trend_p["summary"]
+        assert "10/20 -> 14/20 -> 18/20" in trend_p["summary"]
+
+    async def test_mcp_direct_workstream_1_defects(self, mcp_service):
+        """Direct MCP tool calls verifying Workstream 1 contract defects."""
+        learner_id = "LRN-MCP-DEFECTS"
+
+        # 1. Reject conflicting comparison aliases via direct MCP call
+        with pytest.raises(ValueError, match="Conflicting comparison-authorization aliases"):
+            await ingest_evidence(
+                learner_id=learner_id,
+                evidence_type="assessment",
+                source_system="school_sis",
+                ingestion_method="api",
+                source_type="teacher",
+                source_reference="Teacher A",
+                academic_year=2025,
+                term=1,
+                content={
+                    "score": 15,
+                    "max_score": 20,
+                    "comparison_authorized": True,
+                    "comparable": False,
+                },
+                observed_at="2025-03-20T10:00:00+00:00",
+            )
+
+        # 2. Reject boolean score via direct MCP call
+        with pytest.raises(ValueError, match="'score' must be a numeric value, not boolean or non-numeric"):
+            await ingest_evidence(
+                learner_id=learner_id,
+                evidence_type="assessment",
+                source_system="school_sis",
+                ingestion_method="api",
+                source_type="teacher",
+                source_reference="Teacher A",
+                academic_year=2025,
+                term=1,
+                content={"score": True, "max_score": 20},
+                observed_at="2025-03-20T10:00:00+00:00",
+            )
+
+        # 3. Accept fluency payload via direct MCP call
+        ev_fl = await ingest_evidence(
+            learner_id=learner_id,
+            evidence_type="assessment",
+            source_system="school_sis",
+            ingestion_method="api",
+            source_type="teacher",
+            source_reference="Teacher A",
+            academic_year=2025,
+            term=1,
+            content={"value": 45.0, "unit": "cwpm"},
+            observed_at="2025-03-20T10:00:00+00:00",
+            source_event_id="MCP-FL-01",
+        )
+        assert ev_fl["content"]["value"] == 45.0
+        assert ev_fl["content"]["unit"] == "cwpm"
+
+        # 4. Accept missing outcome with null outcome fields via direct MCP call
+        ev_miss = await ingest_evidence(
+            learner_id=learner_id,
+            evidence_type="assessment",
+            source_system="school_sis",
+            ingestion_method="api",
+            source_type="teacher",
+            source_reference="Teacher A",
+            academic_year=2025,
+            term=1,
+            content={"status": "absent", "reason": "Medical appointment", "score": None, "level": None},
+            observed_at="2025-03-20T10:00:00+00:00",
+            source_event_id="MCP-MISS-01",
+        )
+        assert ev_miss["content"]["status"] == "absent"
+
+    async def test_analyse_pattern_on_seeded_learners(self, tmp_path):
+        """Verify analyse_longitudinal_pattern directly against full seeded dataset."""
+        db_path = str(tmp_path / "seeded_mcp_test.db")
+        await seed_database(db_path)
+        test_store = SQLiteStore(db_path)
+        await test_store.initialize()
+        srv = EvidenceService(test_store)
+        set_service(srv)
+        try:
+            # 1. Learner 001 (LRN-001): Declining maths trend across 3 terms
+            patterns_a = await analyse_longitudinal_pattern(
+                learner_id="LRN-001",
+                subject="Mathematics",
+            )
+            assert len(patterns_a) >= 1
+            trend_a = [p for p in patterns_a if p["pattern_type"] == "trend"][0]
+            assert "Declining across-term trend" in trend_a["summary"]
+            assert "82/100 -> 68/100 -> 51/100" in trend_a["summary"]
+
+            baseline_a = [p for p in patterns_a if p["pattern_type"] == "changed_from_baseline"][0]
+            assert "Drop of 31 marks from baseline" in baseline_a["summary"]
+
+            # 2. Learner 003 (LRN-003): Science subject stream has only 1 mark & 1 missing
+            patterns_c_sci = await analyse_longitudinal_pattern(
+                learner_id="LRN-003",
+                subject="Science",
+            )
+            # Fails 3-period trend threshold, returns no trends (or insufficient evidence)
+            trend_c = [p for p in patterns_c_sci if p["pattern_type"] == "trend"]
+            assert len(trend_c) == 0
+
+            # 3. Learner C: English subject stream has 3 terms (78 -> 81 -> 76, variable)
+            patterns_c_eng = await analyse_longitudinal_pattern(
+                learner_id="LRN-003",
+                subject="English",
+            )
+            trend_c_eng = [p for p in patterns_c_eng if p["pattern_type"] == "trend"][0]
+            assert "variable" in trend_c_eng["summary"]
+        finally:
+            set_service(None)
+            await test_store.close()
+
+
 
 # ── Protocol-level MCP smoke test ─────────────────────────────────
 
@@ -261,15 +495,20 @@ class TestMCPProtocol:
             async with ClientSession(*streams) as session:
                 await session.initialize()
 
-                # ── 1. Verify exactly 2 tools registered ──
+                # ── 1. Verify tools registered ──
                 tools_result = await session.list_tools()
                 tool_names = sorted(
                     t.name for t in tools_result.tools
                 )
                 assert tool_names == [
+                    "analyse_longitudinal_pattern",
+                    "flag_pattern_for_review",
                     "get_learner_history",
+                    "get_pending_reviews",
+                    "get_surfaced_profile",
                     "ingest_evidence",
-                ], f"Expected exactly ['get_learner_history', 'ingest_evidence'], got: {tool_names}"
+                    "resolve_teacher_review",
+                ], f"Expected registered tools, got: {tool_names}"
 
                 # ── 2. Call ingest_evidence via MCP protocol ──
                 record_result = await session.call_tool(
@@ -321,6 +560,19 @@ class TestMCPProtocol:
                     ev_record["source_reference"]
                     == "Protocol Test Teacher"
                 )
+
+                # ── 4. Call analyse_longitudinal_pattern via MCP protocol ──
+                analysis_result = await session.call_tool(
+                    "analyse_longitudinal_pattern",
+                    arguments={"learner_id": "PROTO-001"},
+                )
+                assert analysis_result.content
+                patterns_data = [
+                    json.loads(c.text) for c in analysis_result.content
+                ]
+                assert isinstance(patterns_data, list)
+                assert len(patterns_data) >= 1
+                assert patterns_data[0]["learner_id"] == "PROTO-001"
 
     async def test_mcp_protocol_idempotency_retry_and_conflict(self, tmp_path):
         """Test full-observation idempotency and conflict through real MCP wire protocol."""
@@ -393,6 +645,235 @@ class TestMCPProtocol:
                 res_conflict = await session.call_tool("ingest_evidence", arguments=conflict_args)
                 assert res_conflict.is_error
                 assert res_conflict.content
+
+    async def test_mcp_protocol_wire_rich_marks_rubric_and_missing_analysis(self, tmp_path):
+        """Test full wire-protocol lifecycle for rich marks, rubrics, and distinct missing outcomes."""
+        db_file = tmp_path / "protocol_rich.db"
+        store = SQLiteStore(str(db_file))
+        await store.initialize()
+        await store.add_learner(
+            Learner(
+                learner_id="PROTO-RICH-01",
+                display_name="Protocol Rich Learner",
+            )
+        )
+        await store.close()
+
+        env = os.environ.copy()
+        env["ALLPS_DB_PATH"] = str(db_file)
+        src_dir = str(Path(__file__).parent.parent / "src")
+        env["PYTHONPATH"] = (
+            src_dir + os.pathsep + env.get("PYTHONPATH", "")
+        )
+
+        from mcp import ClientSession
+        from mcp.client.stdio import StdioServerParameters, stdio_client
+
+        server_params = StdioServerParameters(
+            command=sys.executable,
+            args=["-m", "allps.mcp.server"],
+            env=env,
+        )
+
+        async with stdio_client(server_params) as streams:
+            async with ClientSession(*streams) as session:
+                await session.initialize()
+
+                # 1. Ingest rich marks across 3 distinct terms
+                for t_idx, score in enumerate([10, 15, 20], start=1):
+                    res = await session.call_tool(
+                        "ingest_evidence",
+                        arguments={
+                            "learner_id": "PROTO-RICH-01",
+                            "evidence_type": "assessment",
+                            "source_system": "school_sis",
+                            "ingestion_method": "api",
+                            "source_type": "teacher",
+                            "source_reference": "Mr. Banda",
+                            "academic_year": 2025,
+                            "term": t_idx,
+                            "subject": "Mathematics",
+                            "content": {
+                                "grade": "Grade 2",
+                                "score": score,
+                                "max_score": 20,
+                                "form": "Form A",
+                                "form_version": "v1.0",
+                                "language": "English",
+                                "measured_skill": "addition",
+                                "comparison_authorized": True,
+                            },
+                            "observed_at": f"2025-{t_idx * 3:02d}-15T10:00:00+00:00",
+                            "source_event_id": f"PROTO-MARK-{t_idx}",
+                        },
+                    )
+                    assert not res.is_error
+
+                # 2. Ingest rubric assessment with defined scale
+                res_rub = await session.call_tool(
+                    "ingest_evidence",
+                    arguments={
+                        "learner_id": "PROTO-RICH-01",
+                        "evidence_type": "assessment",
+                        "source_system": "school_sis",
+                        "ingestion_method": "api",
+                        "source_type": "teacher",
+                        "source_reference": "Mrs. Achebe",
+                        "academic_year": 2025,
+                        "term": 1,
+                        "subject": "English",
+                        "content": {
+                            "grade": "Grade 2",
+                            "rubric": "Reading Rubric",
+                            "rubric_version": "v1.0",
+                            "scale": ["Below Expectation", "Approaching Expectation", "Meeting Expectation", "Exceeding Expectation"],
+                            "level": "Meeting Expectation",
+                        },
+                        "observed_at": "2025-03-20T10:00:00+00:00",
+                        "source_event_id": "PROTO-RUB-1",
+                    },
+                )
+                assert not res_rub.is_error
+
+                # 3. Ingest missing outcome: result_unavailable
+                res_unavail = await session.call_tool(
+                    "ingest_evidence",
+                    arguments={
+                        "learner_id": "PROTO-RICH-01",
+                        "evidence_type": "assessment",
+                        "source_system": "school_sis",
+                        "ingestion_method": "api",
+                        "source_type": "teacher",
+                        "source_reference": "Teacher A",
+                        "academic_year": 2025,
+                        "term": 2,
+                        "subject": "Science",
+                        "content": {
+                            "grade": "Grade 2",
+                            "status": "result_unavailable",
+                            "reason": "Script damaged by water",
+                            "max_score": 25,
+                        },
+                        "observed_at": "2025-06-20T10:00:00+00:00",
+                        "source_event_id": "PROTO-UNAVAIL-1",
+                    },
+                )
+                assert not res_unavail.is_error
+
+                # 4. Ingest missing outcome: assessment_not_administered
+                res_notadmin = await session.call_tool(
+                    "ingest_evidence",
+                    arguments={
+                        "learner_id": "PROTO-RICH-01",
+                        "evidence_type": "assessment",
+                        "source_system": "school_sis",
+                        "ingestion_method": "api",
+                        "source_type": "teacher",
+                        "source_reference": "Teacher A",
+                        "academic_year": 2025,
+                        "term": 3,
+                        "subject": "Science",
+                        "content": {
+                            "grade": "Grade 2",
+                            "status": "assessment_not_administered",
+                            "reason": "School closure",
+                            "max_score": 25,
+                        },
+                        "observed_at": "2025-09-20T10:00:00+00:00",
+                        "source_event_id": "PROTO-NOTADMIN-1",
+                    },
+                )
+                assert not res_notadmin.is_error
+
+                # 5. Retrieve learner history via wire protocol
+                hist_res = await session.call_tool(
+                    "get_learner_history",
+                    arguments={"learner_id": "PROTO-RICH-01"},
+                )
+                assert not hist_res.is_error
+                hist_data = json.loads(hist_res.content[0].text)
+                assert hist_data["record_count"] == 6
+
+                # 6. Analyse longitudinal pattern over wire protocol
+                analysis_res = await session.call_tool(
+                    "analyse_longitudinal_pattern",
+                    arguments={"learner_id": "PROTO-RICH-01", "subject": "Mathematics"},
+                )
+                assert not analysis_res.is_error
+                patterns_data = [json.loads(c.text) for c in analysis_res.content]
+                assert len(patterns_data) >= 1
+                trend_pat = [p for p in patterns_data if p["pattern_type"] == "trend"][0]
+                assert "Improving across-term trend" in trend_pat["summary"]
+                assert "10/20 -> 15/20 -> 20/20" in trend_pat["summary"]
+                assert len(trend_pat["supporting_evidence"]) == 3
+
+                # 7. Wire protocol call with boolean score is rejected
+                res_bool = await session.call_tool(
+                    "ingest_evidence",
+                    arguments={
+                        "learner_id": "PROTO-RICH-01",
+                        "evidence_type": "assessment",
+                        "source_system": "school_sis",
+                        "ingestion_method": "api",
+                        "source_type": "teacher",
+                        "source_reference": "Teacher A",
+                        "academic_year": 2025,
+                        "term": 1,
+                        "content": {"score": True, "max_score": 20},
+                        "observed_at": "2025-01-20T10:00:00+00:00",
+                    },
+                )
+                assert res_bool.is_error
+
+                # 8. Wire protocol call with conflicting comparison aliases is rejected
+                res_alias = await session.call_tool(
+                    "ingest_evidence",
+                    arguments={
+                        "learner_id": "PROTO-RICH-01",
+                        "evidence_type": "assessment",
+                        "source_system": "school_sis",
+                        "ingestion_method": "api",
+                        "source_type": "teacher",
+                        "source_reference": "Teacher A",
+                        "academic_year": 2025,
+                        "term": 1,
+                        "content": {
+                            "score": 15,
+                            "max_score": 20,
+                            "comparison_authorized": True,
+                            "comparable": False,
+                        },
+                        "observed_at": "2025-01-20T10:00:00+00:00",
+                    },
+                )
+                assert res_alias.is_error
+
+                # 9. Wire protocol call with valid fluency payload succeeds
+                res_fl = await session.call_tool(
+                    "ingest_evidence",
+                    arguments={
+                        "learner_id": "PROTO-RICH-01",
+                        "evidence_type": "assessment",
+                        "source_system": "school_sis",
+                        "ingestion_method": "api",
+                        "source_type": "teacher",
+                        "source_reference": "Teacher A",
+                        "academic_year": 2025,
+                        "term": 1,
+                        "content": {
+                            "value": 45.0,
+                            "unit": "cwpm",
+                            "form": "Oral Form 1",
+                            "form_version": "v1.0",
+                            "language": "English",
+                            "measured_skill": "fluency",
+                            "comparison_authorized": True,
+                        },
+                        "observed_at": "2025-01-20T10:00:00+00:00",
+                    },
+                )
+                assert not res_fl.is_error
+
 
 
 
