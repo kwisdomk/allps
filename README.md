@@ -3,7 +3,7 @@
 > **Challenge Track**: Education: The Long View — African Agentic AI Design Challenge  
 > *"Record evidence without reducing learners to labels."*  
 > **Repository**: [https://github.com/kwisdomk/ALLPS](https://github.com/kwisdomk/ALLPS)  
-> **Video Demonstration**: [YouTube Walkthrough (2m 45s)](https://youtu.be/0VsipM2FLGk)  
+> **Video Demonstration**: [YouTube Walkthrough (2m 45s)](https://youtu.be/MXhL38vzq-s)  
 > **Public Portal**: [https://allps.kwaix.dev](https://allps.kwaix.dev)  
 > **License**: [MIT License](LICENSE) (OSI-Approved)
 
@@ -332,7 +332,7 @@ ALLPS ships with a realistic synthetic demonstration dataset modeled on the Keny
 
 ## 15. Project Documentation & Verification Links
 
-- [Video Demonstration (YouTube)](https://youtu.be/0VsipM2FLGk) — Official 2m 45s challenge walkthrough demonstrating local AI synthesis, FastMCP stdio wire protocol, and sovereign human review gate.
+- [Video Demonstration (YouTube)](https://youtu.be/MXhL38vzq-s) — Official 2m 45s challenge walkthrough demonstrating local AI synthesis, FastMCP stdio wire protocol, and sovereign human review gate.
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Comprehensive system architecture, component breakdown, and tool call boundaries.
 - [EVALS.md](EVALS.md) — Nine real evaluation tasks, observed pass/fail outcomes, the unresolved CUDA allocation failure, and development repairs.
 - [DEVELOPMENT_RESEARCH.md](DEVELOPMENT_RESEARCH.md) — Technical research record, African classroom constraints, architectural experiments, and limitations.
