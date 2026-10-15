@@ -2,6 +2,7 @@
 
 > **Challenge Track**: Education: The Long View — African Agentic AI Design Challenge  
 > **Repository**: [https://github.com/kwisdomk/ALLPS](https://github.com/kwisdomk/ALLPS)  
+> **Video Demonstration**: [https://youtu.be/0VsipM2FLGk](https://youtu.be/0VsipM2FLGk)  
 > **Target Audience**: Challenge Judges & Technical Review Panel
 
 ---
