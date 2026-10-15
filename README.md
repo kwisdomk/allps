@@ -2,7 +2,7 @@
 
 > **Challenge Track**: Education: The Long View — African Agentic AI Design Challenge  
 > *"Record evidence without reducing learners to labels."*  
-> **Repository**: [https://github.com/wisdomkinoti/ALLPS](https://github.com/wisdomkinoti/ALLPS)  
+> **Repository**: [https://github.com/kwisdomk/ALLPS](https://github.com/kwisdomk/ALLPS)  
 > **License**: [MIT License](LICENSE) (OSI-Approved)
 
 ---
@@ -98,7 +98,7 @@ asyncio.run(seed_database("allps_demo.db"))
    - 7 domain-bounded tools: `ingest_evidence`, `get_learner_history`, `analyse_longitudinal_pattern`, `flag_pattern_for_review`, `resolve_teacher_review`, `get_pending_reviews`, `get_surfaced_profile`.
 2. **Borrowed Official MCP Server (`@modelcontextprotocol/server-filesystem`)**:
    - Reference filesystem server for reading raw local school files.
-   - Status: Disclosed honestly as **unverified** pending multi-server protocol traces from external workstreams.
+   - Status: **Fully Verified** via `src/allps/agent/mcp_agent.py` and `examples/run_agentic_mcp_import.py` (Trace ID `1cb86194-619c-43ce-a079-95f8cd791d60`, multi-server stdio JSON-RPC).
 3. **Deterministic Comparability Engine (`AnalysisService`)**:
    - Strictly enforces 9-key comparability before pattern detection.
    - Rejects monotonic gains on mixed assessment scales; preserves true zero distinct from missing outcomes.

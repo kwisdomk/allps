@@ -1,7 +1,7 @@
 # ALLPS — Official Submission Materials
 
 > **Challenge Track**: Education: The Long View — African Agentic AI Design Challenge  
-> **Repository**: [https://github.com/wisdomkinoti/ALLPS](https://github.com/wisdomkinoti/ALLPS)  
+> **Repository**: [https://github.com/kwisdomk/ALLPS](https://github.com/kwisdomk/ALLPS)  
 > **Target Audience**: Challenge Judges & Technical Review Panel
 
 ---

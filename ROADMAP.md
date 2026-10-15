@@ -19,8 +19,7 @@
 | **Reviewer Identity & Approved Snapshot Hashes** | Governance | **Implemented & Verified** | Reviewer identity tracking, non-agent approval guardrails, SHA-256 hash |
 | **Prohibited Diagnostic Label Screening** | Safety Policies | **Implemented & Verified** | Screening rejecting stigmatizing labels (`"slow learner"`, `"ADHD"`) in `allps.policies` |
 | **Bounded Agent Orchestration** | Agentic AI | **Implemented & Verified** | `src/allps/agent/`, 21 tests in `test_agent_orchestration.py` |
-| **Multi-Outcome E2E Demo Script** | Demonstration | **Implemented & Verified** | `examples/demo_e2e.py`, automated tests in `tests/test_demo_e2e.py` |
-| **Teacher Web Interface** | User Interface | **Upcoming (Milestone 04)** | Local FastAPI + HTML/CSS/JS dashboard for review inbox |
+| **Teacher Web Interface** | User Interface | **Implemented & Verified** | Local FastAPI + HTML/CSS/JS dashboard; 14 tests in `test_web_api.py`, browser verified |
 
 ---
 
@@ -44,5 +43,12 @@
   4. **Safe Abstention**: Insufficient / damaged science assessment data -> deterministic engine -> clean AI abstention -> zero review items generated.
   5. **Policy Rejection**: Intentionally invalid draft containing indirect peer ranking (*"falling behind peers"*, *"below grade average"*), deficit labels, and causal links -> rejected by OutputValidator -> gated from database.
 
-### Milestone 4: Teacher Web Interface (Workstream 4) — Upcoming
+### Milestone 4: Teacher Web Interface (Workstream 4) — Completed
 * **Objective**: Lightweight local educator review dashboard and longitudinal learner timeline viewer.
+* **Status**: Implemented & Verified with 14 tests in `tests/test_web_api.py` and full browser workflow verification in `tests/exercise_browser_workflow.py` and `tests/verify_live_teacher_workflow.py`.
+* **Deliverables**:
+  - FastAPI web server (`src/allps/web/app.py`, `src/allps/web/routes.py`).
+  - Zero-dependency Vanilla JS Single Page Application (`src/allps/web/static/index.html`).
+  - Full candidate brief persistence across page reload (INT-01).
+  - Sovereign human teacher review adjudication and SHA-256 snapshotting.
+  - Overall codebase status: 252 passing tests across 14 test suites.

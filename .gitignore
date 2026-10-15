@@ -38,3 +38,5 @@ datasets/
 allps_full_codebase.txt
 allps_code_bundle.txt
 allps_*.txt
+temp_audio/
+*.mp4

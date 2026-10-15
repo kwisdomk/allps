@@ -1,7 +1,7 @@
 # ALLPS — Evaluation Framework & Technical Research Evaluations
 
 > **Track**: Education: The Long View — African Agentic AI Design Challenge  
-> **Repository**: [https://github.com/wisdomkinoti/ALLPS](https://github.com/wisdomkinoti/ALLPS)  
+> **Repository**: [https://github.com/kwisdomk/ALLPS](https://github.com/kwisdomk/ALLPS)  
 > **Target**: `master`  
 > **Status**: Official Evaluation Record (252/252 automated tests passing, 100% pass rate)
 
