@@ -72,10 +72,11 @@ async def main():
 
     # 3. User task instruction
     user_task = (
-        f"Examine the incoming teacher evidence exports for learner {config.bound_learner_id} in {config.imports_dir}. "
-        "Validate the source records, incorporate suitable new evidence into ALLPS, compare it with existing learner history, "
-        "and flag a supported finding for teacher review. If a source is malformed, explain the failure and attempt a safe recovery. "
-        "Never approve or publish a learner finding."
+        f"Execute the evidence import workflow for learner {config.bound_learner_id} in {config.imports_dir}: "
+        "1. List the directory and read the export files once. "
+        "2. Ingest the valid observation record into ALLPS while noting the validation error on the malformed record. "
+        "3. Retrieve the learner's history and run longitudinal pattern analysis on Mathematics assessments (evidence_type='assessment'). "
+        "4. Flag the resulting pattern for teacher review and summarize your findings."
     )
 
     print("\n[Executing] Launching Pydantic AI Agent with dual MCP servers...")

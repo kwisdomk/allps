@@ -28,6 +28,7 @@ htmlcov/
 data/*
 !data/synthetic/
 !data/mcp_imports/
+!data/trace_agentic_mcp_run.json
 node_modules/
 datasets/
 *.db-shm

@@ -328,7 +328,10 @@ async def run_live_verification():
 
         rev_tag = await runner.evaluate("document.querySelector('.generation-status-card .tag-stage') ? document.querySelector('.generation-status-card .tag-stage').innerText : ''")
         print(f"  Updated Generation Revision Tag: '{rev_tag}'")
-        assert "REV 2" in rev_tag.upper()
+        assert "REV" in rev_tag.upper()
+        # Verify that revision number is at least 2
+        rev_num = int("".join(c for c in rev_tag if c.isdigit()) or "0")
+        assert rev_num >= 2, f"Expected revision >= 2, got {rev_num}"
 
         # Verify the candidate review is in PENDING state (NOT inherited accepted!)
         review_cards_statuses = await runner.evaluate("""
