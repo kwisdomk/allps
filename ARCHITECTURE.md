@@ -273,4 +273,83 @@ Workstream 3 introduces a modular **Runtime Decision Layer** (`allps.runtime`) t
 
 ### 8.4. Request-Scoped Provenance & Website Integration Handoff
 - **Provenance Isolation**: `GenerationResult` subclasses `str` to carry immutable per-generation metadata (`used_fallback`, `fallback_error`, `runtime_method`). Overlapping or concurrent asynchronous requests on a shared client do not overwrite each other's audit records or return metadata. `AgentOrchestrator.orchestrate_handover` also supports request-scoped client injection via the optional `inference_client` parameter.
-- **Teacher Review Authority Boundary**: `ReviewService.resolve_teacher_review` currently screens caller identifiers against known autonomous bot patterns (`is_autonomous_agent`), but does not perform cryptographic human authentication. It is exposed over MCP without session tokens. The website application must implement server-side authenticated teacher sessions (JWT/session cookie) and invoke `ReviewService.resolve_teacher_review` directly from trusted backend routes, preventing autonomous agents from accessing the approval endpoint.
+---
+
+## 9. Teacher Workspace & Web Architecture
+
+Workstream 4 establishes an educator-facing web application that connects directly to ALLPS services without bypassing governance or analysis boundaries.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Browser (Modern Desktop)                     │
+│  Vanilla JavaScript SPA (ES2022) + Apple HIG CSS3 (No Next.js)  │
+│  • Evidence Timeline & Citation Drawer                          │
+│  • Idempotent Teacher Observation Form                          │
+│  • Candidate Review & Adjudication                              │
+│  • Sovereign Approved Handover Profile                          │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │ HTTP / JSON (Restricted CORS)
+┌────────────────────────────────▼────────────────────────────────┐
+│                   Thin Web API (FastAPI)                        │
+│  [allps.web.app] & [allps.web.routes]                           │
+│  • Routes: /api/learners, /evidence, /generate, /reviews,       │
+│    /brief, /handover, /config                                   │
+│  • Explicit allowed origins (SEC-02)                            │
+│  • Server-configured reviewer injection (demo authority)        │
+└──────────────┬──────────────────┬──────────────┬────────────────┘
+               │                  │              │
+┌──────────────▼──────┐    ┌──────▼───────┐    ┌─▼────────────────┐
+│  EvidenceService    │    │ ReviewService│    │AgentOrchestrator │
+└──────────────┬──────┘    └──────┬───────┘    └─┬────────────────┘
+               │                  │              │
+┌──────────────▼──────────────────▼──────────────▼────────────────┐
+│                       SQLiteStore                               │
+│  • learners, evidence, patterns, review_items, audit_log        │
+│  • candidate_briefs (INT-01 full brief persistence across reload)│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 9.1. Frontend Technology Stack (Real Stack)
+- **Framework & Runtime**: Pure Vanilla ECMAScript (ES2022) Single Page Application served statically via FastAPI's `StaticFiles`.
+- **Zero Node/Bundler Dependency**: **The frontend does NOT use Next.js, React, Vue, Webpack, or Node.js.** There are no `node_modules` or JavaScript build steps required. The application loads natively via `<script type="module" src="/static/app.js">`.
+- **Styling**: Native CSS3 adhering strictly to Apple Human Interface Guidelines (HIG):
+  - Canvas: `#f5f5f7`
+  - Cards & Surfaces: `#ffffff`
+  - Accents: Apple Blue (`#0071e3`), Green (`#34c759`), Orange (`#ff9500`), Red (`#ff3b30`)
+  - Typography: `-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif`
+  - Two-column compartmentalized layout separating learner contextual metrics from the active task view.
+
+### 9.2. Candidate Handover Persistence (INT-01)
+To ensure candidate handover briefs survive browser reloads without regressing to deterministic summaries:
+- **`candidate_briefs` Schema**:
+  ```sql
+  CREATE TABLE candidate_briefs (
+      brief_id TEXT PRIMARY KEY,
+      learner_id TEXT NOT NULL,
+      pattern_id TEXT,
+      review_id TEXT,
+      generation_revision INTEGER NOT NULL DEFAULT 1,
+      status TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      findings TEXT NOT NULL,       -- JSON serialized
+      contradictions TEXT,          -- JSON serialized
+      limitations TEXT,             -- JSON serialized
+      abstention_reason TEXT,
+      runtime_method TEXT NOT NULL,
+      generated_at TEXT NOT NULL,
+      FOREIGN KEY (learner_id) REFERENCES learners(learner_id)
+  );
+  ```
+- **Lifecycle & Revisioning**:
+  - `AgentOrchestrator.orchestrate_handover` increments `generation_revision = count + 1` for the target learner and commits the full structured brief atomically.
+  - The frontend queries `GET /api/learners/{id}/brief` on workspace load to faithfully re-hydrate the synthesis view, findings, and citation links.
+  - Each review item returned by `GET /api/learners/{id}/reviews` is enriched with its associated `candidate_brief` and `generation_revision`.
+
+### 9.3. Security & Trust Boundaries (SEC-02)
+- **Restricted CORS Policy**:
+  - Replaced credentialed wildcard CORS (`allow_origins=["*"]`) with an explicit whitelist (`http://localhost:8000`, `http://127.0.0.1:8000`, `http://localhost:3000`, `http://127.0.0.1:3000`).
+  - Allowed methods are strictly constrained to `["GET", "POST", "OPTIONS"]`.
+- **Prototype Reviewer Identity Limitation**:
+  - The prototype server injects a configured reviewer identity (e.g. `--reviewer TCH-BANDA`) to enable human adjudication demonstration.
+  - **Explicit Trust Notice**: This configured string is NOT authenticated identity. The frontend status pill explicitly alerts users that the reviewer identity is a demonstration configuration and not a cryptographic credential.
+

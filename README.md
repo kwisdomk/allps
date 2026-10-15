@@ -81,14 +81,13 @@ Phase 1 stores and retrieves dated learner evidence with source information. Pat
 
 ### What Remains Unfinished (Future Work)
 
-- **Teacher Identity Authentication**: `ReviewService` prevents automated bots from approving patterns through identifier screening and decouples agent orchestration from adjudication. However, `reviewer_id` is currently an unauthenticated string parameter without cryptographic proof or SSO session tokens. A production deployment requires cryptographic teacher authentication.
-- **Dedicated Educator UI**: Web dashboards, mobile teacher approval interfaces, and visual timeline exports are planned for future frontend milestones.
+- **Cryptographic Teacher Authentication**: While `ReviewService` prevents automated bots from approving patterns through identifier screening and decouples agent orchestration from adjudication, the web prototype's configured reviewer ID (e.g. `--reviewer TCH-BANDA`) is a demonstration configuration, **not an authenticated identity**. A production deployment requires cryptographic teacher authentication (such as OpenID Connect / SAML SSO, signed JWT sessions, or WebAuthn).
 - **Live Open-Weight Model Verification**: Automated test suites verify AI orchestration via bounded mocks and deterministic fallback. Verification against live open-weight LLMs (e.g. Qwen 3.5 4B via LM Studio) requires a running local instance with loaded VRAM weights; when LM Studio times out during model loading, ALLPS engages deterministic fallback.
 
 ### Known Limitations
 
 - **Concurrent submissions with the same source event**: When two overlapping requests submit the same `(source_system, source_event_id)`, both can pass the initial existence check before either transaction commits. SQLite's `UNIQUE(source_system, source_event_id)` index constraint ensures that only one evidence record is stored. The second call encounters an `IntegrityError`, rolls back its ingestion transaction, and attempts to log a failure audit entry. Sequential retries of identical events succeed normally and return the existing evidence record.
-- **Teacher Review Authority Boundary**: While agent tools cannot self-approve and unreviewed/rejected patterns are never surfaced in the public profile, any caller with direct Python or MCP access can pass a human-like `reviewer_id`. Full cryptographic authentication remains an unresolved roadmap requirement.
+- **Teacher Review Authority Prototype Boundary**: While agent tools cannot self-approve and unreviewed/rejected patterns are never surfaced in the public profile, the prototype web server supplies a reviewer ID via server configuration flag (`--reviewer TCH-BANDA`) for human-in-the-loop demonstration. This is not authentication. The prototype web interface explicitly tags this as a demonstration configuration. Full cryptographic authentication remains an unresolved roadmap requirement.
 
 ---
 
@@ -305,6 +304,45 @@ python examples/demo_e2e.py --mode deterministic
 # Offline reproducible mock execution
 python examples/demo_e2e.py --mode mock
 ```
+
+---
+
+## ALLPS Teacher Workspace & Web Architecture
+
+The ALLPS Teacher Workspace provides an educator-facing web interface for longitudinal evidence review, teacher observation recording, AI candidate handover brief synthesis, human adjudication, and accepted handover inspection.
+
+### Frontend Technology Stack (Real Stack)
+- **Architecture**: Single Page Application (SPA) served statically by FastAPI.
+- **Languages & Frameworks**: Pure vanilla ECMAScript (ES2022) and semantic CSS3.
+- **Explicit Clarification**: **This frontend does NOT use Next.js, React, Node.js, or complex bundler toolchains.** It requires zero Node/NPM dependencies and executes natively in modern evergreen browsers (Edge, Chrome, Firefox, Safari).
+- **Design System**: Apple Human Interface Guidelines (HIG) theme:
+  - Clean light canvas (`#f5f5f7`) with pure white card surfaces (`#ffffff`).
+  - Subtle borders (`rgba(0, 0, 0, 0.08)` to `rgba(0, 0, 0, 0.15)`), soft Apple drop-shadows, and zero neon/fluorescent accents.
+  - Native Apple system typography (`-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif`).
+  - Apple system accents (Apple Blue `#0071e3`, Apple Green `#34c759`, Apple Orange `#ff9500`, Apple Red `#ff3b30`).
+  - Compartmentalized two-column desktop workspace separating learner controls and longitudinal metrics from active views.
+
+### Web API & Security (INT-01 & SEC-02)
+- **Thin Web API Adapter (`allps.web.routes`)**: Connects web requests directly to existing ALLPS domain services (`EvidenceService`, `AnalysisService`, `ReviewService`, `AgentOrchestrator`, `SQLiteStore`).
+- **INT-01 Candidate Brief Persistence**:
+  - Full `CandidateHandoverBrief` objects (findings, citations, co-occurring context, teacher inquiries, generation revision, and runtime method) are persisted to the `candidate_briefs` table in SQLite upon synthesis.
+  - Refreshing or reloading the browser queries `GET /api/learners/{id}/brief` to restore the exact candidate handover brief rather than substituting a deterministic summary.
+  - Each brief is associated with the active pattern ID, review ID, and incrementing `generation_revision`.
+- **SEC-02 Hardened CORS**:
+  - Replaced wildcard CORS with explicit allowed origins (`http://localhost:8000`, `http://127.0.0.1:8000`, `http://localhost:3000`, `http://127.0.0.1:3000`) and allowed HTTP methods (`GET`, `POST`, `OPTIONS`).
+- **Runtime Provenance Distinguishability**:
+  - The API and UI explicitly distinguish between `MOCK`, `DETERMINISTIC`, `FALLBACK`, and `LIVE` runtime methods with distinct visual badges.
+- **Prototype Trust Limitation**:
+  - A server-configured `--reviewer TCH-BANDA` flag injects reviewer identity for prototype evaluation. This is explicitly labeled in the UI as a demonstration configuration, not authenticated identity.
+
+### Running the Teacher Workspace
+
+```powershell
+# Set PYTHONPATH and start the web server
+$env:PYTHONPATH="src;."
+python -m allps.web.app --port 8000 --db allps_web_demo.db --mode mock --reviewer TCH-BANDA
+```
+Open your browser to: `http://127.0.0.1:8000/`
 
 ---
 

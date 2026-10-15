@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALLPS — Teacher Workspace</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- Top Bar (Apple Header) -->
+  <header class="top-bar">
+    <div class="brand-cluster">
+      <span class="brand-kwaix">ALLPS</span>
+      <span class="brand-slash">/</span>
+      <span class="brand-product">Teacher Workspace</span>
+    </div>
+    <div class="top-telemetry">
+      <span class="demo-pill" title="Synthetic records for pedagogical evaluation">Synthetic Demo</span>
+      <div id="auth-status-banner" class="status-pill active" title="Prototype trust limitation: Server-configured reviewer ID, not verified cryptographic identity.">
+        <span class="pulse-dot"></span>
+        <span id="auth-status-text">Configured Reviewer: Initializing...</span>
+      </div>
+      <button type="button" id="btn-open-observation" class="btn btn-primary">
+        + Record Observation
+      </button>
+    </div>
+  </header>
+
+  <!-- 2-Column Compartmentalized Dashboard -->
+  <main class="dashboard-container">
+
+    <!-- Left Compartment: Learner Context & Scope Filters -->
+    <aside class="compartment-sidebar" aria-label="Learner controls">
+      <div class="sidebar-section">
+        <label for="learner-select" class="label-mono">Selected Learner</label>
+        <select id="learner-select" class="kwaix-select">
+          <option value="">Loading learners...</option>
+        </select>
+      </div>
+
+      <div class="sidebar-section">
+        <span class="label-mono">Learner Snapshot</span>
+        <div class="learner-metrics-grid">
+          <div class="metric-cell">
+            <span id="side-evidence-count" class="metric-num">0</span>
+            <span class="metric-desc">Evidence</span>
+          </div>
+          <div class="metric-cell">
+            <span id="side-pending-count" class="metric-num">0</span>
+            <span class="metric-desc">Pending</span>
+          </div>
+          <div class="metric-cell">
+            <span id="side-approved-count" class="metric-num">0</span>
+            <span class="metric-desc">Approved</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <span class="label-mono">Scope Filters</span>
+        <div class="filters-stack">
+          <select id="filter-subject" class="kwaix-select" aria-label="Filter by subject">
+            <option value="">All Subjects</option>
+            <option value="Mathematics">Mathematics</option>
+            <option value="Science">Science</option>
+            <option value="English">English</option>
+          </select>
+
+          <select id="filter-year" class="kwaix-select" aria-label="Filter by academic year">
+            <option value="">All Years</option>
+            <option value="2025">Year 2025</option>
+          </select>
+
+          <select id="filter-term" class="kwaix-select" aria-label="Filter by term">
+            <option value="">All Terms</option>
+            <option value="1">Term 1</option>
+            <option value="2">Term 2</option>
+            <option value="3">Term 3</option>
+          </select>
+
+          <select id="filter-type" class="kwaix-select" aria-label="Filter by evidence type">
+            <option value="">All Evidence Types</option>
+            <option value="assessment">Assessment</option>
+            <option value="attendance">Attendance</option>
+            <option value="observation">Observation</option>
+            <option value="learner_reflection">Learner Reflection</option>
+            <option value="project">Project</option>
+          </select>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Compartment: Main Active Workspace -->
+    <section class="compartment-main" aria-label="Workspace views">
+
+      <!-- Tabs Header -->
+      <div class="tabs-header">
+        <nav class="tabs-pills" aria-label="Workspace views">
+          <button type="button" class="tab-pill tab-btn active" data-tab="evidence">
+            1. Evidence Stream <span id="evidence-count-badge" class="pill-count">0</span>
+          </button>
+          <button type="button" class="tab-pill tab-btn" data-tab="reviews">
+            2. Candidate Review <span id="reviews-count-badge" class="pill-count">0</span>
+          </button>
+          <button type="button" class="tab-pill tab-btn" data-tab="handover">
+            3. Approved Handover <span id="handover-count-badge" class="pill-count">0</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- VIEW 1: Evidence Stream -->
+      <div id="view-evidence" class="view-panel active" aria-labelledby="view-evidence-heading">
+        <div id="evidence-list" class="cards-stream" aria-live="polite">
+          <div class="empty-state">Loading evidence records...</div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: Candidate Review -->
+      <div id="view-reviews" class="view-panel" aria-labelledby="view-reviews-heading">
+        <!-- Generation Control Box -->
+        <div class="generation-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <span class="label-mono">Bounded AI Transition Synthesis</span>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                Deterministic input bounding, LLM inference, and verifiable citation tracing.
+              </p>
+            </div>
+            <div class="generation-controls">
+              <select id="generate-subject" class="kwaix-select" style="width: auto;">
+                <option value="">All Subjects</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Science">Science</option>
+                <option value="English">English</option>
+              </select>
+
+              <select id="generate-mode" class="kwaix-select" style="width: auto;">
+                <option value="auto">Mode: AUTO</option>
+                <option value="live">Mode: LIVE</option>
+                <option value="deterministic">Mode: DETERMINISTIC</option>
+                <option value="mock">Mode: MOCK</option>
+              </select>
+
+              <button type="button" id="btn-generate" class="btn btn-primary">
+                ⚡ Generate Candidate Handover
+              </button>
+            </div>
+          </div>
+
+          <div id="generation-result-container" aria-live="polite"></div>
+        </div>
+
+        <!-- Saved Candidate Findings for Review -->
+        <div>
+          <span class="label-mono" style="display: block; margin-bottom: 8px;">Saved Candidate Findings for Teacher Review</span>
+          <div id="reviews-list" class="cards-stream" aria-live="polite">
+            <div class="empty-state">Loading candidate reviews...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: Approved Handover -->
+      <div id="view-handover" class="view-panel" aria-labelledby="view-handover-heading">
+        <span class="label-mono" style="display: block; margin-bottom: 8px;">Approved Transition Handover (Sovereign Profile)</span>
+        <div id="handover-list" class="cards-stream" aria-live="polite">
+          <div class="empty-state">Loading approved handover...</div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Slide-Out Side Panel (Citation Drawer) -->
+  <div id="side-panel-overlay" class="side-panel-overlay"></div>
+  <aside id="side-panel" class="side-panel" aria-label="Evidence citation details">
+    <div class="side-panel-header">
+      <h3>Stored Evidence Record</h3>
+      <button type="button" id="side-panel-close-btn" class="btn btn-secondary btn-sm" aria-label="Close side panel">✕</button>
+    </div>
+    <div id="side-panel-content" class="side-panel-body"></div>
+  </aside>
+
+  <!-- Observation Input Dialog -->
+  <dialog id="observation-dialog" aria-labelledby="dialog-obs-heading">
+    <div class="modal-header">
+      <h3 id="dialog-obs-heading">Record Teacher Observation</h3>
+      <button type="button" id="btn-close-observation" class="btn btn-secondary btn-sm" aria-label="Close dialog">✕</button>
+    </div>
+    <form id="observation-form" method="dialog">
+      <div class="modal-body">
+        <div id="obs-error-alert" class="field-error" style="display: none; padding: 8px 12px; background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3); border-radius: 4px;"></div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="obs-year">Academic Year *</label>
+            <input type="number" id="obs-year" class="form-input" min="2000" max="2100" value="2025" required>
+          </div>
+          <div class="form-group">
+            <label for="obs-term">Term *</label>
+            <select id="obs-term" class="form-select" required>
+              <option value="1">Term 1</option>
+              <option value="2">Term 2</option>
+              <option value="3">Term 3</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="obs-subject">Subject (Optional)</label>
+            <select id="obs-subject" class="form-select">
+              <option value="">General / Classroom</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Science">Science</option>
+              <option value="English">English</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="obs-source-ref">Teacher Attribution Reference *</label>
+            <input type="text" id="obs-source-ref" class="form-input" value="Mr. Banda" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="obs-datetime">Event Date & Time (Observed Time) *</label>
+          <input type="datetime-local" id="obs-datetime" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label for="obs-text">Factual Observation *</label>
+          <textarea id="obs-text" class="form-textarea" rows="3" placeholder="Describe the factual pedagogical observation without diagnostic or deficit labels..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="obs-context">Classroom Context / Co-Occurring Factors (Optional)</label>
+          <textarea id="obs-context" class="form-textarea" rows="2" placeholder="e.g. Small-group cooperative activity; rainy morning with low overall attendance..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-preview-observation" class="btn btn-primary">
+          Preview Observation →
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Observation Preview Dialog -->
+  <dialog id="preview-dialog" aria-labelledby="dialog-preview-heading">
+    <div class="modal-header">
+      <h3 id="dialog-preview-heading">Confirm Observation Submission</h3>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 8px;">
+        Review the structured record below before saving. Observations are immutable once recorded into ALLPS evidence stream.
+      </p>
+      <div id="preview-content" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" id="btn-back-to-edit-observation" class="btn btn-secondary">
+        ← Back to Edit
+      </button>
+      <button type="button" id="btn-confirm-save-observation" class="btn btn-primary">
+        Confirm & Save Observation
+      </button>
+    </div>
+  </dialog>
+
+  <!-- Application Script -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
