@@ -132,6 +132,10 @@ async def get_system_config(request: Request) -> dict[str, Any]:
             "Prototype Trust Limitation: The server reviewer ID is a demonstration setting, "
             "not a verified authentication token or SSO identity."
         ),
+        "trust_notice": (
+            "Prototype Trust Limitation: The server reviewer ID is a demonstration setting, "
+            "not a verified authentication token or SSO identity."
+        ),
     }
 
 
