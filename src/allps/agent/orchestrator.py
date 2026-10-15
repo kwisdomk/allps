@@ -76,6 +76,7 @@ class OrchestrationResult:
         errors: list[str] | None = None,
         raw_inference_output: str | None = None,
         runtime_info: dict[str, Any] | None = None,
+        generation_revision: int = 1,
     ) -> None:
         self.learner_id = learner_id
         self.status = status
@@ -85,6 +86,7 @@ class OrchestrationResult:
         self.errors = errors or []
         self.raw_inference_output = raw_inference_output
         self.runtime_info = runtime_info or {}
+        self.generation_revision = generation_revision
 
     def __repr__(self) -> str:
         return (
@@ -271,7 +273,32 @@ class AgentOrchestrator:
         if runtime_method == "deterministic_fallback" or used_fallback:
             approval_state = f"pending_teacher_review (deterministic_fallback: {fb_err})"
 
+        generation_revision = 1
         if self._store:
+            if hasattr(self._store, "get_generation_revision_count") and hasattr(self._store, "add_candidate_brief"):
+                rev_cnt = await self._store.get_generation_revision_count(learner_id)
+                generation_revision = rev_cnt + 1
+
+                findings_data = [
+                    f.model_dump(mode="json") if hasattr(f, "model_dump") else dict(f)
+                    for f in validated_brief.findings
+                ]
+                await self._store.add_candidate_brief({
+                    "brief_id": validated_brief.brief_id,
+                    "learner_id": learner_id,
+                    "pattern_id": target_pattern_id,
+                    "review_id": final_review_id,
+                    "generation_revision": generation_revision,
+                    "status": validated_brief.status.value,
+                    "summary": validated_brief.summary,
+                    "findings": findings_data,
+                    "contradictions": validated_brief.contradictions,
+                    "limitations": validated_brief.limitations,
+                    "abstention_reason": validated_brief.abstention_reason,
+                    "runtime_method": runtime_method,
+                    "generated_at": validated_brief.generated_at,
+                })
+
             await self._store.add_audit_entry(
                 AuditEntry(
                     tool_name="ai_orchestrate_handover",
@@ -295,6 +322,7 @@ class AgentOrchestrator:
             brief=validated_brief,
             raw_inference_output=raw_output,
             runtime_info={"runtime_method": runtime_method},
+            generation_revision=generation_revision,
         )
 
     def _build_learner_prompt(
