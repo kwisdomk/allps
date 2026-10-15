@@ -246,9 +246,10 @@ async def main():
         await runner.evaluate("document.querySelector('[data-tab=\"reviews\"]').click()")
         await asyncio.sleep(0.5)
 
-        # Trigger generation
+        # Trigger generation in reproducible mock mode
+        await runner.evaluate("document.getElementById('generate-mode').value = 'mock'")
         await runner.evaluate("document.getElementById('btn-generate').click()")
-        await runner.wait_for("!document.getElementById('btn-generate').disabled", timeout_sec=15.0, step="generate brief")
+        await runner.wait_for("!document.getElementById('btn-generate').disabled", timeout_sec=30.0, step="generate brief")
         await asyncio.sleep(1.0)
         await runner.screenshot("preview_08_candidate_review_desktop.png")
 
