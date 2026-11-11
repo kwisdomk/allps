@@ -43,6 +43,13 @@ class ReviewItem(BaseModel):
         description="SHA-256 hash of the exact approved pattern summary snapshot at time of approval.",
     )
 
+    # Optimistic concurrency — incremented on every successful write.
+    # Callers supply the revision they last observed; the store rejects if it has changed.
+    revision: int = Field(
+        default=0,
+        description="Monotonically-incrementing write counter for optimistic concurrency control.",
+    )
+
     @model_validator(mode="after")
     def validate_resolution_metadata(self) -> "ReviewItem":
         """Ensure human authority and content snapshot hash are recorded on acceptance."""
