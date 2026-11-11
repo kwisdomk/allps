@@ -3,7 +3,8 @@
 1. BE-01: Correct orphaned pattern UUID produced during signature deduplication.
 2. GOV-01: Prevent previously accepted review items from being silently reused for new syntheses.
 3. SEC-01: Safely XML-encode untrusted observation content inside prompt boundaries.
-4. GOV-02: Prevent autonomous MCP clients from self-approving findings.
+4. GOV-02: Prevent autonomous MCP clients from self-approving findings; sovereign teacher
+          correction via explicit is_correction=True after reloading needs_context revision.
 """
 
 from __future__ import annotations
@@ -197,7 +198,8 @@ async def test_sec01_untrusted_observation_xml_encoding(tmp_path: Path):
 
 
 # ---------------------------------------------------------------------------
-# 4. GOV-02: Autonomous MCP clients cannot self-approve findings
+# 4. GOV-02: Autonomous MCP clients cannot self-approve findings; explicit
+#            teacher correction using the revision returned after needs_context.
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
 async def test_gov02_mcp_client_cannot_self_approve(tmp_path: Path):
@@ -207,38 +209,53 @@ async def test_gov02_mcp_client_cannot_self_approve(tmp_path: Path):
     rev_srv = ReviewService(store)
     set_service(ev_srv, review_service=rev_srv)
 
+    # Register a teacher so the correction authority check passes
+    from allps.auth import hash_pin
+    await store.add_teacher("TCH-MR-DAVIS", "Mr. Davis", hash_pin("9999"))
+
     patterns = await an_srv.analyse_longitudinal_pattern("LRN-001", subject="Mathematics")
     rev_id = patterns[0]["review_id"]
     rev_item = await store.get_review_item(rev_id)
 
     # 1. MCP tool called with status='accepted' and human-looking reviewer_id -> MUST FAIL
-    with pytest.raises(PermissionError, match="Autonomous MCP clients cannot self-approve"):
+    with pytest.raises(PermissionError, match="MCP clients cannot approve"):
         await resolve_teacher_review(
             review_id=rev_item.review_id,
             status="accepted",
             reviewer_id="teacher:mr_davis",
             teacher_notes="Autonomous self-approval attempt.",
+            expected_revision=0,
         )
 
     # Verify review item in store remains PENDING
     item_in_store = await store.get_review_item(rev_item.review_id)
     assert item_in_store.status == ReviewStatus.PENDING
 
-    # 2. MCP tool called with status='needs_context' or 'rejected' is permitted
-    rej_res = await resolve_teacher_review(
+    # 2. MCP tool called with status='needs_context' is permitted (initial decision)
+    nc_res = await resolve_teacher_review(
         review_id=rev_item.review_id,
         status="needs_context",
         reviewer_id="agent:feedback_recorder",
         teacher_notes="Requesting additional classroom context.",
+        expected_revision=0,
     )
-    assert rej_res["status"] == "needs_context"
+    assert nc_res["status"] == "needs_context"
 
-    # 3. Sovereign human teacher resolves review directly via trusted backend service
+    # Reload the review item to obtain the revision after the needs_context write
+    nc_item = await store.get_review_item(rev_item.review_id)
+    assert nc_item.status == ReviewStatus.NEEDS_CONTEXT
+    nc_revision = nc_item.revision  # should be 1 after the initial decision
+
+    # 3. Sovereign human teacher performs an explicit correction (needs_context → accepted)
+    #    via the trusted backend service, supplying the revision from the reload.
     accepted_res = await rev_srv.resolve_teacher_review(
         review_id=rev_item.review_id,
         status=ReviewStatus.ACCEPTED,
-        reviewer_id="teacher:mr_davis",
-        teacher_notes="Validated by human educator via trusted backend.",
+        reviewer_id="TCH-MR-DAVIS",
+        teacher_notes="Validated by human educator via trusted backend correction.",
+        expected_revision=nc_revision,
+        is_correction=True,
+        authenticated_teacher_id="TCH-MR-DAVIS",
     )
     assert accepted_res.status == ReviewStatus.ACCEPTED
     assert accepted_res.approved_content_hash is not None

@@ -15,11 +15,12 @@ from typing import Any
 import uuid
 
 import aiosqlite
-from fastapi import APIRouter, HTTPException, Query, Request, status
+from fastapi import APIRouter, Cookie, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field, field_validator
 
 from allps.agent.contracts import HandoverStatus
 from allps.agent.orchestrator import AgentOrchestrator, OrchestrationResult
+from allps.auth import COOKIE_NAME, make_session_cookie, read_session_cookie, verify_pin
 from allps.models.evidence import Evidence, EvidenceType, IngestionMethod
 from allps.models.learner import Learner
 from allps.models.review import ReviewItem, ReviewStatus
@@ -27,7 +28,7 @@ from allps.policies.label_policy import check_for_prohibited_labels
 from allps.runtime import ExecutionMode, RuntimeRegistry
 from allps.services.analysis_service import AnalysisService
 from allps.services.evidence_service import EvidenceService
-from allps.services.review_service import ReviewService
+from allps.services.review_service import ConflictError, ReviewService
 from allps.storage.sqlite_store import SQLiteStore
 
 logger = logging.getLogger(__name__)
@@ -102,10 +103,107 @@ class GenerateBriefRequest(BaseModel):
 
 
 class ReviewDecisionRequest(BaseModel):
-    """Payload for submitting a teacher adjudication decision."""
+    """Payload for submitting a teacher adjudication decision.
+
+    expected_revision must match the review item's current revision.  Concurrent
+    submissions sharing the same expected_revision will produce exactly one 200 and
+    one 409 — there is no unconditional fallback.
+
+    is_correction must be True when overriding an already-resolved decision.
+    Corrections require the caller to hold an authenticated teacher session and to
+    supply the revision returned by the most recent GET of this review item.
+    """
 
     status: str = Field(..., description="accepted | rejected | needs_context")
     teacher_notes: str | None = Field(default=None, max_length=5000)
+    expected_revision: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "Revision counter last seen by the caller.  The server rejects the "
+            "request with 409 if the stored revision has advanced past this value."
+        ),
+    )
+    is_correction: bool = Field(
+        default=False,
+        description=(
+            "Set True to explicitly correct an already-resolved decision. "
+            "Requires an authenticated teacher session and the current revision."
+        ),
+    )
+
+
+class LoginRequest(BaseModel):
+    teacher_id: str = Field(..., min_length=1, max_length=100)
+    pin: str = Field(..., min_length=4, max_length=64)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Session helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _current_teacher_id(request: Request) -> str | None:
+    """Extract and verify the signed session cookie.  Returns teacher_id or None."""
+    token = request.cookies.get(COOKIE_NAME)
+    if not token:
+        return None
+    return read_session_cookie(token)
+
+
+def _require_teacher(request: Request) -> str:
+    """Return the authenticated teacher_id or raise 401."""
+    teacher_id = _current_teacher_id(request)
+    if not teacher_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sign in required.",
+        )
+    return teacher_id
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Auth endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@router.post("/auth/login", status_code=status.HTTP_200_OK)
+async def login(payload: LoginRequest, request: Request, response: Response) -> dict[str, Any]:
+    """PIN login.  Sets an HttpOnly session cookie on success."""
+    store: SQLiteStore = request.app.state.store
+    teacher = await store.get_teacher(payload.teacher_id)
+    if not teacher or not verify_pin(payload.pin, teacher["pin_hash"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid teacher ID or PIN.",
+        )
+    token = make_session_cookie(teacher["teacher_id"])
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=token,
+        httponly=True,
+        samesite="strict",
+        max_age=60 * 60 * 12,
+    )
+    return {"teacher_id": teacher["teacher_id"], "display_name": teacher["display_name"]}
+
+
+@router.post("/auth/logout", status_code=status.HTTP_200_OK)
+async def logout(response: Response) -> dict[str, str]:
+    """Clear the session cookie."""
+    response.delete_cookie(key=COOKIE_NAME)
+    return {"status": "logged_out"}
+
+
+@router.get("/auth/me")
+async def me(request: Request) -> dict[str, Any]:
+    """Return the signed-in teacher or 401."""
+    teacher_id = _require_teacher(request)
+    store: SQLiteStore = request.app.state.store
+    teacher = await store.get_teacher(teacher_id)
+    if not teacher:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Teacher not found.")
+    return {"teacher_id": teacher["teacher_id"], "display_name": teacher["display_name"]}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -471,6 +569,7 @@ async def get_learner_reviews(learner_id: str, request: Request) -> list[dict[st
                 "resolved_at": None,
                 "approved_content_hash": None,
                 "assigned_to": None,
+                "revision": 0,
                 "candidate_brief": brief,
                 "generation_revision": brief.get("generation_revision", 1) if brief else 1,
             })
@@ -491,6 +590,7 @@ async def get_learner_reviews(learner_id: str, request: Request) -> list[dict[st
                     "resolved_at": r.resolved_at.isoformat() if r.resolved_at else None,
                     "approved_content_hash": r.approved_content_hash,
                     "assigned_to": r.assigned_to,
+                    "revision": r.revision,
                     "candidate_brief": brief,
                     "generation_revision": brief.get("generation_revision", 1) if brief else 1,
                 })
@@ -506,27 +606,23 @@ async def submit_review_decision(
 ) -> dict[str, Any]:
     """Submit human teacher adjudication for a candidate finding.
 
-    Human Authority Boundary:
-    - Reviewer identity is obtained strictly server-side (from server configuration/session).
-    - Browser-supplied teacher identity is not authentication.
-    - If trusted server-side authority is unavailable, submission is disabled.
+    Reviewer identity comes from the signed session cookie — never from the request body.
+    Unauthenticated requests are rejected with 401.
+
+    Concurrency contract:
+    - Supply the revision you last observed as expected_revision.
+    - Two concurrent requests carrying the same expected_revision produce exactly
+      one 200 OK and one 409 Conflict.
+    - Set is_correction=True to override a previously-resolved decision.  Corrections
+      require an authenticated session and the current (post-initial-decision) revision.
     """
-    app = request.app
-    trusted_reviewer_id = getattr(app.state, "trusted_reviewer_id", None)
-    review_service: ReviewService = app.state.review_service
-    store: SQLiteStore = app.state.store
+    # 1. Require an authenticated session — reviewer identity comes from the cookie, not the body
+    authenticated_teacher_id = _require_teacher(request)
 
-    # 1. Check if trusted server-side human authority is configured
-    if not trusted_reviewer_id or not trusted_reviewer_id.strip():
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=(
-                "Review decision submission is disabled: Trusted server-side human review authority "
-                "is not configured or is under active repair by the backend instance."
-            ),
-        )
+    review_service: ReviewService = request.app.state.review_service
+    store: SQLiteStore = request.app.state.store
 
-    # 2. Check if review item exists
+    # 2. Check review item exists
     item = await store.get_review_item(review_id)
     if not item:
         raise HTTPException(
@@ -534,13 +630,28 @@ async def submit_review_decision(
             detail=f"Review item '{review_id}' does not exist.",
         )
 
-    # 3. Resolve review through ReviewService using server-side reviewer identity
+    # 3. Resolve through ReviewService.
+    #    authenticated_teacher_id (from the session) drives authority for corrections;
+    #    reviewer_id on the record is also set to the authenticated identity.
     try:
         updated_item = await review_service.resolve_teacher_review(
             review_id=review_id,
             status=payload.status,
-            reviewer_id=trusted_reviewer_id,
+            reviewer_id=authenticated_teacher_id,
             teacher_notes=payload.teacher_notes,
+            expected_revision=payload.expected_revision,
+            is_correction=payload.is_correction,
+            authenticated_teacher_id=authenticated_teacher_id,
+        )
+    except ConflictError as ce:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(ce),
+        )
+    except PermissionError as pe:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(pe),
         )
     except ValueError as val_err:
         raise HTTPException(
@@ -556,6 +667,7 @@ async def submit_review_decision(
         "teacher_notes": updated_item.teacher_notes,
         "resolved_at": updated_item.resolved_at.isoformat() if updated_item.resolved_at else None,
         "approved_content_hash": updated_item.approved_content_hash,
+        "revision": updated_item.revision + 1,  # reflects the new revision after the increment
     }
 
 

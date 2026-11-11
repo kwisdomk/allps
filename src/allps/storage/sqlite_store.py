@@ -25,6 +25,13 @@ from allps.models import (
 from allps.models.evidence import _deep_unfreeze
 
 _SCHEMA = """
+CREATE TABLE IF NOT EXISTS teachers (
+    teacher_id   TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    pin_hash     TEXT NOT NULL,
+    created_at   TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS learners (
     learner_id TEXT PRIMARY KEY,
     display_name TEXT NOT NULL,
@@ -77,6 +84,7 @@ CREATE TABLE IF NOT EXISTS review_items (
     resolved_at TEXT,
     reviewer_id TEXT,
     approved_content_hash TEXT,
+    revision INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (pattern_id) REFERENCES patterns(pattern_id)
 );
 
@@ -185,6 +193,8 @@ class SQLiteStore:
             await self.db.execute("ALTER TABLE review_items ADD COLUMN reviewer_id TEXT")
         if "approved_content_hash" not in rev_columns:
             await self.db.execute("ALTER TABLE review_items ADD COLUMN approved_content_hash TEXT")
+        if "revision" not in rev_columns:
+            await self.db.execute("ALTER TABLE review_items ADD COLUMN revision INTEGER NOT NULL DEFAULT 0")
 
         await self.db.execute("""
             CREATE TABLE IF NOT EXISTS candidate_briefs (
@@ -207,6 +217,16 @@ class SQLiteStore:
         await self.db.execute("CREATE INDEX IF NOT EXISTS idx_briefs_learner ON candidate_briefs(learner_id)")
         await self.db.execute("CREATE INDEX IF NOT EXISTS idx_briefs_pattern ON candidate_briefs(pattern_id)")
         await self.db.execute("CREATE INDEX IF NOT EXISTS idx_briefs_review ON candidate_briefs(review_id)")
+
+        # teachers table (added in feature/teacher-review-authority)
+        await self.db.execute("""
+            CREATE TABLE IF NOT EXISTS teachers (
+                teacher_id   TEXT PRIMARY KEY,
+                display_name TEXT NOT NULL,
+                pin_hash     TEXT NOT NULL,
+                created_at   TEXT NOT NULL
+            )
+        """)
 
     async def close(self) -> None:
         """Close the database connection."""
@@ -280,6 +300,46 @@ class SQLiteStore:
             "SELECT 1 FROM learners WHERE learner_id = ?", (learner_id,)
         ) as cursor:
             return await cursor.fetchone() is not None
+
+    # ── Teachers ──────────────────────────────────────────────────
+
+    async def add_teacher(
+        self,
+        teacher_id: str,
+        display_name: str,
+        pin_hash: str,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> None:
+        """Insert a teacher record. Silently skips if teacher_id already exists."""
+        db = conn or self.db
+        await db.execute(
+            "INSERT OR IGNORE INTO teachers (teacher_id, display_name, pin_hash, created_at) "
+            "VALUES (?, ?, ?, ?)",
+            (teacher_id, display_name, pin_hash, datetime.now(timezone.utc).isoformat()),
+        )
+        if commit:
+            await db.commit()
+
+    async def get_teacher(
+        self,
+        teacher_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> dict | None:
+        """Return teacher row as dict, or None if not found."""
+        db = conn or self.db
+        async with db.execute(
+            "SELECT teacher_id, display_name, pin_hash FROM teachers WHERE teacher_id = ?",
+            (teacher_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+            if not row:
+                return None
+            return {
+                "teacher_id": row["teacher_id"],
+                "display_name": row["display_name"],
+                "pin_hash": row["pin_hash"],
+            }
 
     # ── Evidence (immutable — no update method) ───────────────────
 
@@ -538,8 +598,8 @@ class SQLiteStore:
             """INSERT INTO review_items
                (review_id, pattern_id, assigned_to, status,
                 teacher_notes, created_at, resolved_at,
-                reviewer_id, approved_content_hash)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                reviewer_id, approved_content_hash, revision)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 item.review_id,
                 item.pattern_id,
@@ -550,6 +610,7 @@ class SQLiteStore:
                 item.resolved_at.isoformat() if item.resolved_at else None,
                 item.reviewer_id,
                 item.approved_content_hash,
+                item.revision,
             ),
         )
         if commit:
@@ -579,6 +640,7 @@ class SQLiteStore:
                 resolved_at=datetime.fromisoformat(row["resolved_at"]) if row["resolved_at"] else None,
                 reviewer_id=row["reviewer_id"],
                 approved_content_hash=row["approved_content_hash"],
+                revision=row["revision"] if "revision" in row.keys() else 0,
             )
 
     async def get_review_items_for_pattern(
@@ -605,6 +667,7 @@ class SQLiteStore:
                         resolved_at=datetime.fromisoformat(row["resolved_at"]) if row["resolved_at"] else None,
                         reviewer_id=row["reviewer_id"],
                         approved_content_hash=row["approved_content_hash"],
+                        revision=row["revision"] if "revision" in row.keys() else 0,
                     )
                 )
         return results
@@ -637,6 +700,7 @@ class SQLiteStore:
                         resolved_at=datetime.fromisoformat(row["resolved_at"]) if row["resolved_at"] else None,
                         reviewer_id=row["reviewer_id"],
                         approved_content_hash=row["approved_content_hash"],
+                        revision=row["revision"] if "revision" in row.keys() else 0,
                     )
                 )
         return results
@@ -647,12 +711,13 @@ class SQLiteStore:
         commit: bool = True,
         conn: aiosqlite.Connection | None = None,
     ) -> ReviewItem:
-        """Update an existing review item with resolution details."""
+        """Unconditional update — only for internal migrations.  Prefer update_review_at_revision."""
         db = conn or self.db
         await db.execute(
             """UPDATE review_items
                SET status = ?, teacher_notes = ?, resolved_at = ?,
-                   reviewer_id = ?, approved_content_hash = ?, assigned_to = ?
+                   reviewer_id = ?, approved_content_hash = ?, assigned_to = ?,
+                   revision = revision + 1
                WHERE review_id = ?""",
             (
                 item.status.value,
@@ -667,6 +732,70 @@ class SQLiteStore:
         if commit:
             await db.commit()
         return item
+
+    async def update_review_at_revision(
+        self,
+        item: ReviewItem,
+        expected_revision: int,
+        conn: aiosqlite.Connection | None = None,
+    ) -> bool:
+        """Conditionally update a review item only if its revision matches expected_revision.
+
+        Atomically increments revision on success.
+        Returns True if the row was updated (optimistic lock held), False on conflict.
+        Must be called inside a store.transaction() block.
+        """
+        db = conn or self.db
+        cursor = await db.execute(
+            """UPDATE review_items
+               SET status = ?, teacher_notes = ?, resolved_at = ?,
+                   reviewer_id = ?, approved_content_hash = ?, assigned_to = ?,
+                   revision = revision + 1
+               WHERE review_id = ? AND revision = ?""",
+            (
+                item.status.value,
+                item.teacher_notes,
+                item.resolved_at.isoformat() if item.resolved_at else None,
+                item.reviewer_id,
+                item.approved_content_hash,
+                item.assigned_to,
+                item.review_id,
+                expected_revision,
+            ),
+        )
+        return cursor.rowcount == 1
+
+    async def resolve_review_if_pending(
+        self,
+        item: ReviewItem,
+        conn: aiosqlite.Connection | None = None,
+    ) -> bool:
+        """Atomically resolve a review only if it is still pending AND revision matches.
+
+        Kept for backwards-compatibility; delegates to update_review_at_revision with
+        the additional constraint that status must still be 'pending'.
+        Returns True if the row was updated, False if another caller got there first.
+        Must be called inside a store.transaction() block.
+        """
+        db = conn or self.db
+        cursor = await db.execute(
+            """UPDATE review_items
+               SET status = ?, teacher_notes = ?, resolved_at = ?,
+                   reviewer_id = ?, approved_content_hash = ?, assigned_to = ?,
+                   revision = revision + 1
+               WHERE review_id = ? AND revision = ? AND status = 'pending'""",
+            (
+                item.status.value,
+                item.teacher_notes,
+                item.resolved_at.isoformat() if item.resolved_at else None,
+                item.reviewer_id,
+                item.approved_content_hash,
+                item.assigned_to,
+                item.review_id,
+                item.revision,
+            ),
+        )
+        return cursor.rowcount == 1
 
     async def get_surfaced_profile(
         self,
@@ -685,7 +814,8 @@ class SQLiteStore:
             SELECT p.pattern_id, p.learner_id, p.pattern_type, p.summary,
                    p.supporting_evidence, p.conflicting_evidence, p.limitations,
                    p.generated_at, r.review_id, r.status, r.teacher_notes,
-                   r.reviewer_id, r.approved_content_hash, r.resolved_at
+                   r.reviewer_id, r.approved_content_hash, r.resolved_at,
+                   COALESCE(r.revision, 0) AS revision
             FROM patterns p
             INNER JOIN review_items r ON p.pattern_id = r.pattern_id
             WHERE p.learner_id = ? AND r.status = 'accepted'
@@ -722,6 +852,7 @@ class SQLiteStore:
                         "resolved_at": row["resolved_at"],
                         "approved_content_hash": expected_hash,
                         "hash_verified": True,
+                        "revision": row["revision"] if "revision" in row.keys() else 0,
                     },
                 })
         return results

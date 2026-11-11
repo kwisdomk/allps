@@ -16,12 +16,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from allps.auth import hash_pin
 from allps.runtime import RuntimeRegistry
 from allps.services.analysis_service import AnalysisService
 from allps.services.evidence_service import EvidenceService
 from allps.services.review_service import ReviewService
 from allps.storage.sqlite_store import SQLiteStore
 from allps.web.routes import router
+
+# Synthetic pilot teachers — two accounts for the handover scenario.
+# PINs are hashed at import time; plaintext never stored.
+# Replace these with a proper provisioning step before real deployment.
+_PILOT_TEACHERS = [
+    ("TCH-BANDA", "Mr. Banda", "1234"),
+    ("TCH-OCHIENG", "Ms. Ochieng", "5678"),
+]
 
 
 def _build_default_mock_responses(records_by_learner: dict[str, list[Any]]) -> dict[str, str]:
@@ -36,7 +45,6 @@ def _build_default_mock_responses(records_by_learner: dict[str, list[Any]]) -> d
 def create_app(
     db_path: str = "allps_demo.db",
     mode: str = "auto",
-    trusted_reviewer_id: str | None = "TCH-BANDA",
     seed_demo_data: bool = True,
     allowed_origins: list[str] | None = None,
 ) -> FastAPI:
@@ -47,6 +55,10 @@ def create_app(
         # Initialize storage
         store = SQLiteStore(db_path)
         await store.initialize()
+
+        # Seed pilot teacher accounts (idempotent — INSERT OR IGNORE)
+        for teacher_id, display_name, pin in _PILOT_TEACHERS:
+            await store.add_teacher(teacher_id, display_name, hash_pin(pin))
 
         # Seed synthetic Kenyan demonstration dataset if empty or requested
         if seed_demo_data:
@@ -80,7 +92,6 @@ def create_app(
         app.state.analysis_service = an_service
         app.state.review_service = rev_service
         app.state.runtime_registry = registry
-        app.state.trusted_reviewer_id = trusted_reviewer_id
         app.state.default_mode = mode
         app.state.mock_responses = mock_responses
 
@@ -133,32 +144,19 @@ def main() -> None:
     import uvicorn
 
     parser = argparse.ArgumentParser(description="ALLPS Teacher Website Server")
-    parser.add_argument("--host", default="127.0.0.1", help="Host interface (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000)")
-    parser.add_argument("--db", default="allps_demo.db", help="SQLite database path")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--db", default="allps_demo.db")
     parser.add_argument("--mode", default="auto", choices=["auto", "live", "deterministic", "mock"])
-    parser.add_argument("--reviewer", default="TCH-BANDA", help="Server-side trusted reviewer identifier")
-    parser.add_argument(
-        "--disable-reviewer",
-        action="store_true",
-        help="Simulate unconfigured/repair state for human review authority",
-    )
     args = parser.parse_args()
 
-    reviewer_id = None if args.disable_reviewer else args.reviewer
-    app = create_app(
-        db_path=args.db,
-        mode=args.mode,
-        trusted_reviewer_id=reviewer_id,
-        seed_demo_data=True,
-    )
+    app = create_app(db_path=args.db, mode=args.mode, seed_demo_data=True)
 
     print(f"\n==================================================================")
-    print(f" ALLPS Teacher Website Starting")
-    print(f" URL:             http://{args.host}:{args.port}")
-    print(f" Database:        {args.db}")
-    print(f" Runtime Mode:    {args.mode.upper()}")
-    print(f" Review Auth:     {'Active (' + str(reviewer_id) + ')' if reviewer_id else 'DISABLED (Under Repair)'}")
+    print(f" ALLPS Teacher Website")
+    print(f" URL:   http://{args.host}:{args.port}")
+    print(f" DB:    {args.db}")
+    print(f" Mode:  {args.mode.upper()}")
     print(f"==================================================================\n")
 
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")

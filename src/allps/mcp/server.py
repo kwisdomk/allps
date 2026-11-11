@@ -202,10 +202,12 @@ async def flag_pattern_for_review(
 
 @mcp.tool(
     description=(
-        "Resolve a candidate pattern review. Autonomous MCP clients may record notes, "
-        "reject, or request context ('needs_context', 'rejected'), but are strictly prohibited "
-        "from self-approving ('accepted'). Formal approval must be mediated by authenticated "
-        "human teachers via the trusted backend ReviewService."
+        "Resolve a candidate pattern review with an initial decision. "
+        "Autonomous MCP clients may record notes, reject, or request context "
+        "('needs_context', 'rejected'), but are strictly prohibited from "
+        "self-approving ('accepted') or making corrections to prior decisions. "
+        "Formal approval and corrections must be mediated by authenticated human "
+        "teachers via the trusted backend web interface (POST /api/reviews/{id}/decision)."
     )
 )
 async def resolve_teacher_review(
@@ -213,21 +215,40 @@ async def resolve_teacher_review(
     status: str,
     reviewer_id: str,
     teacher_notes: str | None = None,
+    expected_revision: int = 0,
 ) -> dict[str, Any]:
-    """Resolve a review item with human teacher adjudication."""
+    """Resolve a review item with an initial (non-correction) decision.
+
+    MCP authority boundary:
+    - 'accepted' is permanently blocked — human approval requires an authenticated
+      session via the teacher web interface (POST /api/reviews/{id}/decision).
+    - Corrections (is_correction=True) are permanently blocked over MCP — the
+      caller-supplied reviewer_id is not authenticated at this transport layer.
+    - 'rejected' and 'needs_context' may be submitted by an MCP caller.
+    - Concurrency: supply expected_revision (default 0 for a fresh pending review).
+      A concurrent submission on the same revision produces a ConflictError.
+    """
+    from allps.services.review_service import ConflictError
+
     clean_status = status.strip().lower() if isinstance(status, str) else str(status)
     if clean_status in ("accepted", "reviewstatus.accepted"):
         raise PermissionError(
-            "Autonomous MCP clients cannot self-approve findings. "
-            "Human teacher approval must occur via the trusted backend ReviewService."
+            "MCP clients cannot approve findings. "
+            "Use the teacher web interface to accept a pattern."
         )
     review_srv = await _get_review_service()
-    item = await review_srv.resolve_teacher_review(
-        review_id=review_id,
-        status=status,
-        reviewer_id=reviewer_id,
-        teacher_notes=teacher_notes,
-    )
+    try:
+        item = await review_srv.resolve_teacher_review(
+            review_id=review_id,
+            status=status,
+            reviewer_id=reviewer_id,
+            teacher_notes=teacher_notes,
+            expected_revision=expected_revision,
+            is_correction=False,
+            authenticated_teacher_id=None,
+        )
+    except ConflictError as ce:
+        raise ValueError(str(ce)) from ce
     return item.model_dump(mode="json")
 
 
