@@ -11,7 +11,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 import logging
-from typing import Any
+from pathlib import Path
+from typing import Any, Literal
 import uuid
 
 import aiosqlite
@@ -160,6 +161,15 @@ class IngestRecordsRequest(BaseModel):
     source_type: str = Field(default="system", max_length=60)
     source_reference: str | None = Field(default=None, max_length=200)
     records: list[dict[str, Any]] = Field(..., min_length=1, max_length=5000)
+
+
+class ReseedRequest(BaseModel):
+    """Payload for workspace database seeding or reset."""
+
+    mode: Literal["merge", "reset"] = Field(
+        default="merge",
+        description="'merge' idempotently adds missing demo records; 'reset' clears workspace data first.",
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -878,3 +888,100 @@ async def list_ingest_manifests(
         _require_ingest_api_key(request)
     store: SQLiteStore = request.app.state.store
     return await store.list_import_manifests(source_system=source_system)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Workspace Database Status & Demo Reseed Endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+async def _build_db_status_payload(request: Request, recent_limit: int = 5) -> dict[str, Any]:
+    store: SQLiteStore = request.app.state.store
+    raw_status = await store.get_database_status(recent_limit=recent_limit)
+    raw_db_path = getattr(request.app.state, "db_path", None) or raw_status.pop("db_path", "allps.db")
+    raw_status.pop("db_path", None)
+    db_name = ":memory:" if raw_db_path == ":memory:" else Path(str(raw_db_path)).name
+    has_demo_learners = all(
+        [
+            await store.learner_exists("LRN-001"),
+            await store.learner_exists("LRN-002"),
+            await store.learner_exists("LRN-003"),
+        ]
+    )
+    return {
+        **raw_status,
+        "db_name": db_name,
+        "allow_demo_reset": bool(getattr(request.app.state, "allow_demo_reset", True)),
+        "has_demo_learners": has_demo_learners,
+    }
+
+
+@router.get("/db/status")
+async def get_db_status(
+    request: Request,
+    recent_limit: int = Query(5, ge=1, le=25),
+) -> dict[str, Any]:
+    """Return live database counts, freshness timestamps, and recent evidence/audit records."""
+    return await _build_db_status_payload(request, recent_limit=recent_limit)
+
+
+@router.post("/db/reseed")
+async def reseed_workspace_database(
+    payload: ReseedRequest,
+    request: Request,
+) -> dict[str, Any]:
+    """Idempotently seed missing demo data ('merge') or wipe and re-seed ('reset')."""
+    if not getattr(request.app.state, "allow_demo_reset", True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Workspace demo seeding/reset is disabled on this server.",
+        )
+
+    store: SQLiteStore = request.app.state.store
+    ev_service: EvidenceService = request.app.state.evidence_service
+
+    try:
+        from data.synthetic.seed_data import seed_store
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Synthetic seed dataset is unavailable in this installation: {exc}",
+        ) from exc
+
+    actor = _current_teacher_id(request) or "web_operator"
+    reset = payload.mode == "reset"
+    summary = await seed_store(store, reset=reset, actor=actor)
+
+    # Keep offline mock synthesis aligned with the refreshed dataset
+    from allps.web.app import build_mock_responses_from_store
+    request.app.state.mock_responses = await build_mock_responses_from_store(store, ev_service)
+
+    db_status = await _build_db_status_payload(request)
+    if reset:
+        message = (
+            f"Reset workspace and re-seeded {summary['learners_added']} learners and "
+            f"{summary['evidence_added']} evidence records."
+        )
+    elif summary["learners_added"] == 0 and summary["evidence_added"] == 0:
+        message = (
+            f"No new demo records added ({summary['learners_skipped']} learners and "
+            f"{summary['evidence_skipped']} evidence records already present)."
+        )
+    else:
+        message = (
+            f"Added +{summary['learners_added']} learners and +{summary['evidence_added']} "
+            f"evidence records ({summary['evidence_skipped']} existing skipped)."
+        )
+
+    return {
+        "mode": payload.mode,
+        "message": message,
+        "learners_added": summary["learners_added"],
+        "learners_skipped": summary["learners_skipped"],
+        "evidence_added": summary["evidence_added"],
+        "evidence_skipped": summary["evidence_skipped"],
+        "total_learners": summary["total_learners"],
+        "total_evidence": summary["total_evidence"],
+        "cleared": summary["cleared"],
+        "db_status": db_status,
+    }

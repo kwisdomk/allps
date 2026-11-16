@@ -8,7 +8,7 @@ JSON fields (content, supporting_evidence, etc.) are stored as TEXT.
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import json
-from typing import Sequence
+from typing import Any, Sequence
 
 import aiosqlite
 
@@ -1255,4 +1255,144 @@ class SQLiteStore:
                 "runtime_method": row["runtime_method"],
                 "generated_at": row["generated_at"],
             }
+
+    # ── Workspace Diagnostics & Reset ──────────────────────────────
+
+    async def get_database_status(
+        self,
+        recent_limit: int = 5,
+        conn: aiosqlite.Connection | None = None,
+    ) -> dict[str, Any]:
+        """Return live counts, freshness timestamps, and most recent activity."""
+        db = conn or self.db
+
+        async def _count(sql: str, params: tuple[Any, ...] = ()) -> int:
+            async with db.execute(sql, params) as cursor:
+                row = await cursor.fetchone()
+                return int(row["cnt"]) if row else 0
+
+        async def _scalar(sql: str) -> str | None:
+            async with db.execute(sql) as cursor:
+                row = await cursor.fetchone()
+                return row[0] if row and row[0] is not None else None
+
+        learners_count = await _count("SELECT COUNT(*) AS cnt FROM learners")
+        evidence_count = await _count("SELECT COUNT(*) AS cnt FROM evidence")
+        patterns_count = await _count("SELECT COUNT(*) AS cnt FROM patterns")
+        review_items_count = await _count("SELECT COUNT(*) AS cnt FROM review_items")
+        pending_reviews_count = await _count(
+            "SELECT COUNT(*) AS cnt FROM review_items WHERE status = 'pending'"
+        )
+        accepted_reviews_count = await _count(
+            "SELECT COUNT(*) AS cnt FROM review_items WHERE status = 'accepted'"
+        )
+        rejected_reviews_count = await _count(
+            "SELECT COUNT(*) AS cnt FROM review_items WHERE status = 'rejected'"
+        )
+        needs_context_reviews_count = await _count(
+            "SELECT COUNT(*) AS cnt FROM review_items WHERE status = 'needs_context'"
+        )
+        candidate_briefs_count = await _count("SELECT COUNT(*) AS cnt FROM candidate_briefs")
+        import_manifests_count = await _count("SELECT COUNT(*) AS cnt FROM import_manifests")
+        audit_entries_count = await _count("SELECT COUNT(*) AS cnt FROM audit_log")
+
+        latest_evidence_recorded_at = await _scalar("SELECT MAX(recorded_at) FROM evidence")
+        latest_evidence_observed_at = await _scalar("SELECT MAX(observed_at) FROM evidence")
+        latest_pattern_generated_at = await _scalar("SELECT MAX(generated_at) FROM patterns")
+        latest_manifest_imported_at = await _scalar("SELECT MAX(imported_at) FROM import_manifests")
+        latest_audit_at = await _scalar("SELECT MAX(timestamp) FROM audit_log")
+
+        recent_evidence: list[dict[str, Any]] = []
+        async with db.execute(
+            """SELECT evidence_id, learner_id, evidence_type, subject,
+                      academic_year, term, source_system, ingestion_method,
+                      source_reference, recorded_at, observed_at
+               FROM evidence
+               ORDER BY recorded_at DESC, rowid DESC
+               LIMIT ?""",
+            (recent_limit,),
+        ) as cursor:
+            async for row in cursor:
+                recent_evidence.append({
+                    "evidence_id": row["evidence_id"],
+                    "learner_id": row["learner_id"],
+                    "evidence_type": row["evidence_type"],
+                    "subject": row["subject"],
+                    "academic_year": row["academic_year"],
+                    "term": row["term"],
+                    "source_system": row["source_system"],
+                    "ingestion_method": row["ingestion_method"],
+                    "source_reference": row["source_reference"],
+                    "recorded_at": row["recorded_at"],
+                    "observed_at": row["observed_at"],
+                })
+
+        recent_audit: list[dict[str, Any]] = []
+        async with db.execute(
+            """SELECT audit_id, timestamp, tool_name, output_reference, approval_state
+               FROM audit_log
+               ORDER BY timestamp DESC, rowid DESC
+               LIMIT ?""",
+            (recent_limit,),
+        ) as cursor:
+            async for row in cursor:
+                recent_audit.append({
+                    "audit_id": row["audit_id"],
+                    "timestamp": row["timestamp"],
+                    "tool_name": row["tool_name"],
+                    "output_reference": row["output_reference"],
+                    "approval_state": row["approval_state"],
+                })
+
+        return {
+            "db_path": self._db_path,
+            "learners_count": learners_count,
+            "evidence_count": evidence_count,
+            "patterns_count": patterns_count,
+            "review_items_count": review_items_count,
+            "pending_reviews_count": pending_reviews_count,
+            "accepted_reviews_count": accepted_reviews_count,
+            "rejected_reviews_count": rejected_reviews_count,
+            "needs_context_reviews_count": needs_context_reviews_count,
+            "candidate_briefs_count": candidate_briefs_count,
+            "import_manifests_count": import_manifests_count,
+            "audit_entries_count": audit_entries_count,
+            "latest_evidence_recorded_at": latest_evidence_recorded_at,
+            "latest_evidence_observed_at": latest_evidence_observed_at,
+            "latest_pattern_generated_at": latest_pattern_generated_at,
+            "latest_manifest_imported_at": latest_manifest_imported_at,
+            "latest_audit_at": latest_audit_at,
+            "recent_evidence": recent_evidence,
+            "recent_audit": recent_audit,
+        }
+
+    async def reset_workspace_data(self, *, actor: str = "system") -> dict[str, int]:
+        """Clear workspace learner/evidence/review data while preserving teacher accounts and audit log."""
+        tables = (
+            "candidate_briefs",
+            "review_items",
+            "patterns",
+            "evidence",
+            "import_manifests",
+            "learners",
+        )
+        cleared: dict[str, int] = {}
+        async with self.transaction() as conn:
+            for table in tables:
+                async with conn.execute(f"SELECT COUNT(*) AS cnt FROM {table}") as cursor:
+                    row = await cursor.fetchone()
+                    cleared[table] = int(row["cnt"]) if row else 0
+                await conn.execute(f"DELETE FROM {table}")
+
+            await self.add_audit_entry(
+                AuditEntry(
+                    tool_name="workspace_reset",
+                    input_summary={"actor": actor, "cleared": cleared},
+                    output_reference=None,
+                    approval_state="reset",
+                ),
+                commit=False,
+                conn=conn,
+            )
+        return cleared
 

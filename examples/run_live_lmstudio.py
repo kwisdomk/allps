@@ -32,7 +32,7 @@ async def main():
     print("=" * 70)
 
     import tempfile
-    from data.synthetic.seed_data import seed_database
+    from data.synthetic.seed_data import seed_store
 
     temp_dir = None
     if "ALLPS_DB_PATH" in os.environ:
@@ -45,7 +45,7 @@ async def main():
     store = SQLiteStore(db_path)
     await store.initialize()
     if temp_dir is not None:
-        await seed_database(store)
+        await seed_store(store, reset=False, actor="run_live_lmstudio")
 
     ev_srv = EvidenceService(store)
     an_srv = AnalysisService(ev_srv, store)

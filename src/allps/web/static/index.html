@@ -92,10 +92,47 @@
           </select>
         </div>
       </div>
+
+      <div class="sidebar-section db-controls-section">
+        <div class="db-section-header">
+          <span class="label-mono">Database &amp; Sync</span>
+          <span id="db-name-label" class="db-name-chip">allps.db</span>
+        </div>
+        <div id="db-last-sync" class="db-sync-meta">Checking database...</div>
+        <div class="db-actions-stack">
+          <button type="button" id="btn-refresh-data" class="btn btn-secondary btn-sm btn-block">
+            ↻ Refresh Data
+          </button>
+          <button type="button" id="btn-seed-merge" class="btn btn-secondary btn-sm btn-block">
+            + Seed Missing Demo Data
+          </button>
+          <button
+            type="button"
+            id="btn-open-reset-dialog"
+            class="btn btn-danger-outline btn-sm btn-block"
+            command="show-modal"
+            commandfor="reset-db-dialog"
+          >
+            ↺ Reset &amp; Re-seed DB
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <span class="label-mono">Recent / New Data</span>
+        <div id="recent-data-list" class="recent-data-list" aria-live="polite">
+          <div class="recent-data-empty">Loading recent records...</div>
+        </div>
+      </div>
     </aside>
 
     <!-- Right Compartment: Main Active Workspace -->
     <section class="compartment-main" aria-label="Workspace views">
+
+      <div id="workspace-status-banner" class="feedback-banner" role="status" aria-live="polite" hidden>
+        <span id="workspace-status-text"></span>
+        <button type="button" id="btn-dismiss-workspace-status" class="btn btn-secondary btn-sm" aria-label="Dismiss status message">✕</button>
+      </div>
 
       <!-- Tabs Header -->
       <div class="tabs-header">
@@ -350,6 +387,29 @@
         Confirm & Save Observation
       </button>
     </div>
+  </dialog>
+
+  <!-- Reset & Re-seed Confirmation Dialog -->
+  <dialog id="reset-db-dialog" closedby="any" aria-labelledby="dialog-reset-heading">
+    <div class="modal-header">
+      <h3 id="dialog-reset-heading">Reset &amp; Re-seed Workspace Database?</h3>
+    </div>
+    <form method="dialog">
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-secondary);">
+          This will clear all learners, evidence records, candidate briefs, review decisions, and import manifests in <strong id="reset-dialog-db-name">the active database</strong>, then restore the baseline synthetic Kenyan CBC demonstration dataset.
+        </p>
+        <p style="font-size: 12px; color: var(--apple-orange-text); background: var(--apple-orange-dim); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,149,0,0.25);">
+          Pilot teacher accounts and the audit log entry for this reset are preserved. Use <strong>Seed Missing Demo Data</strong> instead if you want to keep newly ingested records.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" value="cancel" class="btn btn-secondary" autofocus>Cancel</button>
+        <button type="submit" id="btn-confirm-reset-db" value="confirm" class="btn btn-danger">
+          Reset &amp; Re-seed
+        </button>
+      </div>
+    </form>
   </dialog>
 
   <!-- Application Script -->
