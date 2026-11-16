@@ -1,0 +1,594 @@
+{
+  "timestamp": "2026-10-15T04:57:25.823063+00:00",
+  "protocol": "mcp/stdio",
+  "transport": "stdio",
+  "server_module": "allps.mcp.server",
+  "database": "Q:\\ALLPS-closeout-20261015\\allps_mcp_demo.db",
+  "steps": [
+    {
+      "step": "initialize",
+      "latency_ms": 3807.3532999987947,
+      "server_info": {
+        "name": "allps",
+        "version": ""
+      },
+      "protocol_version": "2025-11-25"
+    },
+    {
+      "step": "tools/list",
+      "latency_ms": 6.190000000060536,
+      "tool_count": 7,
+      "tools": [
+        {
+          "name": "ingest_evidence",
+          "description": "Ingest a new piece of learner evidence with full provenance and system origin. Evidence is immutable once recorded. Auto-creates the learner if they do not yet exist in the system.",
+          "inputSchema": {
+            "properties": {
+              "learner_id": {
+                "title": "Learner Id",
+                "type": "string"
+              },
+              "evidence_type": {
+                "title": "Evidence Type",
+                "type": "string"
+              },
+              "source_system": {
+                "title": "Source System",
+                "type": "string"
+              },
+              "ingestion_method": {
+                "title": "Ingestion Method",
+                "type": "string"
+              },
+              "source_type": {
+                "title": "Source Type",
+                "type": "string"
+              },
+              "source_reference": {
+                "title": "Source Reference",
+                "type": "string"
+              },
+              "academic_year": {
+                "title": "Academic Year",
+                "type": "integer"
+              },
+              "term": {
+                "title": "Term",
+                "type": "integer"
+              },
+              "content": {
+                "additionalProperties": true,
+                "title": "Content",
+                "type": "object"
+              },
+              "observed_at": {
+                "title": "Observed At",
+                "type": "string"
+              },
+              "source_event_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Event Id"
+              },
+              "subject": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Subject"
+              }
+            },
+            "required": [
+              "learner_id",
+              "evidence_type",
+              "source_system",
+              "ingestion_method",
+              "source_type",
+              "source_reference",
+              "academic_year",
+              "term",
+              "content",
+              "observed_at"
+            ],
+            "type": "object",
+            "title": "ingest_evidenceArguments"
+          }
+        },
+        {
+          "name": "get_learner_history",
+          "description": "Retrieve the full chronologically ordered evidence history for a learner. Supports optional filters by evidence type, academic year, term, and subject. Results are ordered by academic_year, term, then observed_at.",
+          "inputSchema": {
+            "properties": {
+              "learner_id": {
+                "title": "Learner Id",
+                "type": "string"
+              },
+              "evidence_type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Evidence Type"
+              },
+              "academic_year": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Academic Year"
+              },
+              "term": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Term"
+              },
+              "subject": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Subject"
+              }
+            },
+            "required": [
+              "learner_id"
+            ],
+            "type": "object",
+            "title": "get_learner_historyArguments"
+          }
+        },
+        {
+          "name": "analyse_longitudinal_pattern",
+          "description": "Analyse longitudinal patterns for a learner, optionally filtered by evidence type and subject. Returns a list of pattern objects with supporting evidence and limitations.",
+          "inputSchema": {
+            "properties": {
+              "learner_id": {
+                "title": "Learner Id",
+                "type": "string"
+              },
+              "evidence_type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Evidence Type"
+              },
+              "subject": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Subject"
+              }
+            },
+            "required": [
+              "learner_id"
+            ],
+            "type": "object",
+            "title": "analyse_longitudinal_patternArguments"
+          }
+        },
+        {
+          "name": "flag_pattern_for_review",
+          "description": "Flag a candidate longitudinal pattern for sovereign human teacher review. Enters candidate pattern into the teacher review inbox in PENDING state.",
+          "inputSchema": {
+            "properties": {
+              "pattern_id": {
+                "title": "Pattern Id",
+                "type": "string"
+              },
+              "assigned_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Assigned To"
+              }
+            },
+            "required": [
+              "pattern_id"
+            ],
+            "type": "object",
+            "title": "flag_pattern_for_reviewArguments"
+          }
+        },
+        {
+          "name": "resolve_teacher_review",
+          "description": "Resolve a candidate pattern review. Autonomous MCP clients may record notes, reject, or request context ('needs_context', 'rejected'), but are strictly prohibited from self-approving ('accepted'). Formal approval must be mediated by authenticated human teachers via the trusted backend ReviewService.",
+          "inputSchema": {
+            "properties": {
+              "review_id": {
+                "title": "Review Id",
+                "type": "string"
+              },
+              "status": {
+                "title": "Status",
+                "type": "string"
+              },
+              "reviewer_id": {
+                "title": "Reviewer Id",
+                "type": "string"
+              },
+              "teacher_notes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Teacher Notes"
+              }
+            },
+            "required": [
+              "review_id",
+              "status",
+              "reviewer_id"
+            ],
+            "type": "object",
+            "title": "resolve_teacher_reviewArguments"
+          }
+        },
+        {
+          "name": "get_pending_reviews",
+          "description": "Retrieve all review items pending teacher adjudication, optionally filtered by assigned teacher identifier.",
+          "inputSchema": {
+            "properties": {
+              "assigned_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Assigned To"
+              }
+            },
+            "type": "object",
+            "title": "get_pending_reviewsArguments"
+          }
+        },
+        {
+          "name": "get_surfaced_profile",
+          "description": "Retrieve published learner profile, strictly exposing patterns that have been reviewed and accepted by a human teacher. Unreviewed, pending, or rejected patterns are excluded.",
+          "inputSchema": {
+            "properties": {
+              "learner_id": {
+                "title": "Learner Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "learner_id"
+            ],
+            "type": "object",
+            "title": "get_surfaced_profileArguments"
+          }
+        }
+      ]
+    },
+    {
+      "step": "tools/call:get_learner_history",
+      "arguments": {
+        "learner_id": "LRN-001"
+      },
+      "latency_ms": 352.62430000148015,
+      "is_error": false,
+      "response_record_count": 9,
+      "sample_records": [
+        {
+          "evidence_id": "ea1f9dab-4b14-4abb-86e5-0c28c4c57819",
+          "learner_id": "LRN-001",
+          "evidence_type": "assessment",
+          "source_system": "synthetic_dataset",
+          "ingestion_method": "synthetic",
+          "source_event_id": null,
+          "source_type": "teacher",
+          "source_reference": "Mr. Banda",
+          "academic_year": 2025,
+          "term": 1,
+          "subject": "Mathematics",
+          "content": {
+            "grade": "Grade 3",
+            "score": 82,
+            "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": true,
+            "assessment_name": "Term 1 Test"
+          },
+          "observed_at": "2025-03-15T00:00:00Z",
+          "recorded_at": "2026-10-15T04:57:25.655626Z"
+        },
+        {
+          "evidence_id": "2518eac6-ca3f-4a73-bd8f-3c301caf556d",
+          "learner_id": "LRN-001",
+          "evidence_type": "observation",
+          "source_system": "synthetic_dataset",
+          "ingestion_method": "synthetic",
+          "source_event_id": null,
+          "source_type": "teacher",
+          "source_reference": "Mr. Banda",
+          "academic_year": 2025,
+          "term": 1,
+          "subject": "Mathematics",
+          "content": {
+            "note": "Learner 001 participates actively and helps classmates with problem-solving."
+          },
+          "observed_at": "2025-03-20T00:00:00Z",
+          "recorded_at": "2026-10-15T04:57:25.656063Z"
+        },
+        {
+          "evidence_id": "f3ba188d-92d9-443c-b71e-2d996695139b",
+          "learner_id": "LRN-001",
+          "evidence_type": "attendance",
+          "source_system": "synthetic_dataset",
+          "ingestion_method": "synthetic",
+          "source_event_id": null,
+          "source_type": "system",
+          "source_reference": "attendance-system",
+          "academic_year": 2025,
+          "term": 1,
+          "subject": null,
+          "content": {
+            "days_present": 48,
+            "days_total": 50,
+            "rate": 0.96
+          },
+          "observed_at": "2025-03-28T00:00:00Z",
+          "recorded_at": "2026-10-15T04:57:25.655975Z"
+        }
+      ]
+    },
+    {
+      "step": "tools/call:analyse_longitudinal_pattern",
+      "arguments": {
+        "learner_id": "LRN-001",
+        "subject": "Mathematics"
+      },
+      "latency_ms": 28.69490000011865,
+      "is_error": false,
+      "patterns_count": 2,
+      "patterns": [
+        {
+          "pattern_id": "3c090204-b814-4fea-b217-4b2adce7d76c",
+          "learner_id": "LRN-001",
+          "pattern_type": "trend",
+          "summary": "Declining across-term trend in Grade 3 Mathematics (scale: 100 marks) across 3 distinct terms (82/100 -> 68/100 -> 51/100).",
+          "supporting_evidence": [
+            "ea1f9dab-4b14-4abb-86e5-0c28c4c57819",
+            "6b9215bf-69e5-429b-9c3b-9adde29ad909",
+            "43af1c3a-c825-445b-bdbf-9d7bdabe3dba"
+          ],
+          "conflicting_evidence": [],
+          "limitations": [
+            "Evaluated across 3 distinct academic periods within Grade 3.",
+            "Scoring scale is uniform (100 marks); assessments have not been equated across different instruments or grades.",
+            "Percentage conversion alone was not used to establish comparability across differing scales."
+          ],
+          "generated_at": "2026-10-15T04:57:29.997450Z",
+          "review_id": "fc34bcc6-2200-4417-b970-e6baaf09323f",
+          "review_status": "pending"
+        },
+        {
+          "pattern_id": "322fe5e3-ce7e-4178-a725-ec8ae7874819",
+          "learner_id": "LRN-001",
+          "pattern_type": "changed_from_baseline",
+          "summary": "Drop of 31 marks from baseline (82/100 in Year 2025 Term 1 to 51/100 in Year 2025 Term 3) in Grade 3 Mathematics.",
+          "supporting_evidence": [
+            "ea1f9dab-4b14-4abb-86e5-0c28c4c57819",
+            "43af1c3a-c825-445b-bdbf-9d7bdabe3dba"
+          ],
+          "conflicting_evidence": [],
+          "limitations": [
+            "Baseline comparison is restricted to compatible Grade 3 Mathematics assessments on the uniform 100-mark scale.",
+            "Does not assume cross-grade or cross-instrument equating."
+          ],
+          "generated_at": "2026-10-15T04:57:29.997512Z",
+          "review_id": "9fae70a3-97b7-4b4e-a9b9-c9adf656f65f",
+          "review_status": "pending"
+        }
+      ]
+    },
+    {
+      "step": "verify_citations_in_sqlite",
+      "verified_count": 5,
+      "citations": [
+        {
+          "evidence_id": "ea1f9dab-4b14-4abb-86e5-0c28c4c57819",
+          "learner_id": "LRN-001",
+          "evidence_type": "assessment",
+          "academic_year": 2025,
+          "term": 1,
+          "content": {
+            "grade": "Grade 3",
+            "score": 82,
+            "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": true,
+            "assessment_name": "Term 1 Test"
+          },
+          "source_system": "synthetic_dataset",
+          "observed_at": "2025-03-15T00:00:00+00:00"
+        },
+        {
+          "evidence_id": "6b9215bf-69e5-429b-9c3b-9adde29ad909",
+          "learner_id": "LRN-001",
+          "evidence_type": "assessment",
+          "academic_year": 2025,
+          "term": 2,
+          "content": {
+            "grade": "Grade 3",
+            "score": 68,
+            "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": true,
+            "assessment_name": "Term 2 Test"
+          },
+          "source_system": "synthetic_dataset",
+          "observed_at": "2025-06-10T00:00:00+00:00"
+        },
+        {
+          "evidence_id": "43af1c3a-c825-445b-bdbf-9d7bdabe3dba",
+          "learner_id": "LRN-001",
+          "evidence_type": "assessment",
+          "academic_year": 2025,
+          "term": 3,
+          "content": {
+            "grade": "Grade 3",
+            "score": 51,
+            "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": true,
+            "assessment_name": "Term 3 Test"
+          },
+          "source_system": "synthetic_dataset",
+          "observed_at": "2025-09-12T00:00:00+00:00"
+        },
+        {
+          "evidence_id": "ea1f9dab-4b14-4abb-86e5-0c28c4c57819",
+          "learner_id": "LRN-001",
+          "evidence_type": "assessment",
+          "academic_year": 2025,
+          "term": 1,
+          "content": {
+            "grade": "Grade 3",
+            "score": 82,
+            "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": true,
+            "assessment_name": "Term 1 Test"
+          },
+          "source_system": "synthetic_dataset",
+          "observed_at": "2025-03-15T00:00:00+00:00"
+        },
+        {
+          "evidence_id": "43af1c3a-c825-445b-bdbf-9d7bdabe3dba",
+          "learner_id": "LRN-001",
+          "evidence_type": "assessment",
+          "academic_year": 2025,
+          "term": 3,
+          "content": {
+            "grade": "Grade 3",
+            "score": 51,
+            "max_score": 100,
+            "form": "Term Test",
+            "form_version": "v1.0",
+            "language": "English",
+            "measured_skill": "multiplication_and_division",
+            "comparison_authorized": true,
+            "assessment_name": "Term 3 Test"
+          },
+          "source_system": "synthetic_dataset",
+          "observed_at": "2025-09-12T00:00:00+00:00"
+        }
+      ]
+    },
+    {
+      "step": "tools/call:flag_pattern_for_review",
+      "arguments": {
+        "pattern_id": "3c090204-b814-4fea-b217-4b2adce7d76c",
+        "assigned_to": "TCH-BANDA"
+      },
+      "review_id": "fc34bcc6-2200-4417-b970-e6baaf09323f",
+      "status": "pending"
+    },
+    {
+      "step": "tools/call:resolve_teacher_review (UNAUTHORIZED SELF-APPROVAL)",
+      "arguments": {
+        "review_id": "fc34bcc6-2200-4417-b970-e6baaf09323f",
+        "status": "accepted",
+        "reviewer_id": "autonomous-agent-007"
+      },
+      "is_error": true,
+      "error_payload": "Error executing tool resolve_teacher_review",
+      "rejection_confirmed": true
+    },
+    {
+      "step": "tools/call:resolve_teacher_review (PERMITTED NEEDS_CONTEXT)",
+      "arguments": {
+        "review_id": "fc34bcc6-2200-4417-b970-e6baaf09323f",
+        "status": "needs_context",
+        "reviewer_id": "autonomous-audit-agent"
+      },
+      "is_error": false,
+      "status": "needs_context"
+    },
+    {
+      "step": "tools/call:get_surfaced_profile",
+      "arguments": {
+        "learner_id": "LRN-001"
+      },
+      "is_error": false,
+      "surfaced_patterns_count": 0
+    }
+  ]
+}

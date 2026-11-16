@@ -1,0 +1,17 @@
+usage: python.exe -m allps.web.app [-h] [--host HOST] [--port PORT] [--db DB]
+                                   [--mode {auto,live,deterministic,mock}]
+                                   [--reviewer REVIEWER] [--disable-reviewer]
+
+ALLPS Teacher Website Server
+
+options:
+  -h, --help            show this help message and exit
+  --host HOST           Host interface (default: 127.0.0.1)
+  --port PORT           Port to listen on (default: 8000)
+  --db DB               SQLite database path
+  --mode {auto,live,deterministic,mock}
+  --reviewer REVIEWER   Server-side trusted reviewer identifier
+  --disable-reviewer    Simulate unconfigured/repair state for human review
+                        authority
+
+STDERR:

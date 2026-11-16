@@ -1,0 +1,8 @@
+  Added learner: Learner 001 (LRN-001)
+  Added learner: Learner 002 (LRN-002)
+  Added learner: Learner 003 (LRN-003)
+  Added 27 evidence records
+
+Database seeded at: Q:\ALLPS-closeout-20261015\.audit-runtime\seed.db
+
+STDERR:
