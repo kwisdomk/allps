@@ -2,7 +2,7 @@
 
 Executes genuine, deterministic longitudinal pattern analysis on real learner records
 without relying on external language models or probabilistic inference.
-Conforms strictly to docs/AI_CONTRACT.md and OutputValidator invariants.
+Conforms strictly to docs/ai_contract.md and OutputValidator invariants.
 """
 
 from __future__ import annotations

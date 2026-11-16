@@ -1,4 +1,4 @@
-# ALLPS — Data Quality & Ambiguity Management Specification (`DATA_QUALITY.md`)
+# ALLPS — Data Quality & Ambiguity Management Specification (`data_quality.md`)
 
 > **Document Status**: Canonical Active Specification  
 > **Target Audience**: Challenge Evaluators, Data Engineers, Educators  
@@ -43,7 +43,7 @@ ALLPS was engineered from the ground up to **preserve raw truth and uncertainty*
 The most destructive error in educational analytics is treating an absent exam as a score of `0%`. This manufactures artificial drop curves, distorts longitudinal baselines, and biases future teachers against the learner.
 
 ### 3.1. Standard Missing Statuses
-ALLPS domain models explicitly recognize non-numeric missing states via [`AssessmentMissingStatus`](file:///q:/ALLPS/src/allps/models/evidence.py#L81):
+ALLPS domain models explicitly recognize non-numeric missing states via [`AssessmentMissingStatus`](../src/allps/models/evidence.py#L81):
 
 | Status Enum | Real-World Context | System Handling |
 |---|---|---|
@@ -63,7 +63,7 @@ If a student sat an exam, submitted their paper, and scored `0 / 50`, ALLPS reco
 
 A common mistake in educational systems is converting scores to percentages and treating them as comparable (e.g. 15/20 = 75%, 75/100 = 75%). A 15/20 on an easy quiz does not measure the same difficulty or skill as a 75/100 on an end-term summative examination.
 
-### 4.1. The 9-Key Series Key ([`SeriesKey`](file:///q:/ALLPS/src/allps/services/analysis_service.py#L14-L33))
+### 4.1. The 9-Key Series Key ([`SeriesKey`](../src/allps/services/analysis_service.py#L14-L33))
 Assessments are grouped into a longitudinal series **only if all 9 dimensions match identically**:
 
 ```python
@@ -83,7 +83,7 @@ class SeriesKey:
 If any dimension differs:
 - The assessments are partitioned into distinct series.
 - They are **never plotted on the same trend line**.
-- The analysis engine emits [`PatternType.INSUFFICIENT_EVIDENCE`](file:///q:/ALLPS/src/allps/models/pattern.py#L19) if an isolated series contains fewer than 3 terms.
+- The analysis engine emits [`PatternType.INSUFFICIENT_EVIDENCE`](../src/allps/models/pattern.py#L19) if an isolated series contains fewer than 3 terms.
 
 ---
 
@@ -165,7 +165,7 @@ A naive AI system would attempt to blend these into: *"Student displays moderate
 
 ### 7.2. The ALLPS Solution: Multi-Perspective Attribution
 1. **Preserve Both Records**: Both observations remain immutable with distinct `source_reference` identities (`"Teacher Achebe"`, `"Teacher Okafor"`).
-2. **Surface as Divergence**: The analysis engine surfaces a candidate [`PatternType.DIVERGENCE`](file:///q:/ALLPS/src/allps/models/pattern.py#L17).
+2. **Surface as Divergence**: The analysis engine surfaces a candidate [`PatternType.DIVERGENCE`](../src/allps/models/pattern.py#L17).
 3. **Present to Teacher for Adjudication**: The candidate handover presents both quotes side-by-side:
    > *"Teacher Achebe noted high verbal engagement in Term 1, while Teacher Okafor observed withdrawal in Term 2. The receiving teacher may wish to evaluate whether group size or subject matter influences participation."*
 

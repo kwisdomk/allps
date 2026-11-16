@@ -103,7 +103,7 @@ ALLPS uses a strictly bounded multi-tiered architecture that separates untrusted
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-For full details, see [ARCHITECTURE.md](ARCHITECTURE.md) and [`allps_architecture_map.md`](allps_architecture_map.md).
+For full details, see [architecture.md](docs/architecture.md) and [`architecture_map.md`](docs/architecture_map.md).
 
 ---
 
@@ -291,7 +291,7 @@ In ALLPS, AI is treated as the lowest-authority contributor with **strictly zero
 ## 12. Limitations
 
 - **Confirmed CUDA Allocation Failure (Unresolved for 7B Models)**:  
-  Attempting to load unquantized 7B distilled models (`DeepSeek-R1-Distill-Qwen-7B` / `Qwen2.5-7B`) on consumer 8GB GPUs produces a CUDA out-of-memory exception (`failed to allocate 14.2 GiB on CUDA:0`). Mitigated by utilizing the 4-bit quantized base model `allps-qwen35-base-4b` (<3.5GB VRAM). See [EVALS.md](EVALS.md) for full incident details.
+  Attempting to load unquantized 7B distilled models (`DeepSeek-R1-Distill-Qwen-7B` / `Qwen2.5-7B`) on consumer 8GB GPUs produces a CUDA out-of-memory exception (`failed to allocate 14.2 GiB on CUDA:0`). Mitigated by utilizing the 4-bit quantized base model `allps-qwen35-base-4b` (<3.5GB VRAM). See [evals.md](docs/evals.md) for full incident details.
 - **Prototype Reviewer Identity Boundary**:  
   The prototype server injects a configured reviewer identifier (e.g. `--reviewer TCH-BANDA`) for human-in-the-loop demonstration. This is a demonstration setting, **not cryptographic authentication or SSO identity**. Production deployments require OpenID Connect / SAML integration.
 - **Concurrent Ingestion Race**:  
@@ -332,10 +332,16 @@ ALLPS ships with a realistic synthetic demonstration dataset modeled on the Keny
 
 ## 15. Project Documentation & Verification Links
 
+Technical documentation lives in `docs/`, development plans in `docs/dev/`,
+and diagrams in `assets/diagrams/`. Local code exports belong in the ignored
+`exports/` directory. The video generator writes to `assets/demo/allps_demo.mp4`
+and uses ignored `tmp/demo_video/` files, with paths resolved from the repository.
+Existing database paths and the older `temp_audio/` files are preserved.
+
 - [Video Demonstration (YouTube)](https://youtu.be/MXhL38vzq-s) — Official 2m 45s challenge walkthrough demonstrating local AI synthesis, FastMCP stdio wire protocol, and sovereign human review gate.
-- [ARCHITECTURE.md](ARCHITECTURE.md) — Comprehensive system architecture, component breakdown, and tool call boundaries.
-- [EVALS.md](EVALS.md) — Nine real evaluation tasks, observed pass/fail outcomes, the unresolved CUDA allocation failure, and development repairs.
-- [DEVELOPMENT_RESEARCH.md](DEVELOPMENT_RESEARCH.md) — Technical research record, African classroom constraints, architectural experiments, and limitations.
-- [ROADMAP.md](ROADMAP.md) — Implementation roadmap, milestone tracking, and completed deliverables.
+- [architecture.md](docs/architecture.md) — Comprehensive system architecture, component breakdown, and tool call boundaries.
+- [evals.md](docs/evals.md) — Nine real evaluation tasks, observed pass/fail outcomes, the unresolved CUDA allocation failure, and development repairs.
+- [development_research.md](docs/development_research.md) — Technical research record, African classroom constraints, architectural experiments, and limitations.
+- [roadmap.md](docs/roadmap.md) — Implementation roadmap, milestone tracking, and completed deliverables.
 - [docs/SUBMISSION.md](docs/SUBMISSION.md) — Official challenge submission materials and video demonstration outline.
 - [LICENSE](LICENSE) — OSI-Approved MIT License.

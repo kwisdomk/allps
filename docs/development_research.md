@@ -110,7 +110,7 @@ flowchart TD
 ## 5. Unresolved Limitations & Untried Experiments
 
 1. **CUDA Out-of-Memory on 7B+ Distilled Models**:
-   As documented in [EVALS.md](EVALS.md), running unquantized 7B models on 8GB VRAM fails. Future experiments include testing partial CPU layer offloading (`n_gpu_layers = 16`), 3-bit GGUF quantization, and evaluating smaller 1.5B distillation models (`Qwen2.5-1.5B-Instruct`).
+   As documented in [evals.md](evals.md), running unquantized 7B models on 8GB VRAM fails. Future experiments include testing partial CPU layer offloading (`n_gpu_layers = 16`), 3-bit GGUF quantization, and evaluating smaller 1.5B distillation models (`Qwen2.5-1.5B-Instruct`).
 
 2. **Prototype Reviewer Identity vs. Production SSO**:
    The web interface uses a server-configured reviewer ID (`--reviewer TCH-BANDA`) to demonstrate human adjudication. While autonomous agents are blocked, this string is **not an authenticated cryptographic identity**. A production deployment requires OpenID Connect, SAML, or WebAuthn integration.

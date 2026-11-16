@@ -1,6 +1,6 @@
 """ALLPS Demo Submission Video Generator (<3 Minutes / 165s).
 
-Generates Q:\\ALLPS\\ALLPS_Demo_Submission.mp4:
+Generates assets/demo/allps_demo.mp4 relative to the repository root:
 - Resolution: 1920x1080 Full HD (libx264, aac, yuv420p)
 - Voiceover: en-KE-AsiliaNeural via edge-tts (Kenyan English neural voice)
 - Target duration: ~165 seconds (< 180 seconds, strictly > 120s and < 178s)
@@ -14,13 +14,15 @@ import math
 import os
 import subprocess
 import sys
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 import edge_tts
 import imageio_ffmpeg
 
-OUTPUT_VIDEO = r"Q:\ALLPS\ALLPS_Demo_Submission.mp4"
-TEMP_DIR = r"Q:\ALLPS\temp_audio"
-SCREENSHOTS_DIR = r"Q:\ALLPS\assets\screenshots"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+OUTPUT_VIDEO = str(REPO_ROOT / "assets" / "demo" / "allps_demo.mp4")
+TEMP_DIR = str(REPO_ROOT / "tmp" / "demo_video")
+SCREENSHOTS_DIR = str(REPO_ROOT / "assets" / "screenshots")
 FPS = 4
 WIDTH = 1920
 HEIGHT = 1080
@@ -567,6 +569,7 @@ def render_frame(
 
 
 def main():
+    Path(OUTPUT_VIDEO).parent.mkdir(parents=True, exist_ok=True)
     print("=" * 80)
     print("ALLPS DEMO VIDEO GENERATOR (<3 MINUTES / 165s)")
     print("=" * 80)

@@ -8,6 +8,12 @@
 
 ## 1. One-Page Architecture Map
 
+The [architecture workflow diagram](../assets/diagrams/architecture_workflow.png)
+shows the implemented agents, models, MCP tools, data flow, and human review.
+The [proposed architecture diagram](../assets/diagrams/proposed_architecture.png)
+is the earlier pre-build concept and is retained for development history.
+See also the [component map](architecture_map.md).
+
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                               EXTERNAL AGENTS & MCP CLIENTS                            │

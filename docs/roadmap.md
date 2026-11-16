@@ -31,7 +31,7 @@
 
 ### Milestone 2: Bounded AI Intelligence Layer (Workstream 3) — Completed
 * **Objective**: Implement bounded AI synthesis respecting educational safety bounds.
-* **Status**: Implemented & Verified with 21 tests in `tests/test_agent_orchestration.py` and live integration test `examples/test_live_lmstudio.py`.
+* **Status**: Implemented & Verified with 21 tests in `tests/test_agent_orchestration.py` and live integration test `examples/run_live_lmstudio.py`.
 
 ### Milestone 3: End-to-End Multi-Outcome Demo & Policy Rejection (Workstream 3/4) — Completed
 * **Objective**: Provide a runnable, under-60-second console proof of the complete ALLPS lifecycle.

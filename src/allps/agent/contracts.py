@@ -1,7 +1,7 @@
 """Pydantic domain contracts for the ALLPS AI Intelligence Layer.
 
 Defines the structured handover schema, synthesized findings, epistemic
-boundaries, and abstention types as codified in docs/AI_CONTRACT.md.
+boundaries, and abstention types as codified in docs/ai_contract.md.
 """
 
 from __future__ import annotations

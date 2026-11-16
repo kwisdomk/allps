@@ -154,17 +154,17 @@ flowchart TB
 |--------|-----------|-------------------|--------|
 | 📥 | **Data Sources** | 5 evidence types: `assessment`, `attendance`, `observation`, `learner_reflection`, `project` | ✅ Implemented |
 | 🏫 | **Source Systems** | `source_system` field (`school_sis`, `moodle`, `attendance_system`, `csv_import`, etc.) | ✅ Implemented |
-| 🤖 | **Orchestration Agent** | [`allps.agent`](file:///q:/ALLPS/src/allps/agent/__init__.py) — Bounded Pydantic AI orchestration | ✅ Implemented |
+| 🤖 | **Orchestration Agent** | [`allps.agent`](../src/allps/agent/__init__.py) — Bounded Pydantic AI orchestration | ✅ Implemented |
 | 🧠 | **LLM Backend** | Pluggable: deterministic fallback, local open-weight model (`allps-qwen35-base-4b`), or hosted Gemini API | ✅ Implemented |
-| ⚙️ | **MCP Server** | [`allps.mcp.server`](file:///q:/ALLPS/src/allps/mcp/server.py) — FastMCP, stdio transport | ✅ Implemented |
+| ⚙️ | **MCP Server** | [`allps.mcp.server`](../src/allps/mcp/server.py) — FastMCP, stdio transport | ✅ Implemented |
 | 🔧 | **MCP Tools** | `ingest_evidence`, `get_learner_history`, `analyse_longitudinal_pattern` | ✅ Implemented |
 | 🔧 | **Review Tools** | `flag_pattern_for_review`, `resolve_teacher_review`, `get_pending_reviews`, `get_surfaced_profile` | ✅ Implemented |
-| 📦 | **Evidence Service** | [`allps.services.evidence_service`](file:///q:/ALLPS/src/allps/services/evidence_service.py) | ✅ Implemented |
-| 📦 | **Analysis Service** | [`allps.services.analysis_service`](file:///q:/ALLPS/src/allps/services/analysis_service.py) | ✅ Implemented |
-| 🗄️ | **SQLite Store** | [`allps.storage.sqlite_store`](file:///q:/ALLPS/src/allps/storage/sqlite_store.py) — async via `aiosqlite` | ✅ Implemented |
-| 📐 | **Domain Models** | [`allps.models`](file:///q:/ALLPS/src/allps/models/__init__.py) — `Learner`, `Evidence`, `Pattern`, `ReviewItem`, `AuditEntry` | ✅ Implemented |
-| 🛡️ | **Safety Policies** | [`allps.policies`](file:///q:/ALLPS/src/allps/policies/__init__.py) — prohibited label screening | ✅ Implemented |
-| 🔒 | **Teacher Approval Gate** | [`ReviewItem`](file:///q:/ALLPS/src/allps/models/review.py) — `pending` → `accepted` / `rejected` / `needs_context` | ✅ Implemented & Enforced |
+| 📦 | **Evidence Service** | [`allps.services.evidence_service`](../src/allps/services/evidence_service.py) | ✅ Implemented |
+| 📦 | **Analysis Service** | [`allps.services.analysis_service`](../src/allps/services/analysis_service.py) | ✅ Implemented |
+| 🗄️ | **SQLite Store** | [`allps.storage.sqlite_store`](../src/allps/storage/sqlite_store.py) — async via `aiosqlite` | ✅ Implemented |
+| 📐 | **Domain Models** | [`allps.models`](../src/allps/models/__init__.py) — `Learner`, `Evidence`, `Pattern`, `ReviewItem`, `AuditEntry` | ✅ Implemented |
+| 🛡️ | **Safety Policies** | [`allps.policies`](../src/allps/policies/__init__.py) — prohibited label screening | ✅ Implemented |
+| 🔒 | **Teacher Approval Gate** | [`ReviewItem`](../src/allps/models/review.py) — `pending` → `accepted` / `rejected` / `needs_context` | ✅ Implemented & Enforced |
 | ✅ | **Approved Handover** | Sourced transition brief with evidence citations, limitations, and SHA-256 snapshot | ✅ Implemented |
 | ☁️ | **External Model API** | Local LM Studio endpoint (`allps-qwen35-base-4b`) + remote Gemini API support | ✅ Implemented |
 

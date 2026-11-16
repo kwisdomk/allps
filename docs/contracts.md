@@ -17,7 +17,7 @@ Educational systems often condense learners into static diagnoses (*"slow learne
 
 ## 2. Core Domain Models & Schemas
 
-### 2.1. Evidence Record ([`Evidence`](file:///q:/ALLPS/src/allps/models/evidence.py#L153)) — [IMPLEMENTED & VERIFIED]
+### 2.1. Evidence Record ([`Evidence`](../src/allps/models/evidence.py#L153)) — [IMPLEMENTED & VERIFIED]
 All observations are immutable once recorded.
 
 | Field | Type | Constraint | Description |
@@ -167,7 +167,7 @@ $$\text{SeriesKey} = (\text{grade}, \text{subject}, \text{measured\_skill}, \tex
 ## 7. Teacher Review Governance & Approval Boundary — [IMPLEMENTED & VERIFIED]
 
 > [!NOTE]
-> The governance model in this section is **fully implemented and verified** across Workstream 2 (Safety & Teacher Review Gate) and Workstream 3 (Bounded Agent Orchestration). `ReviewItem` exists in [`src/allps/models/review.py`](file:///q:/ALLPS/src/allps/models/review.py), with automatic item creation, profile gating, reviewer authentication, non-agent approval enforcement, and SHA-256 snapshot recording.
+> The governance model in this section is **fully implemented and verified** across Workstream 2 (Safety & Teacher Review Gate) and Workstream 3 (Bounded Agent Orchestration). `ReviewItem` exists in [`src/allps/models/review.py`](../src/allps/models/review.py), with automatic item creation, profile gating, reviewer authentication, non-agent approval enforcement, and SHA-256 snapshot recording.
 
 ```
 [Candidate Pattern Detected]
@@ -186,7 +186,7 @@ $$\text{SeriesKey} = (\text{grade}, \text{subject}, \text{measured\_skill}, \tex
              └── NEEDS_CONTEXT ─► Returned for further classroom inquiry
 ```
 
-### 7.1. Review Lifecycle Model ([`ReviewItem`](file:///q:/ALLPS/src/allps/models/review.py))
+### 7.1. Review Lifecycle Model ([`ReviewItem`](../src/allps/models/review.py))
 * **Implemented & Verified**: `review_id`, `pattern_id`, `assigned_to`, `status` (`pending`, `accepted`, `rejected`, `needs_context`), `teacher_notes`, `created_at`, `resolved_at`.
 * **Verified Governance Features**:
   - `reviewer_id`: Explicit authenticated teacher identity (e.g. `"teacher:mrs_ngcobo"`).

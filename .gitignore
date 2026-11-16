@@ -40,3 +40,8 @@ allps_code_bundle.txt
 allps_*.txt
 temp_audio/
 *.mp4
+
+# Local generated artifacts and runtime data
+exports/
+tmp/
+data/runtime/

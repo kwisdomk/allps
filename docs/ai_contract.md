@@ -1,4 +1,4 @@
-# ALLPS — AI Behavior & Output Contract Specification (`AI_CONTRACT.md`)
+# ALLPS — AI Behavior & Output Contract Specification (`ai_contract.md`)
 
 > **Document Status**: Canonical AI Behavior Contract  
 > **Target Audience**: Challenge Evaluators, ML Engineers, Systems Architects  
@@ -147,7 +147,7 @@ class CandidateHandoverBrief(BaseModel):
 
 ## 5. Prohibited Vocabulary & Content Invariants
 
-Every generated draft is passed through [`validate_text_for_prohibited_labels()`](file:///q:/ALLPS/src/allps/policies/label_policy.py#L71) and an Epistemic Validator before storage.
+Every generated draft is passed through [`validate_text_for_prohibited_labels()`](../src/allps/policies/label_policy.py#L71) and an Epistemic Validator before storage.
 
 ### 5.1. Prohibited Terminology Table
 

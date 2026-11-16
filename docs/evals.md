@@ -56,7 +56,7 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
 * **Actual Observed Behavior**: **PASS**. `AnalysisService` computed `trend` and `changed_from_baseline` patterns. Output cited all three UUIDs, verified uniform scale, and appended explicit comparability limitations.
 * **Execution Method**: Predefined Python service invocation (`AnalysisService.compute_longitudinal_patterns`) and MCP tool `analyse_longitudinal_pattern`.
 * **Runtime Provenance**: `deterministic`
-* **Evidence Reference**: [`tests/test_analysis_service.py`](file:///Q:/ALLPS/tests/test_analysis_service.py#L84), [`examples/demo_e2e.py:65`](file:///Q:/ALLPS/examples/demo_e2e.py#L65).
+* **Evidence Reference**: [`tests/test_analysis_service.py`](../tests/test_analysis_service.py#L84), [`examples/demo_e2e.py:65`](../examples/demo_e2e.py#L65).
 
 ---
 
@@ -69,7 +69,7 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
 * **Actual Observed Behavior**: **PASS**. `AnalysisService` identified `divergence`. Candidate review item was created in `pending` status. Teacher recorded contextual notes and marked `rejected`. Profile query (`get_surfaced_profile`) confirmed 0 patterns surfaced.
 * **Execution Method**: Predefined Python service pipeline + `ReviewService` adjudication.
 * **Runtime Provenance**: `deterministic`
-* **Evidence Reference**: [`tests/test_phase2_governance.py`](file:///Q:/ALLPS/tests/test_phase2_governance.py#L131), [`examples/demo_e2e.py:180`](file:///Q:/ALLPS/examples/demo_e2e.py#L180).
+* **Evidence Reference**: [`tests/test_phase2_governance.py`](../tests/test_phase2_governance.py#L131), [`examples/demo_e2e.py:180`](../examples/demo_e2e.py#L180).
 
 ---
 
@@ -80,7 +80,7 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
 * **Actual Observed Behavior**: **PASS**. `AnalysisService` detected insufficient duration (<3 terms); `OutputValidator` confirmed `HandoverStatus.ABSTAINED`; reason *"Longitudinal pattern analysis requires evidence across at least three distinct academic terms"* was recorded in audit log.
 * **Execution Method**: `AgentOrchestrator.orchestrate_handover` with `OutputValidator`.
 * **Runtime Provenance**: `live_ai` (LM Studio `allps-qwen35-base-4b`) and `deterministic`.
-* **Evidence Reference**: [`tests/test_agent_orchestration.py`](file:///Q:/ALLPS/tests/test_agent_orchestration.py#L320), [`examples/demo_e2e.py:240`](file:///Q:/ALLPS/examples/demo_e2e.py#L240).
+* **Evidence Reference**: [`tests/test_agent_orchestration.py`](../tests/test_agent_orchestration.py#L320), [`examples/demo_e2e.py:240`](../examples/demo_e2e.py#L240).
 
 ---
 
@@ -95,7 +95,7 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
   The brief was rejected with `status="validation_failed"`, raw output was hidden from the UI, and no corrupted data was stored.
 * **Execution Method**: Local inference via LM Studio (`allps-qwen35-base-4b`) + `OutputValidator.validate()`.
 * **Runtime Provenance**: `live_ai`
-* **Evidence Reference**: Observed in live API request (`task-951`); verified in [`tests/test_agent_orchestration.py`](file:///Q:/ALLPS/tests/test_agent_orchestration.py#L182).
+* **Evidence Reference**: Observed in live API request (`task-951`); verified in [`tests/test_agent_orchestration.py`](../tests/test_agent_orchestration.py#L182).
 
 ---
 
@@ -106,7 +106,7 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
 * **Actual Observed Behavior**: **PASS**. All 19 direct and indirect comparative patterns and 12 deficit/clinical terms were rejected with 100% precision. Legitimate phrases (*"peer collaboration"*, *"peer tutoring"*) were accepted without false positives.
 * **Execution Method**: Policy regex evaluation in `OutputValidator` and `label_policy.py`.
 * **Runtime Provenance**: `deterministic`
-* **Evidence Reference**: [`tests/test_peer_comparison_gap.py`](file:///Q:/ALLPS/tests/test_peer_comparison_gap.py#L1-L121) (27 tests), [`tests/test_phase2_governance.py`](file:///Q:/ALLPS/tests/test_phase2_governance.py#L40) (44 tests).
+* **Evidence Reference**: [`tests/test_peer_comparison_gap.py`](../tests/test_peer_comparison_gap.py#L1-L121) (27 tests), [`tests/test_phase2_governance.py`](../tests/test_phase2_governance.py#L40) (44 tests).
 
 ---
 
@@ -118,7 +118,7 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
 * **Actual Observed Behavior**: **PASS**. The FastMCP server intercepted the call and raised `PermissionError: Autonomous MCP clients cannot self-approve findings. Human teacher approval must occur via the trusted backend ReviewService.` The client received `is_error: True` (`UnexpectedToolError`). The published profile remained completely empty.
 * **Execution Method**: Real stdio JSON-RPC 2.0 wire protocol via official `mcp.ClientSession`.
 * **Runtime Provenance**: `mcp_wire_protocol`
-* **Evidence Reference**: [`examples/demonstrate_mcp_wire_protocol.py:180`](file:///Q:/ALLPS/examples/demonstrate_mcp_wire_protocol.py#L180), [`tests/test_phase2_governance.py`](file:///Q:/ALLPS/tests/test_phase2_governance.py#L128).
+* **Evidence Reference**: [`examples/demonstrate_mcp_wire_protocol.py:180`](../examples/demonstrate_mcp_wire_protocol.py#L180), [`tests/test_phase2_governance.py`](../tests/test_phase2_governance.py#L128).
 
 ---
 
@@ -129,7 +129,7 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
 * **Actual Observed Behavior**: **PASS**. Edge CDP automation verified that `candidate-synthesis-label`, finding citations, and `LIVE LLM` method badges were fully restored from SQLite upon reload.
 * **Execution Method**: FastAPI REST API + SQLiteStore `candidate_briefs` table + Vanilla JS SPA re-hydration.
 * **Runtime Provenance**: `live_ai`
-* **Evidence Reference**: [`tests/test_web_api.py::test_candidate_brief_persistence_on_reload`](file:///Q:/ALLPS/tests/test_web_api.py#L220), [`tests/verify_live_teacher_workflow.py`](file:///Q:/ALLPS/tests/verify_live_teacher_workflow.py#L275).
+* **Evidence Reference**: [`tests/test_web_api.py::test_candidate_brief_persistence_on_reload`](../tests/test_web_api.py#L220), [`tests/verify_live_teacher_workflow.py`](../tests/verify_live_teacher_workflow.py#L275).
 
 ---
 
@@ -140,7 +140,7 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
 * **Actual Observed Behavior**: **PASS**. UI updated to `REV 2`. Review item badges displayed `PENDING`. Approved handover profile count remained strictly 1. Zero unreviewed candidate material leaked into the approved view.
 * **Execution Method**: AgentOrchestrator + SQLiteStore + FastAPI Router.
 * **Runtime Provenance**: `live_ai`
-* **Evidence Reference**: [`tests/verify_live_teacher_workflow.py`](file:///Q:/ALLPS/tests/verify_live_teacher_workflow.py#L318), [`tests/test_web_api.py`](file:///Q:/ALLPS/tests/test_web_api.py#L280).
+* **Evidence Reference**: [`tests/verify_live_teacher_workflow.py`](../tests/verify_live_teacher_workflow.py#L318), [`tests/test_web_api.py`](../tests/test_web_api.py#L280).
 
 ---
 
@@ -164,7 +164,7 @@ Below are nine genuine evaluation tasks executed across the ALLPS pipeline, docu
 * **Status**: **Fully Verified & Reproducible**.
 * **Execution Method**: Open-source orchestration via Pydantic AI (`mcp_agent.py`) + official Filesystem MCP server (Node.js) + custom ALLPS FastMCP server (Python stdio) + local LM Studio (`allps-qwen35-base-4b`).
 * **Runtime Provenance**: `live_local_qwen_mcp`
-* **Evidence Reference**: [`examples/run_agentic_mcp_import.py`](file:///Q:/ALLPS/examples/run_agentic_mcp_import.py), [`src/allps/agent/mcp_agent.py`](file:///Q:/ALLPS/src/allps/agent/mcp_agent.py), [`data/trace_agentic_mcp_run.json`](file:///Q:/ALLPS/data/trace_agentic_mcp_run.json).
+* **Evidence Reference**: [`examples/run_agentic_mcp_import.py`](../examples/run_agentic_mcp_import.py), [`src/allps/agent/mcp_agent.py`](../src/allps/agent/mcp_agent.py), [`data/trace_agentic_mcp_run.json`](../data/trace_agentic_mcp_run.json).
 
 ---
 

@@ -14,7 +14,7 @@ ALLPS (Agentic Longitudinal Learner Profile System) collects atomic, dated, attr
 
 ## 2. Core Evidence Schema
 
-Every evidence record submitted to ALLPS adheres to the domain model [`Evidence`](file:///q:/ALLPS/src/allps/models/evidence.py#L116).
+Every evidence record submitted to ALLPS adheres to the domain model [`Evidence`](../src/allps/models/evidence.py#L116).
 
 ### 2.1. Top-Level Metadata Attributes
 
@@ -110,7 +110,7 @@ Represents unobserved or missing evaluations, preserving administrative and peda
 
 ## 5. Longitudinal Comparison & Equating Rules
 
-The analysis engine ([`AnalysisService`](file:///q:/ALLPS/src/allps/services/analysis_service.py)) enforces strict comparability guardrails:
+The analysis engine ([`AnalysisService`](../src/allps/services/analysis_service.py)) enforces strict comparability guardrails:
 
 1. **Explicit Compatibility Barrier (7-Fold Check)**:
    Longitudinal comparison across terms is permitted **only** between records matching across:
