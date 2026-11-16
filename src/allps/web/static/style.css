@@ -1068,6 +1068,108 @@ dialog::backdrop {
   color: var(--text-muted);
 }
 
+/* ── Auth Sign-In Dialog & Pilot Educator Pills ───────────────────── */
+
+.pilot-teacher-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pilot-teacher-pill {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  background-color: var(--bg-surface-secondary);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pilot-teacher-pill:hover {
+  border-color: var(--apple-blue);
+  background-color: var(--apple-blue-dim);
+  color: var(--apple-blue);
+}
+
+.pilot-teacher-pill.active {
+  border-color: var(--apple-blue);
+  background-color: var(--apple-blue);
+  color: #ffffff;
+}
+
+.pin-input-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.pin-input-row .form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Review Feedback Banner & Correction Panel ────────────────────── */
+
+.feedback-banner[hidden] {
+  display: none;
+}
+
+.feedback-banner {
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--border-subtle);
+}
+
+.feedback-banner.success {
+  background-color: var(--apple-green-dim);
+  border-color: rgba(52, 199, 89, 0.35);
+  color: var(--apple-green-text);
+}
+
+.feedback-banner.conflict {
+  background-color: var(--apple-orange-dim);
+  border-color: rgba(255, 149, 0, 0.35);
+  color: var(--apple-orange-text);
+}
+
+.feedback-banner.error {
+  background-color: var(--apple-red-dim);
+  border-color: rgba(255, 59, 48, 0.3);
+  color: var(--apple-red-text);
+}
+
+.review-correction-area {
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid rgba(0, 113, 227, 0.22);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.review-correction-area[hidden] {
+  display: none;
+}
+
+.review-decision-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* ── Mobile Responsive Refinements ──────────────────────────────────── */
 
 @media (max-width: 768px) {

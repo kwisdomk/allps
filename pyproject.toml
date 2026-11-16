@@ -16,17 +16,21 @@ dependencies = [
     "pydantic-ai>=2.56.0,<3",
     "itsdangerous>=2.1",
     "bcrypt>=4.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
+    "httpx>=0.27",
 ]
 
 [project.scripts]
 allps-mcp = "allps.mcp.server:main"
 allps-mcp-import = "allps.agent.mcp_agent:main"
+allps-web = "allps.web.app:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

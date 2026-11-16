@@ -678,6 +678,137 @@ async def test_mcp_teacher_id_cannot_correct(tmp_path: Path):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# L. Full Two-Teacher Handover & Competing Revision Conflict Workflow
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_two_teacher_handover_and_competing_revision_workflow(tmp_path: Path):
+    """End-to-end two-teacher handover across session switch, correction, and 409 conflict."""
+    db_file = str(tmp_path / "two_teacher_handover.db")
+    app = _make_app(db_file)
+    transport = httpx.ASGITransport(app=app)
+
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        async with app.router.lifespan_context(app):
+            # Unauthenticated config reports authority unavailable
+            cfg0 = (await client.get("/api/config")).json()
+            assert cfg0["review_authority_available"] is False
+            assert cfg0["authenticated_teacher"] is None
+
+            # Teacher 1 (TCH-BANDA) logs in
+            login1 = await client.post(
+                "/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"}
+            )
+            assert login1.status_code == 200, login1.text
+            cfg1 = (await client.get("/api/config")).json()
+            assert cfg1["review_authority_available"] is True
+            assert cfg1["authenticated_teacher"]["teacher_id"] == "TCH-BANDA"
+
+            # Record observation
+            obs_resp = await client.post(
+                "/api/learners/LRN-001/evidence",
+                json={
+                    "event_datetime": "2025-11-10T09:00:00Z",
+                    "academic_year": 2025,
+                    "term": 3,
+                    "subject": "Mathematics",
+                    "observation": "Demonstrated geometric reasoning during group blocks activity.",
+                    "context": "Concrete manipulatives station.",
+                    "source_reference": "Mr. Banda",
+                    "source_event_id": "two-teacher-obs-001",
+                },
+            )
+            assert obs_resp.status_code == 201, obs_resp.text
+
+            # Generate candidate handover brief
+            gen_resp = await client.post(
+                "/api/learners/LRN-001/generate",
+                json={"subject": "Mathematics", "mode": "mock"},
+            )
+            assert gen_resp.status_code == 200, gen_resp.text
+            assert gen_resp.json()["status"] == "success"
+
+            # Teacher 1 marks pending review as needs_context at expected_revision=0
+            reviews1 = (await client.get("/api/learners/LRN-001/reviews")).json()
+            pending1 = [r for r in reviews1 if r["status"] == "pending"]
+            assert pending1
+            review_id = pending1[0]["review_id"]
+            assert pending1[0]["revision"] == 0
+
+            dec1 = await client.post(
+                f"/api/reviews/{review_id}/decision",
+                json={
+                    "status": "needs_context",
+                    "teacher_notes": "Awaiting incoming Grade 4 teacher verification.",
+                    "expected_revision": 0,
+                    "is_correction": False,
+                },
+            )
+            assert dec1.status_code == 200, dec1.text
+            assert dec1.json()["status"] == "needs_context"
+            assert dec1.json()["reviewer_id"] == "TCH-BANDA"
+            assert dec1.json()["revision"] == 1
+
+            # Handover remains empty prior to acceptance
+            handover_mid = (await client.get("/api/learners/LRN-001/handover")).json()
+            assert handover_mid["accepted_pattern_count"] == 0
+
+            # Teacher 1 logs out; Teacher 2 (TCH-OCHIENG) logs in
+            await client.post("/api/auth/logout")
+            login2 = await client.post(
+                "/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"}
+            )
+            assert login2.status_code == 200, login2.text
+            cfg2 = (await client.get("/api/config")).json()
+            assert cfg2["review_authority_available"] is True
+            assert cfg2["authenticated_teacher"]["teacher_id"] == "TCH-OCHIENG"
+
+            # Teacher 2 inspects review at revision 1
+            reviews2 = (await client.get("/api/learners/LRN-001/reviews")).json()
+            target_rev = next(r for r in reviews2 if r["review_id"] == review_id)
+            assert target_rev["status"] == "needs_context"
+            assert target_rev["revision"] == 1
+
+            # Teacher 2 submits explicit correction to accepted at revision 1 -> revision 2
+            dec2 = await client.post(
+                f"/api/reviews/{review_id}/decision",
+                json={
+                    "status": "accepted",
+                    "teacher_notes": "Verified context with Mr. Banda; accepted for Grade 4 transition.",
+                    "expected_revision": 1,
+                    "is_correction": True,
+                },
+            )
+            assert dec2.status_code == 200, dec2.text
+            dec2_data = dec2.json()
+            assert dec2_data["status"] == "accepted"
+            assert dec2_data["reviewer_id"] == "TCH-OCHIENG"
+            assert dec2_data["revision"] == 2
+            assert len(dec2_data["approved_content_hash"]) == 64
+
+            # Competing stale submission with expected_revision=1 must return 409 Conflict
+            stale = await client.post(
+                f"/api/reviews/{review_id}/decision",
+                json={
+                    "status": "rejected",
+                    "teacher_notes": "Competing stale decision.",
+                    "expected_revision": 1,
+                    "is_correction": True,
+                },
+            )
+            assert stale.status_code == 409, stale.text
+
+            # Approved handover surfaces the pattern attributed to TCH-OCHIENG with verified hash
+            handover_final = (await client.get("/api/learners/LRN-001/handover")).json()
+            assert handover_final["accepted_pattern_count"] == 1
+            surfaced = handover_final["patterns"][0]["review"]
+            assert surfaced["reviewer_id"] == "TCH-OCHIENG"
+            assert surfaced["approved_content_hash"] == dec2_data["approved_content_hash"]
+            assert surfaced["hash_verified"] is True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Utility
 # ─────────────────────────────────────────────────────────────────────────────
 

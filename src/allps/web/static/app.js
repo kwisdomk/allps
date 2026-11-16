@@ -19,7 +19,11 @@ class ApiClient {
   async _request(path, options = {}) {
     const url = `${this.baseUrl}${path}`;
     const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
-    const response = await fetch(url, { ...options, headers });
+    const response = await fetch(url, {
+      credentials: "same-origin",
+      ...options,
+      headers,
+    });
 
     const contentType = response.headers.get("content-type") || "";
     let data;
@@ -42,6 +46,23 @@ class ApiClient {
 
   async getConfig() {
     return this._request("/config");
+  }
+
+  async login(teacherId, pin) {
+    return this._request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ teacher_id: teacherId, pin }),
+    });
+  }
+
+  async logout() {
+    return this._request("/auth/logout", {
+      method: "POST",
+    });
+  }
+
+  async getMe() {
+    return this._request("/auth/me");
   }
 
   async getLearners() {
@@ -81,10 +102,21 @@ class ApiClient {
     return this._request(`/learners/${encodeURIComponent(learnerId)}/reviews`);
   }
 
-  async postReviewDecision(reviewId, status, teacherNotes = null) {
+  async postReviewDecision(
+    reviewId,
+    status,
+    teacherNotes = null,
+    expectedRevision = 0,
+    isCorrection = false
+  ) {
     return this._request(`/reviews/${encodeURIComponent(reviewId)}/decision`, {
       method: "POST",
-      body: JSON.stringify({ status, teacher_notes: teacherNotes }),
+      body: JSON.stringify({
+        status,
+        teacher_notes: teacherNotes,
+        expected_revision: expectedRevision,
+        is_correction: isCorrection,
+      }),
     });
   }
 
@@ -113,9 +145,12 @@ const state = {
   },
   config: {
     review_authority_available: false,
+    authenticated_teacher: null,
     server_reviewer_id: null,
+    available_teachers: [],
     default_mode: "auto",
   },
+  currentTeacher: null,
   isGenerating: false,
   // Stable observation draft state
   observationDraft: {
@@ -156,6 +191,20 @@ const elements = {
   handoverCountBadge: document.getElementById("handover-count-badge"),
 
   authBanner: document.getElementById("auth-status-banner"),
+  btnAuthAction: document.getElementById("btn-auth-action"),
+  reviewFeedbackBanner: document.getElementById("review-feedback-banner"),
+
+  // Login Dialog
+  loginDialog: document.getElementById("login-dialog"),
+  loginForm: document.getElementById("login-form"),
+  loginTeacherPills: document.getElementById("login-teacher-pills"),
+  loginTeacherId: document.getElementById("login-teacher-id"),
+  loginPin: document.getElementById("current-password"),
+  btnTogglePin: document.getElementById("btn-toggle-pin"),
+  btnCloseLogin: document.getElementById("btn-close-login"),
+  btnCancelLogin: document.getElementById("btn-cancel-login"),
+  btnSubmitLogin: document.getElementById("btn-submit-login"),
+  loginErrorAlert: document.getElementById("login-error-alert"),
 
   // Side Panel
   sidePanel: document.getElementById("side-panel"),
@@ -200,12 +249,54 @@ async function init() {
   }
 }
 
+function setupDialogLightDismiss(dialog) {
+  if (!dialog || "closedBy" in HTMLDialogElement.prototype) return;
+  dialog.addEventListener("click", (event) => {
+    if (event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    const isDialogContent =
+      rect.top <= event.clientY &&
+      event.clientY <= rect.top + rect.height &&
+      rect.left <= event.clientX &&
+      event.clientX <= rect.left + rect.width;
+    if (isDialogContent) return;
+    dialog.close();
+  });
+}
+
 function bindEvents() {
   // Learner change
   elements.learnerSelect.addEventListener("change", (e) => {
     state.activeLearnerId = e.target.value;
+    clearReviewFeedback();
     refreshAllViews();
   });
+
+  // Auth Controls & Sign-In Modal
+  if (elements.btnAuthAction) {
+    elements.btnAuthAction.addEventListener("click", handleAuthActionClick);
+  }
+  if (elements.btnCloseLogin) {
+    elements.btnCloseLogin.addEventListener("click", () => elements.loginDialog.close());
+  }
+  if (elements.btnCancelLogin) {
+    elements.btnCancelLogin.addEventListener("click", () => elements.loginDialog.close());
+  }
+  if (elements.btnTogglePin) {
+    elements.btnTogglePin.addEventListener("click", handleTogglePinVisibility);
+  }
+  if (elements.loginForm) {
+    elements.loginForm.addEventListener("submit", handleLoginSubmit);
+  }
+  if (elements.loginTeacherId) {
+    elements.loginTeacherId.addEventListener("input", clearLoginError);
+  }
+  if (elements.loginPin) {
+    elements.loginPin.addEventListener("input", clearLoginError);
+  }
+
+  // Light-dismiss fallback for browsers without <dialog closedby="any">
+  [elements.loginDialog, elements.observationDialog, elements.previewDialog].forEach(setupDialogLightDismiss);
 
   // Filters change
   const filterElements = [elements.filterSubject, elements.filterYear, elements.filterTerm, elements.filterType];
@@ -274,6 +365,10 @@ function switchTab(tabName) {
 async function loadConfig() {
   try {
     state.config = await api.getConfig();
+    state.currentTeacher = state.config.authenticated_teacher || null;
+    if (state.currentTeacher && state.currentTeacher.display_name) {
+      state.observationDraft.source_reference = state.currentTeacher.display_name;
+    }
     renderAuthStatus();
     if (state.config.default_mode && elements.generateMode) {
       elements.generateMode.value = state.config.default_mode;
@@ -284,24 +379,170 @@ async function loadConfig() {
 }
 
 function renderAuthStatus() {
-  const isAvailable = state.config.review_authority_available;
-  const reviewerId = state.config.server_reviewer_id;
+  const teacher = state.currentTeacher;
+  const isAvailable = Boolean(state.config.review_authority_available && teacher);
 
   if (isAvailable) {
     elements.authBanner.className = "status-pill active";
-    elements.authBanner.title = "Prototype Trust Limitation: Server-configured reviewer ID for demonstration, not verified cryptographic identity.";
+    elements.authBanner.title =
+      state.config.trust_notice ||
+      "Authenticated teacher session via signed HttpOnly cookie.";
     elements.authBanner.innerHTML = `
       <span class="pulse-dot"></span>
-      <span>Configured Reviewer: <strong>${escapeHtml(reviewerId)}</strong> <span style="font-size:10px; opacity:0.8;">(Demo Config)</span></span>
+      <span id="auth-status-text">Signed in: <strong>${escapeHtml(teacher.display_name)}</strong> (${escapeHtml(teacher.teacher_id)})</span>
     `;
+    if (elements.btnAuthAction) {
+      elements.btnAuthAction.textContent = "Switch / Sign Out";
+    }
   } else {
     elements.authBanner.className = "status-pill disabled";
-    elements.authBanner.title = "Decision submission disabled: Server authority unconfigured.";
+    elements.authBanner.title = "Sign in with a teacher PIN session to adjudicate or correct findings.";
     elements.authBanner.innerHTML = `
       <span class="pulse-dot"></span>
-      <span>Authority: <strong>Disabled (503)</strong></span>
+      <span id="auth-status-text">Not Signed In (Read-Only)</span>
     `;
+    if (elements.btnAuthAction) {
+      elements.btnAuthAction.textContent = "Sign In";
+    }
   }
+}
+
+function handleAuthActionClick() {
+  if (state.currentTeacher) {
+    handleLogout();
+  } else {
+    openLoginDialog();
+  }
+}
+
+function openLoginDialog(prefillTeacherId = "") {
+  if (!elements.loginDialog) return;
+  clearLoginError();
+
+  if (elements.loginPin) {
+    elements.loginPin.value = "";
+    elements.loginPin.type = "password";
+  }
+  if (elements.btnTogglePin) {
+    elements.btnTogglePin.setAttribute("aria-pressed", "false");
+    elements.btnTogglePin.setAttribute("aria-label", "Show PIN");
+    elements.btnTogglePin.textContent = "Show";
+  }
+
+  if (prefillTeacherId && elements.loginTeacherId) {
+    elements.loginTeacherId.value = prefillTeacherId;
+  }
+
+  renderPilotTeacherPills();
+  elements.loginDialog.showModal();
+  if (elements.loginTeacherId && !elements.loginTeacherId.value) {
+    elements.loginTeacherId.focus();
+  } else if (elements.loginPin) {
+    elements.loginPin.focus();
+  }
+}
+
+function renderPilotTeacherPills() {
+  if (!elements.loginTeacherPills) return;
+  const teachers = state.config.available_teachers || [];
+  const selectedId = elements.loginTeacherId ? elements.loginTeacherId.value.trim() : "";
+
+  elements.loginTeacherPills.innerHTML = "";
+  if (teachers.length === 0) {
+    elements.loginTeacherPills.innerHTML = `<span style="font-size: 12px; color: var(--text-muted);">No local pilot accounts listed.</span>`;
+    return;
+  }
+
+  teachers.forEach((t) => {
+    const pill = document.createElement("button");
+    pill.type = "button";
+    pill.className = `pilot-teacher-pill${selectedId === t.teacher_id ? " active" : ""}`;
+    pill.dataset.teacherId = t.teacher_id;
+    pill.textContent = `${t.display_name} (${t.teacher_id})`;
+    pill.addEventListener("click", () => {
+      if (elements.loginTeacherId) {
+        elements.loginTeacherId.value = t.teacher_id;
+      }
+      clearLoginError();
+      elements.loginTeacherPills.querySelectorAll(".pilot-teacher-pill").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.teacherId === t.teacher_id);
+      });
+      if (elements.loginPin) {
+        elements.loginPin.focus();
+      }
+    });
+    elements.loginTeacherPills.appendChild(pill);
+  });
+}
+
+function handleTogglePinVisibility() {
+  if (!elements.loginPin || !elements.btnTogglePin) return;
+  const isHidden = elements.loginPin.type === "password";
+  elements.loginPin.type = isHidden ? "text" : "password";
+  elements.btnTogglePin.setAttribute("aria-pressed", isHidden ? "true" : "false");
+  elements.btnTogglePin.setAttribute("aria-label", isHidden ? "Hide PIN" : "Show PIN");
+  elements.btnTogglePin.textContent = isHidden ? "Hide" : "Show";
+}
+
+function showLoginError(message) {
+  if (!elements.loginErrorAlert) return;
+  elements.loginErrorAlert.style.display = "block";
+  elements.loginErrorAlert.textContent = message;
+}
+
+function clearLoginError() {
+  if (!elements.loginErrorAlert) return;
+  elements.loginErrorAlert.style.display = "none";
+  elements.loginErrorAlert.textContent = "";
+}
+
+async function handleLoginSubmit(event) {
+  event.preventDefault();
+  const teacherId = elements.loginTeacherId ? elements.loginTeacherId.value.trim() : "";
+  const pin = elements.loginPin ? elements.loginPin.value : "";
+
+  if (!teacherId) {
+    showLoginError("Teacher ID is required.");
+    return;
+  }
+  if (!pin || pin.length < 4) {
+    showLoginError("PIN must be at least 4 characters.");
+    return;
+  }
+
+  clearLoginError();
+  if (elements.btnSubmitLogin) {
+    elements.btnSubmitLogin.disabled = true;
+    elements.btnSubmitLogin.textContent = "Signing In...";
+  }
+
+  try {
+    await api.login(teacherId, pin);
+    if (elements.loginPin) {
+      elements.loginPin.value = "";
+    }
+    elements.loginDialog.close();
+    clearReviewFeedback();
+    await loadConfig();
+    await Promise.all([loadReviewsView(), loadApprovedHandoverView()]);
+  } catch (err) {
+    showLoginError(err.message || "Sign-in failed.");
+  } finally {
+    if (elements.btnSubmitLogin) {
+      elements.btnSubmitLogin.disabled = false;
+      elements.btnSubmitLogin.textContent = "Sign In";
+    }
+  }
+}
+
+async function handleLogout() {
+  try {
+    await api.logout();
+  } catch (err) {
+    console.warn("Logout failed:", err);
+  }
+  await loadConfig();
+  await Promise.all([loadReviewsView(), loadApprovedHandoverView()]);
 }
 
 async function loadLearners() {
@@ -551,10 +792,17 @@ function getMethodBadge(method) {
 function renderReviewCard(rev) {
   const card = document.createElement("div");
   card.className = "review-card";
+  if (rev.review_id) {
+    card.dataset.reviewId = rev.review_id;
+  }
 
   const statusClass = `badge-status-${rev.status.toLowerCase()}`;
   const statusBadge = `<span class="badge ${statusClass}">${escapeHtml(rev.status.toUpperCase())}</span>`;
-  const revBadge = rev.generation_revision != null ? `<span class="tag tag-stage">Rev ${escapeHtml(String(rev.generation_revision))}</span>` : "";
+  const genRevBadge = rev.generation_revision != null
+    ? `<span class="tag tag-stage">Brief Rev ${escapeHtml(String(rev.generation_revision))}</span>`
+    : "";
+  const currentRevision = rev.revision ?? 0;
+  const lockRevBadge = `<span class="tag tag-stage" title="Optimistic concurrency lock revision">Decision Rev ${escapeHtml(String(currentRevision))}</span>`;
   const methodBadge = (rev.candidate_brief && rev.candidate_brief.runtime_method)
     ? getMethodBadge(rev.candidate_brief.runtime_method)
     : "";
@@ -578,7 +826,7 @@ function renderReviewCard(rev) {
   }
 
   // Teacher adjudication area
-  const isAuthorityAvailable = state.config.review_authority_available;
+  const isAuthorityAvailable = Boolean(state.config.review_authority_available && state.currentTeacher);
   const isPending = rev.status === "pending";
 
   let actionAreaHtml = "";
@@ -599,7 +847,7 @@ function renderReviewCard(rev) {
           <button type="button" class="btn btn-needs-context btn-sm" ${!isAuthorityAvailable ? "disabled" : ""}>
             ? Needs Context
           </button>
-          ${!isAuthorityAvailable ? `<span style="font-size: 11px; color: var(--rose-accent);">Authority disabled: waiting for backend server auth.</span>` : ""}
+          ${!isAuthorityAvailable ? `<button type="button" class="btn btn-secondary btn-sm btn-inline-signin">Sign in to Adjudicate</button>` : ""}
         </div>
       </div>
     `;
@@ -607,9 +855,35 @@ function renderReviewCard(rev) {
     actionAreaHtml = `
       <div class="review-decision-box">
         <span>Decision: <strong>${escapeHtml(rev.status.toUpperCase())}</strong> by <code>${escapeHtml(rev.reviewer_id || "Teacher")}</code></span>
-        ${rev.approved_content_hash ? `<span class="hash-badge" title="SHA-256 Hash">SHA: ${escapeHtml(rev.approved_content_hash.slice(0, 16))}…</span>` : ""}
+        <div class="review-decision-meta">
+          <span class="tag tag-stage">Decision Rev ${escapeHtml(String(currentRevision))}</span>
+          ${rev.approved_content_hash ? `<span class="hash-badge" title="SHA-256 Hash">SHA: ${escapeHtml(rev.approved_content_hash.slice(0, 16))}…</span>` : ""}
+          ${isAuthorityAvailable && rev.review_id ? `<button type="button" class="btn btn-secondary btn-sm btn-correct-toggle">✎ Correct Decision</button>` : ""}
+        </div>
       </div>
       ${rev.teacher_notes ? `<div style="font-size: 12px; color: var(--text-secondary); font-style: italic; margin-top: 4px;">Notes: "${escapeHtml(rev.teacher_notes)}"</div>` : ""}
+      ${isAuthorityAvailable && rev.review_id ? `
+        <div class="review-correction-area" hidden>
+          <label style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; font-family: var(--font-mono);">
+            Explicit Correction Rationale (Rev ${escapeHtml(String(currentRevision))} · Acting as ${escapeHtml(state.currentTeacher.display_name)}):
+          </label>
+          <textarea class="notes-input correction-notes-input" rows="2" placeholder="Document pedagogical rationale for correcting this decision...">${escapeHtml(rev.teacher_notes || "")}</textarea>
+          <div class="review-btn-row">
+            <button type="button" class="btn btn-accept btn-sm btn-correct-submit" data-status="accepted">
+              ✓ Correct to Accepted
+            </button>
+            <button type="button" class="btn btn-reject btn-sm btn-correct-submit" data-status="rejected">
+              ✕ Correct to Rejected
+            </button>
+            <button type="button" class="btn btn-needs-context btn-sm btn-correct-submit" data-status="needs_context">
+              ? Correct to Needs Context
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm btn-correct-cancel">
+              Cancel
+            </button>
+          </div>
+        </div>
+      ` : ""}
     `;
   }
 
@@ -617,7 +891,8 @@ function renderReviewCard(rev) {
     <div class="review-header">
       <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
         <span class="tag tag-stage">${escapeHtml(rev.pattern_type.toUpperCase())}</span>
-        ${revBadge}
+        ${genRevBadge}
+        ${lockRevBadge}
         ${methodBadge}
         ${statusBadge}
       </div>
@@ -640,7 +915,13 @@ function renderReviewCard(rev) {
     btn.addEventListener("click", () => openSidePanel(btn.dataset.evidenceId));
   });
 
-  // Bind decision buttons
+  // Bind inline sign-in button when unauthenticated
+  const inlineSignInBtn = card.querySelector(".btn-inline-signin");
+  if (inlineSignInBtn) {
+    inlineSignInBtn.addEventListener("click", () => openLoginDialog());
+  }
+
+  // Bind initial decision buttons
   if (isPending && rev.review_id) {
     const notesInput = card.querySelector(".notes-input");
     const acceptBtn = card.querySelector(".btn-accept");
@@ -648,14 +929,49 @@ function renderReviewCard(rev) {
     const needsContextBtn = card.querySelector(".btn-needs-context");
 
     if (acceptBtn) {
-      acceptBtn.addEventListener("click", () => handleReviewDecision(rev.review_id, "accepted", notesInput.value));
+      acceptBtn.addEventListener("click", () =>
+        handleReviewDecision(rev.review_id, "accepted", notesInput.value, currentRevision, false)
+      );
     }
     if (rejectBtn) {
-      rejectBtn.addEventListener("click", () => handleReviewDecision(rev.review_id, "rejected", notesInput.value));
+      rejectBtn.addEventListener("click", () =>
+        handleReviewDecision(rev.review_id, "rejected", notesInput.value, currentRevision, false)
+      );
     }
     if (needsContextBtn) {
-      needsContextBtn.addEventListener("click", () => handleReviewDecision(rev.review_id, "needs_context", notesInput.value));
+      needsContextBtn.addEventListener("click", () =>
+        handleReviewDecision(rev.review_id, "needs_context", notesInput.value, currentRevision, false)
+      );
     }
+  }
+
+  // Bind explicit correction controls on resolved reviews
+  if (!isPending && rev.review_id && isAuthorityAvailable) {
+    const toggleBtn = card.querySelector(".btn-correct-toggle");
+    const correctionArea = card.querySelector(".review-correction-area");
+    const cancelBtn = card.querySelector(".btn-correct-cancel");
+    const corrNotesInput = card.querySelector(".correction-notes-input");
+
+    if (toggleBtn && correctionArea) {
+      toggleBtn.addEventListener("click", () => {
+        correctionArea.hidden = !correctionArea.hidden;
+        if (!correctionArea.hidden && corrNotesInput) {
+          corrNotesInput.focus();
+        }
+      });
+    }
+    if (cancelBtn && correctionArea) {
+      cancelBtn.addEventListener("click", () => {
+        correctionArea.hidden = true;
+      });
+    }
+    card.querySelectorAll(".btn-correct-submit").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetStatus = btn.dataset.status;
+        const notes = corrNotesInput ? corrNotesInput.value : "";
+        handleReviewDecision(rev.review_id, targetStatus, notes, currentRevision, true);
+      });
+    });
   }
 
   return card;
@@ -816,13 +1132,64 @@ function renderGenerationResult(res) {
   }
 }
 
-async function handleReviewDecision(reviewId, status, teacherNotes) {
+function showReviewFeedback(type, message) {
+  if (!elements.reviewFeedbackBanner) return;
+  elements.reviewFeedbackBanner.className = `feedback-banner ${type}`;
+  elements.reviewFeedbackBanner.innerHTML = `
+    <span>${escapeHtml(message)}</span>
+    <button type="button" class="btn btn-secondary btn-sm btn-dismiss-feedback" aria-label="Dismiss message">✕</button>
+  `;
+  elements.reviewFeedbackBanner.hidden = false;
+  const dismissBtn = elements.reviewFeedbackBanner.querySelector(".btn-dismiss-feedback");
+  if (dismissBtn) {
+    dismissBtn.addEventListener("click", clearReviewFeedback);
+  }
+}
+
+function clearReviewFeedback() {
+  if (!elements.reviewFeedbackBanner) return;
+  elements.reviewFeedbackBanner.hidden = true;
+  elements.reviewFeedbackBanner.innerHTML = "";
+}
+
+async function handleReviewDecision(
+  reviewId,
+  status,
+  teacherNotes,
+  expectedRevision = 0,
+  isCorrection = false
+) {
   try {
-    await api.postReviewDecision(reviewId, status, teacherNotes);
+    const result = await api.postReviewDecision(
+      reviewId,
+      status,
+      teacherNotes,
+      expectedRevision,
+      isCorrection
+    );
+    const actionLabel = isCorrection ? "Correction recorded" : "Decision recorded";
+    showReviewFeedback(
+      "success",
+      `${actionLabel} (${String(result.status || status).toUpperCase()} · Decision Rev ${result.revision}) by ${result.reviewer_id}.`
+    );
     await loadReviewsView();
     await loadApprovedHandoverView();
   } catch (err) {
-    alert(`Could not submit review decision: ${err.message}`);
+    if (err.status === 409) {
+      showReviewFeedback(
+        "conflict",
+        `Concurrency conflict: ${err.message} Reviews have been reloaded to the latest revision.`
+      );
+      await loadReviewsView();
+      await loadApprovedHandoverView();
+    } else if (err.status === 401) {
+      showReviewFeedback("error", `Sign-in required: ${err.message}`);
+      await loadConfig();
+      await loadReviewsView();
+      openLoginDialog();
+    } else {
+      showReviewFeedback("error", `Could not submit review decision: ${err.message}`);
+    }
   }
 }
 

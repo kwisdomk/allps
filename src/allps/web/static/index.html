@@ -17,10 +17,13 @@
     </div>
     <div class="top-telemetry">
       <span class="demo-pill" title="Synthetic records for pedagogical evaluation">Synthetic Demo</span>
-      <div id="auth-status-banner" class="status-pill active" title="Prototype trust limitation: Server-configured reviewer ID, not verified cryptographic identity.">
+      <div id="auth-status-banner" class="status-pill disabled" title="Sign in with a teacher PIN session to adjudicate or correct findings.">
         <span class="pulse-dot"></span>
-        <span id="auth-status-text">Configured Reviewer: Initializing...</span>
+        <span id="auth-status-text">Checking teacher session...</span>
       </div>
+      <button type="button" id="btn-auth-action" class="btn btn-secondary btn-sm">
+        Sign In
+      </button>
       <button type="button" id="btn-open-observation" class="btn btn-primary">
         + Record Observation
       </button>
@@ -154,6 +157,7 @@
         <!-- Saved Candidate Findings for Review -->
         <div>
           <span class="label-mono" style="display: block; margin-bottom: 8px;">Saved Candidate Findings for Teacher Review</span>
+          <div id="review-feedback-banner" class="feedback-banner" aria-live="polite" hidden></div>
           <div id="reviews-list" class="cards-stream" aria-live="polite">
             <div class="empty-state">Loading candidate reviews...</div>
           </div>
@@ -182,8 +186,73 @@
     <div id="side-panel-content" class="side-panel-body"></div>
   </aside>
 
+  <!-- Teacher Session Sign-In Dialog -->
+  <dialog id="login-dialog" closedby="any" aria-labelledby="dialog-login-heading">
+    <div class="modal-header">
+      <h3 id="dialog-login-heading">Teacher Session Sign-In</h3>
+      <button type="button" id="btn-close-login" class="btn btn-secondary btn-sm" aria-label="Close sign-in dialog">✕</button>
+    </div>
+    <form id="login-form" method="post" action="/api/auth/login">
+      <div class="modal-body">
+        <p style="font-size: 12.5px; color: var(--text-secondary);">
+          Authenticate with your educator ID and PIN to record sovereign review decisions or explicit corrections.
+        </p>
+
+        <div id="login-error-alert" class="field-error" aria-live="polite" style="display: none; padding: 8px 12px; border-radius: 4px;"></div>
+
+        <div class="form-group">
+          <span class="label-mono">Pilot Educator Accounts</span>
+          <div id="login-teacher-pills" class="pilot-teacher-pills" aria-label="Available pilot teacher accounts"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="login-teacher-id">Teacher ID *</label>
+          <input
+            type="text"
+            id="login-teacher-id"
+            name="username"
+            class="form-input"
+            autocomplete="username"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="e.g. TCH-BANDA"
+            enterkeyhint="next"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="current-password">PIN *</label>
+          <div class="pin-input-row">
+            <input
+              type="password"
+              id="current-password"
+              name="password"
+              class="form-input"
+              autocomplete="current-password"
+              inputmode="numeric"
+              minlength="4"
+              maxlength="64"
+              placeholder="Enter 4+ digit PIN"
+              enterkeyhint="done"
+              required
+            >
+            <button type="button" id="btn-toggle-pin" class="btn btn-secondary btn-sm" aria-pressed="false" aria-label="Show PIN">
+              Show
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancel-login" class="btn btn-secondary">Cancel</button>
+        <button type="submit" id="btn-submit-login" class="btn btn-primary">Sign In</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Observation Input Dialog -->
-  <dialog id="observation-dialog" aria-labelledby="dialog-obs-heading">
+  <dialog id="observation-dialog" closedby="any" aria-labelledby="dialog-obs-heading">
     <div class="modal-header">
       <h3 id="dialog-obs-heading">Record Teacher Observation</h3>
       <button type="button" id="btn-close-observation" class="btn btn-secondary btn-sm" aria-label="Close dialog">✕</button>
@@ -247,7 +316,7 @@
   </dialog>
 
   <!-- Observation Preview Dialog -->
-  <dialog id="preview-dialog" aria-labelledby="dialog-preview-heading">
+  <dialog id="preview-dialog" closedby="any" aria-labelledby="dialog-preview-heading">
     <div class="modal-header">
       <h3 id="dialog-preview-heading">Confirm Observation Submission</h3>
     </div>

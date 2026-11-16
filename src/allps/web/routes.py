@@ -213,26 +213,41 @@ async def me(request: Request) -> dict[str, Any]:
 
 @router.get("/config")
 async def get_system_config(request: Request) -> dict[str, Any]:
-    """Retrieve runtime state and approval authority availability."""
+    """Retrieve runtime state, active teacher session, and approval authority availability."""
     app = request.app
-    trusted_reviewer_id = getattr(app.state, "trusted_reviewer_id", None)
+    store: SQLiteStore = app.state.store
+    teacher_id = _current_teacher_id(request)
+    teacher = await store.get_teacher(teacher_id) if teacher_id else None
+
+    available_teachers: list[dict[str, str]] = []
+    async with store.db.execute(
+        "SELECT teacher_id, display_name FROM teachers ORDER BY teacher_id ASC"
+    ) as cursor:
+        async for row in cursor:
+            available_teachers.append({
+                "teacher_id": row["teacher_id"],
+                "display_name": row["display_name"],
+            })
+
     return {
-        "review_authority_available": bool(trusted_reviewer_id and trusted_reviewer_id.strip()),
-        "server_reviewer_id": trusted_reviewer_id,
+        "review_authority_available": teacher is not None,
+        "authenticated_teacher": (
+            {"teacher_id": teacher["teacher_id"], "display_name": teacher["display_name"]}
+            if teacher
+            else None
+        ),
+        "server_reviewer_id": teacher["teacher_id"] if teacher else None,
+        "available_teachers": available_teachers,
         "default_mode": getattr(app.state, "default_mode", "auto"),
         "is_synthetic_demonstration": True,
-        "authentication_type": "prototype_server_configured",
+        "authentication_type": "pin_session_cookie",
         "trust_notice": (
-            "Prototype Trust Limitation: The server reviewer ID is a demonstration setting, "
-            "not a verified authentication token or SSO identity."
+            "Prototype PIN Session: Teacher identity is verified via signed HttpOnly "
+            "session cookie against local pilot accounts, not external school SSO."
         ),
         "trust_limitation_notice": (
-            "Prototype Trust Limitation: The server reviewer ID is a demonstration setting, "
-            "not a verified authentication token or SSO identity."
-        ),
-        "trust_notice": (
-            "Prototype Trust Limitation: The server reviewer ID is a demonstration setting, "
-            "not a verified authentication token or SSO identity."
+            "Prototype PIN Session: Teacher identity is verified via signed HttpOnly "
+            "session cookie against local pilot accounts, not external school SSO."
         ),
     }
 

@@ -433,11 +433,29 @@ async def test_cors_policy_rejects_unauthorized_origins(test_client: httpx.Async
 
 @pytest.mark.asyncio
 async def test_config_reports_session_auth(test_client: httpx.AsyncClient):
-    """Verify GET /api/config reflects session-based auth."""
+    """Verify GET /api/config reflects PIN session auth for authenticated and unauthenticated callers."""
     resp = await test_client.get("/api/config")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["authentication_type"] == "prototype_server_configured"
-    assert "prototype" in data["trust_notice"].lower()
+    assert data["authentication_type"] == "pin_session_cookie"
+    assert data["review_authority_available"] is True
+    assert data["authenticated_teacher"] == {
+        "teacher_id": "TCH-BANDA",
+        "display_name": "Mr. Banda",
+    }
+    assert data["server_reviewer_id"] == "TCH-BANDA"
+    teacher_ids = {t["teacher_id"] for t in data["available_teachers"]}
+    assert {"TCH-BANDA", "TCH-OCHIENG"}.issubset(teacher_ids)
+    assert "pin" in data["trust_notice"].lower()
+
+    # After logout, authority must be unavailable until another teacher signs in
+    logout_resp = await test_client.post("/api/auth/logout")
+    assert logout_resp.status_code == 200
+    unauth_resp = await test_client.get("/api/config")
+    assert unauth_resp.status_code == 200
+    unauth_data = unauth_resp.json()
+    assert unauth_data["review_authority_available"] is False
+    assert unauth_data["authenticated_teacher"] is None
+    assert unauth_data["server_reviewer_id"] is None
 
 

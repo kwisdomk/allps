@@ -196,9 +196,11 @@ python examples/run_agentic_mcp_import.py
 ### ⚡ Start the Local Teacher Workspace (Web UI)
 Launches the FastAPI backend and serves the educator workspace Single Page Application:
 ```bash
-python -m allps.web.app --port 8000 --mode auto --reviewer TCH-BANDA
+python -m allps.web.app --port 8000 --mode auto
 ```
-Open your browser to: **`http://127.0.0.1:8000`**
+Open your browser to: **`http://127.0.0.1:8000`** and sign in with one of the seeded pilot educator PIN accounts:
+- **Mr. Banda** (`TCH-BANDA`, PIN `1234`)
+- **Ms. Ochieng** (`TCH-OCHIENG`, PIN `5678`)
 
 ---
 
@@ -293,7 +295,7 @@ In ALLPS, AI is treated as the lowest-authority contributor with **strictly zero
 - **Confirmed CUDA Allocation Failure (Unresolved for 7B Models)**:  
   Attempting to load unquantized 7B distilled models (`DeepSeek-R1-Distill-Qwen-7B` / `Qwen2.5-7B`) on consumer 8GB GPUs produces a CUDA out-of-memory exception (`failed to allocate 14.2 GiB on CUDA:0`). Mitigated by utilizing the 4-bit quantized base model `allps-qwen35-base-4b` (<3.5GB VRAM). See [evals.md](docs/evals.md) for full incident details.
 - **Prototype Reviewer Identity Boundary**:  
-  The prototype server injects a configured reviewer identifier (e.g. `--reviewer TCH-BANDA`) for human-in-the-loop demonstration. This is a demonstration setting, **not cryptographic authentication or SSO identity**. Production deployments require OpenID Connect / SAML integration.
+  The prototype uses local PIN-authenticated `HttpOnly` signed session cookies against seeded pilot teacher accounts (`TCH-BANDA`, `TCH-OCHIENG`) rather than enterprise identity federation. Production school deployments require formal account provisioning and OpenID Connect / SAML integration.
 - **Concurrent Ingestion Race**:  
   Overlapping concurrent submissions with identical `(source_system, source_event_id)` fail with SQLite `IntegrityError` on the second transaction and roll back safely; sequential retries succeed idempotently.
 - **Local Network Boundary**:  
