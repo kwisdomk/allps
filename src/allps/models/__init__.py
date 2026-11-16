@@ -15,6 +15,7 @@ from allps.models.evidence import (
 from allps.models.pattern import Pattern, PatternType
 from allps.models.review import ReviewItem, ReviewStatus
 from allps.models.audit import AuditEntry
+from allps.models.import_manifest import ImportManifest
 
 __all__ = [
     "Learner",
@@ -32,4 +33,5 @@ __all__ = [
     "ReviewItem",
     "ReviewStatus",
     "AuditEntry",
+    "ImportManifest",
 ]

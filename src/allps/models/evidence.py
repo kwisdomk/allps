@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from enum import Enum
 from types import MappingProxyType
 from typing import Any, Annotated
+import hashlib
+import json
 import math
 
 from pydantic import BaseModel, Field, field_validator, model_validator, PlainValidator, PlainSerializer
@@ -398,6 +400,59 @@ class Evidence(BaseModel):
             and isinstance(u, str)
             and bool(u.strip())
         )
+
+    @property
+    def canonical_fingerprint(self) -> str:
+        """SHA-256 fingerprint of the normalized observation identity.
+
+        Identifies the same underlying observation or assessment regardless of
+        which export file it arrived in or which source_event_id was assigned.
+        """
+        content = self.content if isinstance(self.content, dict) else _deep_unfreeze(self.content)
+
+        skill = (
+            content.get("measured_skill")
+            or content.get("sampled_content")
+            or content.get("skill")
+            or ""
+        )
+        skill = skill.strip().lower() if isinstance(skill, str) else ""
+
+        if self.is_marks:
+            outcome = f"marks:{content.get('score')}:{content.get('max_score')}"
+        elif self.is_rubric:
+            level = (
+                content.get("level")
+                or content.get("ordinal_level")
+                or content.get("rubric_level")
+                or ""
+            )
+            rubric = content.get("rubric") or content.get("rubric_name") or ""
+            outcome = f"rubric:{rubric}:{level}"
+        elif self.is_fluency:
+            outcome = f"fluency:{content.get('value')}:{content.get('unit')}"
+        elif self.is_missing_outcome:
+            outcome = f"missing:{content.get('status')}"
+        else:
+            canonical_content = json.dumps(
+                content, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            )
+            outcome = f"content:{canonical_content}"
+
+        parts = [
+            self.learner_id,
+            self.evidence_type.value,
+            str(self.academic_year),
+            str(self.term),
+            (self.subject or "").strip().lower(),
+            self.observed_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            skill,
+            (self.assessment_stage or "").strip().lower(),
+            (self.grade or "").strip().lower(),
+            outcome,
+        ]
+        raw = "\x1f".join(parts)
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     @field_validator("observed_at", "recorded_at")
     @classmethod

@@ -128,7 +128,7 @@ class EvidenceService:
                 observed_at=obs_dt,
             )
 
-            # Full-observation idempotency check
+            # Level 1: logical idempotency — same source_event_id from same source_system
             if source_event_id:
                 existing = await self._store.get_evidence_by_source_event(source_system, source_event_id)
                 if existing:
@@ -151,6 +151,26 @@ class EvidenceService:
                         return existing
                     else:
                         raise ValueError(f"Conflict: event {source_event_id} already exists with different {diff_field}")
+
+            # Level 2: canonical fingerprint deduplication across exports/event IDs
+            fingerprint = evidence.canonical_fingerprint
+            existing_by_fp = await self._store.get_evidence_by_fingerprint(fingerprint)
+            if existing_by_fp:
+                dedup_audit = AuditEntry(
+                    tool_name="ingest_evidence",
+                    input_summary={
+                        "learner_id": evidence.learner_id,
+                        "evidence_type": evidence.evidence_type.value,
+                        "source_system": source_system,
+                        "source_event_id": source_event_id,
+                        "canonical_fingerprint": fingerprint,
+                        "existing_evidence_id": existing_by_fp.evidence_id,
+                        "deduplicated": True,
+                    },
+                    output_reference=existing_by_fp.evidence_id,
+                )
+                await self._store.add_audit_entry(dedup_audit)
+                return existing_by_fp
 
 
             audit = AuditEntry(

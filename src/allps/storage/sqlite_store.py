@@ -15,6 +15,7 @@ from allps.models import (
     AuditEntry,
     Evidence,
     EvidenceType,
+    ImportManifest,
     IngestionMethod,
     Learner,
     Pattern,
@@ -53,6 +54,7 @@ CREATE TABLE IF NOT EXISTS evidence (
     content TEXT NOT NULL,
     observed_at TEXT NOT NULL,
     recorded_at TEXT NOT NULL,
+    canonical_fingerprint TEXT,
     FOREIGN KEY (learner_id) REFERENCES learners(learner_id),
     UNIQUE(source_system, source_event_id)
 );
@@ -120,6 +122,25 @@ CREATE TABLE IF NOT EXISTS candidate_briefs (
 CREATE INDEX IF NOT EXISTS idx_briefs_learner ON candidate_briefs(learner_id);
 CREATE INDEX IF NOT EXISTS idx_briefs_pattern ON candidate_briefs(pattern_id);
 CREATE INDEX IF NOT EXISTS idx_briefs_review ON candidate_briefs(review_id);
+
+CREATE TABLE IF NOT EXISTS import_manifests (
+    manifest_id TEXT PRIMARY KEY,
+    source_system TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    import_method TEXT NOT NULL,
+    file_sha256 TEXT NOT NULL,
+    row_count INTEGER NOT NULL,
+    accepted_count INTEGER NOT NULL,
+    rejected_count INTEGER NOT NULL,
+    duplicate_count INTEGER NOT NULL DEFAULT 0,
+    imported_by TEXT,
+    imported_at TEXT NOT NULL,
+    notes TEXT,
+    UNIQUE(file_sha256, source_system)
+);
+
+CREATE INDEX IF NOT EXISTS idx_manifests_sha256 ON import_manifests(file_sha256);
+CREATE INDEX IF NOT EXISTS idx_manifests_source ON import_manifests(source_system);
 """
 
 
@@ -186,6 +207,13 @@ class SQLiteStore:
             await self.db.execute("ALTER TABLE evidence ADD COLUMN source_event_id TEXT")
             await self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_evidence_idemp ON evidence(source_system, source_event_id)")
 
+        if "canonical_fingerprint" not in columns:
+            await self.db.execute("ALTER TABLE evidence ADD COLUMN canonical_fingerprint TEXT")
+            await self.db.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_evidence_fingerprint "
+                "ON evidence(canonical_fingerprint) WHERE canonical_fingerprint IS NOT NULL"
+            )
+
         async with self.db.execute("PRAGMA table_info(review_items)") as cursor:
             rev_columns = [row["name"] for row in await cursor.fetchall()]
 
@@ -227,6 +255,26 @@ class SQLiteStore:
                 created_at   TEXT NOT NULL
             )
         """)
+
+        await self.db.execute("""
+            CREATE TABLE IF NOT EXISTS import_manifests (
+                manifest_id TEXT PRIMARY KEY,
+                source_system TEXT NOT NULL,
+                file_name TEXT NOT NULL,
+                import_method TEXT NOT NULL,
+                file_sha256 TEXT NOT NULL,
+                row_count INTEGER NOT NULL,
+                accepted_count INTEGER NOT NULL,
+                rejected_count INTEGER NOT NULL,
+                duplicate_count INTEGER NOT NULL DEFAULT 0,
+                imported_by TEXT,
+                imported_at TEXT NOT NULL,
+                notes TEXT,
+                UNIQUE(file_sha256, source_system)
+            )
+        """)
+        await self.db.execute("CREATE INDEX IF NOT EXISTS idx_manifests_sha256 ON import_manifests(file_sha256)")
+        await self.db.execute("CREATE INDEX IF NOT EXISTS idx_manifests_source ON import_manifests(source_system)")
 
     async def close(self) -> None:
         """Close the database connection."""
@@ -343,6 +391,26 @@ class SQLiteStore:
 
     # ── Evidence (immutable — no update method) ───────────────────
 
+    @staticmethod
+    def _row_to_evidence(row: aiosqlite.Row) -> Evidence:
+        """Hydrate an Evidence model from a SQLite row."""
+        return Evidence(
+            evidence_id=row["evidence_id"],
+            learner_id=row["learner_id"],
+            evidence_type=EvidenceType(row["evidence_type"]),
+            source_system=row["source_system"],
+            ingestion_method=IngestionMethod(row["ingestion_method"]),
+            source_event_id=row["source_event_id"],
+            source_type=row["source_type"],
+            source_reference=row["source_reference"],
+            academic_year=row["academic_year"],
+            term=row["term"],
+            subject=row["subject"],
+            content=json.loads(row["content"]),
+            observed_at=datetime.fromisoformat(row["observed_at"]),
+            recorded_at=datetime.fromisoformat(row["recorded_at"]),
+        )
+
     async def add_evidence(
         self,
         evidence: Evidence,
@@ -356,8 +424,8 @@ class SQLiteStore:
                (evidence_id, learner_id, evidence_type, source_system,
                 ingestion_method, source_event_id, source_type, source_reference,
                 academic_year, term, subject, content, observed_at,
-                recorded_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                recorded_at, canonical_fingerprint)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 evidence.evidence_id,
                 evidence.learner_id,
@@ -373,11 +441,28 @@ class SQLiteStore:
                 json.dumps(_deep_unfreeze(evidence.content)),
                 evidence.observed_at.isoformat(),
                 evidence.recorded_at.isoformat(),
+                evidence.canonical_fingerprint,
             ),
         )
         if commit:
             await db.commit()
         return evidence
+
+    async def get_evidence_by_fingerprint(
+        self,
+        fingerprint: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> Evidence | None:
+        """Retrieve evidence by its canonical record fingerprint."""
+        db = conn or self.db
+        async with db.execute(
+            "SELECT * FROM evidence WHERE canonical_fingerprint = ?",
+            (fingerprint,),
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return self._row_to_evidence(row)
 
     async def get_evidence_by_source_event(
         self,
@@ -394,22 +479,7 @@ class SQLiteStore:
             row = await cursor.fetchone()
             if row is None:
                 return None
-            return Evidence(
-                evidence_id=row["evidence_id"],
-                learner_id=row["learner_id"],
-                evidence_type=EvidenceType(row["evidence_type"]),
-                source_system=row["source_system"],
-                ingestion_method=IngestionMethod(row["ingestion_method"]),
-                source_event_id=row["source_event_id"],
-                source_type=row["source_type"],
-                source_reference=row["source_reference"],
-                academic_year=row["academic_year"],
-                term=row["term"],
-                subject=row["subject"],
-                content=json.loads(row["content"]),
-                observed_at=datetime.fromisoformat(row["observed_at"]),
-                recorded_at=datetime.fromisoformat(row["recorded_at"]),
-            )
+            return self._row_to_evidence(row)
 
     async def get_evidence_for_learner(
         self,
@@ -447,30 +517,118 @@ class SQLiteStore:
         db = conn or self.db
         async with db.execute(query, params) as cursor:
             async for row in cursor:
-                results.append(
-                    Evidence(
-                        evidence_id=row["evidence_id"],
-                        learner_id=row["learner_id"],
-                        evidence_type=EvidenceType(row["evidence_type"]),
-                        source_system=row["source_system"],
-                        ingestion_method=IngestionMethod(
-                            row["ingestion_method"]
-                        ),
-                        source_event_id=row["source_event_id"],
-                        source_type=row["source_type"],
-                        source_reference=row["source_reference"],
-                        academic_year=row["academic_year"],
-                        term=row["term"],
-                        subject=row["subject"],
-                        content=json.loads(row["content"]),
-                        observed_at=datetime.fromisoformat(
-                            row["observed_at"]
-                        ),
-                        recorded_at=datetime.fromisoformat(
-                            row["recorded_at"]
-                        ),
-                    )
-                )
+                results.append(self._row_to_evidence(row))
+        return results
+
+    # ── Import Manifests ──────────────────────────────────────────
+
+    @staticmethod
+    def _row_to_manifest(row: aiosqlite.Row) -> ImportManifest:
+        """Hydrate an ImportManifest model from a SQLite row."""
+        return ImportManifest(
+            manifest_id=row["manifest_id"],
+            source_system=row["source_system"],
+            file_name=row["file_name"],
+            import_method=row["import_method"],
+            file_sha256=row["file_sha256"],
+            row_count=row["row_count"],
+            accepted_count=row["accepted_count"],
+            rejected_count=row["rejected_count"],
+            duplicate_count=row["duplicate_count"],
+            imported_by=row["imported_by"],
+            imported_at=datetime.fromisoformat(row["imported_at"]),
+            notes=row["notes"],
+        )
+
+    async def add_import_manifest(
+        self,
+        manifest: ImportManifest,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> ImportManifest:
+        """Record a file import manifest. Raises ValueError on duplicate (file_sha256, source_system)."""
+        db = conn or self.db
+        try:
+            await db.execute(
+                """INSERT INTO import_manifests
+                   (manifest_id, source_system, file_name, import_method,
+                    file_sha256, row_count, accepted_count, rejected_count,
+                    duplicate_count, imported_by, imported_at, notes)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    manifest.manifest_id,
+                    manifest.source_system,
+                    manifest.file_name,
+                    manifest.import_method,
+                    manifest.file_sha256,
+                    manifest.row_count,
+                    manifest.accepted_count,
+                    manifest.rejected_count,
+                    manifest.duplicate_count,
+                    manifest.imported_by,
+                    manifest.imported_at.isoformat(),
+                    manifest.notes,
+                ),
+            )
+        except Exception as e:
+            if "UNIQUE constraint failed" in str(e):
+                raise ValueError(
+                    f"File with SHA-256 '{manifest.file_sha256}' from source "
+                    f"'{manifest.source_system}' has already been imported. "
+                    "Re-importing the same file would duplicate evidence records."
+                ) from e
+            raise
+        if commit:
+            await db.commit()
+        return manifest
+
+    async def get_import_manifest_by_hash(
+        self,
+        file_sha256: str,
+        source_system: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> ImportManifest | None:
+        """Check whether a file has already been imported from this source system."""
+        db = conn or self.db
+        async with db.execute(
+            "SELECT * FROM import_manifests WHERE file_sha256 = ? AND source_system = ?",
+            (file_sha256, source_system),
+        ) as cursor:
+            row = await cursor.fetchone()
+            if not row:
+                return None
+            return self._row_to_manifest(row)
+
+    async def list_import_manifests(
+        self,
+        source_system: str | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[dict]:
+        """List import history, optionally filtered by source system."""
+        db = conn or self.db
+        if source_system:
+            query = "SELECT * FROM import_manifests WHERE source_system = ? ORDER BY imported_at DESC"
+            params: list = [source_system]
+        else:
+            query = "SELECT * FROM import_manifests ORDER BY imported_at DESC"
+            params = []
+        results = []
+        async with db.execute(query, params) as cursor:
+            async for row in cursor:
+                results.append({
+                    "manifest_id": row["manifest_id"],
+                    "source_system": row["source_system"],
+                    "file_name": row["file_name"],
+                    "import_method": row["import_method"],
+                    "file_sha256": row["file_sha256"],
+                    "row_count": row["row_count"],
+                    "accepted_count": row["accepted_count"],
+                    "rejected_count": row["rejected_count"],
+                    "duplicate_count": row["duplicate_count"],
+                    "imported_by": row["imported_by"],
+                    "imported_at": row["imported_at"],
+                    "notes": row["notes"],
+                })
         return results
 
     # ── Patterns ──────────────────────────────────────────────────
