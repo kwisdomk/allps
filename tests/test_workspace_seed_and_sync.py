@@ -63,6 +63,16 @@ async def test_web_db_status_seed_merge_and_reset_flow(tmp_path: Path):
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
+            # 0. Unauthenticated DB status and reseed calls must be rejected (401)
+            assert (await client.get("/api/db/status")).status_code == 401
+            assert (await client.post("/api/db/reseed", json={"mode": "merge"})).status_code == 401
+            assert (await client.post("/api/db/reseed", json={"mode": "reset"})).status_code == 401
+
+            login_resp = await client.post(
+                "/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"}
+            )
+            assert login_resp.status_code == 200
+
             # 1. Starts empty when seed_demo_data=False
             empty_status = await client.get("/api/db/status")
             assert empty_status.status_code == 200
@@ -120,10 +130,8 @@ async def test_web_db_status_seed_merge_and_reset_flow(tmp_path: Path):
             assert reset_data["total_learners"] == len(LEARNERS)
             assert reset_data["total_evidence"] == len(ALL_EVIDENCE)
 
-            login_resp = await client.post(
-                "/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"}
-            )
-            assert login_resp.status_code == 200
+            me_resp = await client.get("/api/auth/me")
+            assert me_resp.status_code == 200
 
             # 7. Root HTML renders sync, seed, and reset confirmation dialog controls
             index_resp = await client.get("/")
@@ -137,7 +145,7 @@ async def test_web_db_status_seed_merge_and_reset_flow(tmp_path: Path):
 
 @pytest.mark.asyncio
 async def test_web_reseed_blocked_when_disabled(tmp_path: Path):
-    """Verify POST /api/db/reseed returns 403 when allow_demo_reset=False."""
+    """Verify POST /api/db/reseed returns 403 when allow_demo_reset=False for authenticated users."""
     db_file = str(tmp_path / "locked_workspace.db")
     app = create_app(
         db_path=db_file,
@@ -148,6 +156,13 @@ async def test_web_reseed_blocked_when_disabled(tmp_path: Path):
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
+            assert (await client.post("/api/db/reseed", json={"mode": "merge"})).status_code == 401
+
+            login_resp = await client.post(
+                "/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"}
+            )
+            assert login_resp.status_code == 200
+
             status_resp = await client.get("/api/db/status")
             assert status_resp.status_code == 200
             assert status_resp.json()["allow_demo_reset"] is False
@@ -173,6 +188,11 @@ async def test_web_autoseed_resolves_repo_root_outside_cwd(
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
+            assert (await client.get("/api/db/status")).status_code == 401
+            login_resp = await client.post(
+                "/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"}
+            )
+            assert login_resp.status_code == 200
             resp = await client.get("/api/db/status")
             assert resp.status_code == 200
             data = resp.json()

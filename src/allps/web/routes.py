@@ -922,6 +922,7 @@ async def get_db_status(
     recent_limit: int = Query(5, ge=1, le=25),
 ) -> dict[str, Any]:
     """Return live database counts, freshness timestamps, and recent evidence/audit records."""
+    _require_teacher(request)
     return await _build_db_status_payload(request, recent_limit=recent_limit)
 
 
@@ -931,6 +932,7 @@ async def reseed_workspace_database(
     request: Request,
 ) -> dict[str, Any]:
     """Idempotently seed missing demo data ('merge') or wipe and re-seed ('reset')."""
+    actor = _require_teacher(request)
     if not getattr(request.app.state, "allow_demo_reset", True):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -948,7 +950,6 @@ async def reseed_workspace_database(
             detail=f"Synthetic seed dataset is unavailable in this installation: {exc}",
         ) from exc
 
-    actor = _current_teacher_id(request) or "web_operator"
     reset = payload.mode == "reset"
     summary = await seed_store(store, reset=reset, actor=actor)
 

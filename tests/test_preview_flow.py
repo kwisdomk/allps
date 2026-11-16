@@ -28,7 +28,6 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 SCREENSHOTS_DIR = Path("C:/Users/wisdo/.gemini/antigravity/brain/77fd0336-2447-4887-9440-32556d2d7f46")
-SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class EdgePreviewRunner:
@@ -96,6 +95,7 @@ class EdgePreviewRunner:
         return val.get("value")
 
     async def screenshot(self, filename: str) -> Path:
+        SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
         res = await self.send("Page.captureScreenshot", {"format": "png"})
         img_bytes = base64.b64decode(res["data"])
         out_file = SCREENSHOTS_DIR / filename
@@ -122,6 +122,7 @@ class EdgePreviewRunner:
 
 
 async def main():
+    SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
     print("\n" + "=" * 75)
     print(" ALLPS TEACHER WORKSPACE — PREVIEW & OBSERVATION VERIFICATION")
     print("=" * 75)

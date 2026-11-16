@@ -281,6 +281,10 @@ const elements = {
 async function init() {
   bindEvents();
   await loadConfig();
+  if (!state.currentTeacher) {
+    renderSignedOutWorkspaceState();
+    return;
+  }
   await loadLearners();
   await loadDbStatus({ detectChanges: false });
 
@@ -617,8 +621,19 @@ async function handleLoginSubmit(event) {
     }
     elements.loginDialog.close();
     clearReviewFeedback();
+    clearWorkspaceStatus();
     await loadConfig();
-    await Promise.all([loadReviewsView(), loadApprovedHandoverView()]);
+    await loadLearners();
+    await loadDbStatus({ detectChanges: false });
+    if (state.learners.length > 0) {
+      const stillExists = state.learners.some((l) => l.learner_id === state.activeLearnerId);
+      state.activeLearnerId = stillExists ? state.activeLearnerId : state.learners[0].learner_id;
+      elements.learnerSelect.value = state.activeLearnerId;
+      await refreshAllViews();
+    } else {
+      state.activeLearnerId = null;
+      renderEmptyWorkspaceState();
+    }
   } catch (err) {
     showLoginError(err.message || "Sign-in failed.");
   } finally {
@@ -635,8 +650,10 @@ async function handleLogout() {
   } catch (err) {
     console.warn("Logout failed:", err);
   }
+  state.dbStatus = null;
+  state.knownEvidenceIds.clear();
   await loadConfig();
-  await Promise.all([loadReviewsView(), loadApprovedHandoverView()]);
+  renderSignedOutWorkspaceState();
 }
 
 async function loadLearners() {
@@ -673,6 +690,54 @@ function clearWorkspaceStatus() {
   if (!elements.workspaceStatusBanner || !elements.workspaceStatusText) return;
   elements.workspaceStatusBanner.hidden = true;
   elements.workspaceStatusText.textContent = "";
+}
+
+function renderSignedOutWorkspaceState() {
+  state.learners = [];
+  state.activeLearnerId = null;
+  if (elements.learnerSelect) {
+    elements.learnerSelect.innerHTML = `<option value="">Sign in to view learners</option>`;
+  }
+  elements.evidenceCountBadge.textContent = "0";
+  elements.reviewsCountBadge.textContent = "0";
+  elements.handoverCountBadge.textContent = "0";
+  const sideEv = document.getElementById("side-evidence-count");
+  const sidePending = document.getElementById("side-pending-count");
+  const sideApproved = document.getElementById("side-approved-count");
+  if (sideEv) sideEv.textContent = "0";
+  if (sidePending) sidePending.textContent = "0";
+  if (sideApproved) sideApproved.textContent = "0";
+
+  if (elements.dbLastSync) {
+    elements.dbLastSync.textContent = "Sign in to view database status";
+  }
+  if (elements.recentDataList) {
+    elements.recentDataList.innerHTML = `<div class="recent-data-empty">Sign in to view recent database activity.</div>`;
+  }
+  [elements.btnRefreshData, elements.btnSeedMerge, elements.btnOpenResetDialog].forEach((btn) => {
+    if (btn) btn.disabled = true;
+  });
+
+  elements.evidenceList.innerHTML = `
+    <div class="empty-state">
+      <h3>Teacher sign-in required</h3>
+      <p>Click <strong>Sign In</strong> in the header to view learner evidence, candidate reviews, and reports.</p>
+    </div>
+  `;
+  elements.reviewsList.innerHTML = `
+    <div class="empty-state">
+      <h3>Teacher sign-in required</h3>
+      <p>Sign in with your educator ID and PIN to access candidate reviews.</p>
+    </div>
+  `;
+  elements.handoverList.innerHTML = `
+    <div class="empty-state">
+      <h3>Teacher sign-in required</h3>
+      <p>Sign in with your educator ID and PIN to inspect approved handovers.</p>
+    </div>
+  `;
+  elements.generationResultContainer.innerHTML = "";
+  updateHandoverExportControls(null, 0);
 }
 
 function renderEmptyWorkspaceState() {
@@ -737,6 +802,9 @@ async function loadDbStatus({ detectChanges = true } = {}) {
         `Total: ${status.learners_count} learners · ${status.evidence_count} evidence · Checked ${checkedAt}`;
     }
 
+    if (elements.btnRefreshData) {
+      elements.btnRefreshData.disabled = state.isDbBusy;
+    }
     if (elements.btnSeedMerge) {
       elements.btnSeedMerge.disabled = state.isDbBusy || !status.allow_demo_reset;
     }
@@ -1364,7 +1432,7 @@ async function handleGenerateHandover() {
   } finally {
     state.isGenerating = false;
     elements.btnGenerate.disabled = false;
-    elements.btnGenerate.textContent = "⚡ Generate AI Candidate Handover";
+    elements.btnGenerate.textContent = "⚡ Generate Candidate Handover";
   }
 }
 
