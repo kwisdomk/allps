@@ -227,26 +227,104 @@ class _SimplePDFBuilder:
 class ExportService:
     """Renders sovereign human-approved learner handover documents."""
 
-    def __init__(self, store: SQLiteStore, review_service: ReviewService) -> None:
+    def __init__(
+        self,
+        store: SQLiteStore,
+        review_service: ReviewService,
+        handover_service: Any = None,
+    ) -> None:
         self._store = store
         self._review_service = review_service
+        self._handover_service = handover_service
 
-    async def build_handover_document_data(self, learner_id: str) -> dict[str, Any]:
-        """Assemble strictly approved handover data with SHA-256 verification and cited evidence."""
+    def set_handover_service(self, handover_service: Any) -> None:
+        self._handover_service = handover_service
+
+    @staticmethod
+    def _pattern_permitted_for_subjects(
+        pat: dict[str, Any],
+        evidence_map: dict[str, Evidence],
+        allowed_subjects: set[str],
+    ) -> bool:
+        eids = pat.get("supporting_evidence", []) + pat.get("conflicting_evidence", [])
+        subjects_found = {
+            evidence_map[eid].subject
+            for eid in eids
+            if eid in evidence_map and evidence_map[eid].subject is not None
+        }
+        if subjects_found:
+            return bool(subjects_found & allowed_subjects)
+        summary_lower = str(pat.get("summary", "")).lower()
+        return any(subj.lower() in summary_lower for subj in allowed_subjects)
+
+    async def build_handover_document_data(
+        self,
+        learner_id: str,
+        *,
+        teacher_id: str | None = None,
+        allowed_subjects: list[str] | None = None,
+        is_class_teacher: bool = True,
+    ) -> dict[str, Any]:
+        """Assemble strictly approved handover data with SHA-256 verification, role scoping, and published sections."""
         learner = await self._store.get_learner(learner_id)
         if not learner:
             raise ValueError(f"Learner '{learner_id}' not found.")
 
         # Dual-view gate: strictly human-accepted patterns with verified SHA-256 hashes
         profile = await self._review_service.get_surfaced_profile(learner_id)
-        patterns = profile.get("patterns", [])
+        patterns = list(profile.get("patterns", []))
 
-        cited_ids: list[str] = []
+        all_cited_ids: list[str] = []
         for pat in patterns:
-            cited_ids.extend(pat.get("supporting_evidence", []))
-            cited_ids.extend(pat.get("conflicting_evidence", []))
+            all_cited_ids.extend(pat.get("supporting_evidence", []))
+            all_cited_ids.extend(pat.get("conflicting_evidence", []))
 
-        evidence_map = await self._store.get_evidence_by_ids(cited_ids)
+        evidence_map = await self._store.get_evidence_by_ids(all_cited_ids)
+
+        published_release: dict[str, Any] | None = None
+        published_sections: list[dict[str, Any]] = []
+        if self._handover_service is not None and teacher_id is not None:
+            published_view = await self._handover_service.get_learner_published_handover_view(
+                learner_id, teacher_id
+            )
+            published_release = published_view.get("release")
+            published_sections = list(published_view.get("sections", []))
+
+        if not is_class_teacher:
+            if published_release is None:
+                patterns = []
+                evidence_map = {}
+            else:
+                rel_ts = str(published_release.get("released_at") or "")
+                allowed_set = set(allowed_subjects or [])
+                patterns = [
+                    pat
+                    for pat in patterns
+                    if self._pattern_permitted_for_subjects(pat, evidence_map, allowed_set)
+                    and str((pat.get("review") or {}).get("resolved_at") or "") <= rel_ts
+                ]
+                scoped_ids: list[str] = []
+                for pat in patterns:
+                    scoped_ids.extend(pat.get("supporting_evidence", []))
+                    scoped_ids.extend(pat.get("conflicting_evidence", []))
+                evidence_map = {
+                    eid: ev
+                    for eid, ev in evidence_map.items()
+                    if eid in set(scoped_ids)
+                    and (ev.subject is None or ev.subject in allowed_set)
+                }
+
+        if published_sections:
+            sec_cites: list[str] = []
+            for sec in published_sections:
+                sec_cites.extend(sec.get("citations", []))
+            if sec_cites:
+                sec_ev_map = await self._store.get_evidence_by_ids(sec_cites)
+                allowed_set_sec = set(allowed_subjects or [])
+                for eid, ev in sec_ev_map.items():
+                    if is_class_teacher or ev.subject is None or ev.subject in allowed_set_sec:
+                        evidence_map[eid] = ev
+
         cited_evidence = {
             eid: _serialize_cited_evidence(ev)
             for eid, ev in evidence_map.items()
@@ -265,13 +343,17 @@ class ExportService:
             "accepted_pattern_count": len(patterns),
             "patterns": patterns,
             "cited_evidence": cited_evidence,
+            "published_release": published_release,
+            "published_sections": published_sections,
         }
 
         audit = AuditEntry(
             tool_name="export_handover_document",
             input_summary={
                 "learner_id": learner_id,
+                "teacher_id": teacher_id,
                 "accepted_pattern_count": len(patterns),
+                "published_sections_count": len(published_sections),
                 "cited_evidence_count": len(cited_evidence),
             },
             output_reference=learner_id,
@@ -285,6 +367,10 @@ class ExportService:
         self,
         learner_id: str,
         fmt: str = "pdf",
+        *,
+        teacher_id: str | None = None,
+        allowed_subjects: list[str] | None = None,
+        is_class_teacher: bool = True,
     ) -> tuple[bytes, str, str]:
         """Render an approved learner handover document in the requested format.
 
@@ -296,7 +382,12 @@ class ExportService:
                 f"Unsupported export format '{fmt}'. Must be one of: {', '.join(SUPPORTED_EXPORT_FORMATS)}."
             )
 
-        data = await self.build_handover_document_data(learner_id)
+        data = await self.build_handover_document_data(
+            learner_id,
+            teacher_id=teacher_id,
+            allowed_subjects=allowed_subjects,
+            is_class_teacher=is_class_teacher,
+        )
 
         if clean_fmt == "json":
             content = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
@@ -325,9 +416,34 @@ class ExportService:
             "",
         ]
 
-        if not patterns:
+        published_sections = data.get("published_sections") or []
+        published_release = data.get("published_release")
+        if not patterns and not published_sections:
             lines.append("_No human-approved transition findings are currently published for this learner._")
             return "\n".join(lines) + "\n"
+
+        if published_release and published_sections:
+            lines.append(
+                f"## Published Class Handover (Version {published_release.get('version_number')}, "
+                f"Released by {published_release.get('released_by_name')})"
+            )
+            lines.append("")
+            for sec in published_sections:
+                lines.append(f"### {sec['section_title']} — approved by {sec['approved_by_name']}")
+                lines.append(sec["approved_summary"])
+                avail = sec.get("evidence_availability") or {}
+                if avail.get("human_message"):
+                    lines.append(f"- **Evidence Availability:** {avail['human_message']}")
+                if sec.get("missing_evidence_disclosure"):
+                    lines.append(f"- **Evidence Disclosure:** {sec['missing_evidence_disclosure']}")
+                if sec.get("last_opened"):
+                    lines.append(f"- **{sec['last_opened']['display']}**")
+                ack = sec.get("acknowledgment") or {}
+                if ack.get("display"):
+                    lines.append(f"- **{ack['display']}**")
+                for resp in sec.get("responses") or []:
+                    lines.append(f"  - *{resp['teacher_name']}’s response ({resp['response_type']}):* {resp['content']}")
+                lines.append("")
 
         for idx, pat in enumerate(patterns, start=1):
             rev = pat.get("review", {})
@@ -374,12 +490,34 @@ class ExportService:
         patterns = data["patterns"]
         cited = data["cited_evidence"]
 
+        published_sections = data.get("published_sections") or []
+        published_release = data.get("published_release")
+
         findings_blocks: list[str] = []
-        if not patterns:
+        if published_release and published_sections:
+            for sec in published_sections:
+                resps_html = "".join(
+                    f"<div class='meta-grid'><strong>{html.escape(r['teacher_name'])} ({html.escape(r['response_type'])}):</strong> {html.escape(r['content'])}</div>"
+                    for r in (sec.get("responses") or [])
+                )
+                lo = sec.get("last_opened")
+                lo_html = f"<div>{html.escape(lo['display'])}</div>" if lo else ""
+                ack = sec.get("acknowledgment") or {}
+                ack_html = f"<div>{html.escape(ack['display'])}</div>" if ack.get("display") else ""
+                findings_blocks.append(
+                    f"<section class='finding-card'>"
+                    f"<div class='finding-head'><span class='pill'>{html.escape(sec['section_title'])}</span>"
+                    f"<span class='pill approved'>RELEASED v{published_release.get('version_number')} — {html.escape(sec['approved_by_name'])}</span></div>"
+                    f"<p class='finding-summary'>{html.escape(sec['approved_summary'])}</p>"
+                    f"<div class='meta-grid'>{lo_html}{ack_html}</div>"
+                    f"{resps_html}</section>"
+                )
+
+        if not patterns and not published_sections:
             findings_blocks.append(
                 '<div class="empty">No human-approved transition findings are currently published for this learner.</div>'
             )
-        else:
+        elif patterns:
             for idx, pat in enumerate(patterns, start=1):
                 rev = pat.get("review", {})
                 all_refs = list(
@@ -626,7 +764,47 @@ class ExportService:
         )
         pdf.add_spacer(8.0)
 
-        if not patterns:
+        published_sections = data.get("published_sections") or []
+        published_release = data.get("published_release")
+
+        if published_release and published_sections:
+            pdf.add_rule()
+            pdf.add_wrapped(
+                f"Published Class Handover v{published_release.get('version_number')} (Released by {published_release.get('released_by_name')})",
+                font="F2",
+                size=11.5,
+                leading=15.0,
+                max_chars=82,
+            )
+            for sec in published_sections:
+                pdf.add_wrapped(
+                    f"{sec['section_title']} -- approved by {sec['approved_by_name']}",
+                    font="F2",
+                    size=10.5,
+                    leading=14.0,
+                    max_chars=86,
+                    rgb=(0.08, 0.38, 0.18),
+                )
+                pdf.add_wrapped(sec["approved_summary"], font="F1", size=10.0, leading=14.0, max_chars=88)
+                if sec.get("missing_evidence_disclosure"):
+                    pdf.add_wrapped(
+                        f"Gap disclosure: {sec['missing_evidence_disclosure']}",
+                        font="F1",
+                        size=9.0,
+                        leading=13.0,
+                        max_chars=90,
+                    )
+                for resp in sec.get("responses") or []:
+                    pdf.add_wrapped(
+                        f"  -> {resp['teacher_name']}: {resp['content']}",
+                        font="F1",
+                        size=9.0,
+                        leading=13.0,
+                        max_chars=88,
+                    )
+                pdf.add_spacer(4.0)
+
+        if not patterns and not published_sections:
             pdf.add_rule()
             pdf.add_wrapped(
                 "No human-approved transition findings are currently published for this learner.",

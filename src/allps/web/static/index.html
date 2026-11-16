@@ -36,6 +36,13 @@
     <!-- Left Compartment: Learner Context & Scope Filters -->
     <aside class="compartment-sidebar" aria-label="Learner controls">
       <div class="sidebar-section">
+        <label for="class-select" class="label-mono">My Classes</label>
+        <select id="class-select" class="kwaix-select">
+          <option value="">Sign in to view classes</option>
+        </select>
+      </div>
+
+      <div class="sidebar-section">
         <label for="learner-select" class="label-mono">Selected Learner</label>
         <select id="learner-select" class="kwaix-select">
           <option value="">Loading learners...</option>
@@ -134,6 +141,24 @@
         <button type="button" id="btn-dismiss-workspace-status" class="btn btn-secondary btn-sm" aria-label="Dismiss status message">✕</button>
       </div>
 
+      <!-- Teacher Responsibilities, Classes & Attention Strip -->
+      <div id="teacher-workspace-strip" class="workspace-strip" hidden>
+        <div class="workspace-strip-top">
+          <div>
+            <div class="workspace-welcome" id="workspace-welcome-heading">Welcome</div>
+            <div class="workspace-roles-sub" id="workspace-roles-sub"></div>
+          </div>
+          <div class="workspace-classes-block">
+            <span class="label-mono">YOUR CLASSES</span>
+            <div id="workspace-classes-list" class="workspace-classes-list"></div>
+          </div>
+        </div>
+        <div class="workspace-attention-block">
+          <span class="label-mono">NEEDS YOUR ATTENTION</span>
+          <div id="workspace-attention-list" class="workspace-attention-list"></div>
+        </div>
+      </div>
+
       <!-- Tabs Header -->
       <div class="tabs-header">
         <nav class="tabs-pills" aria-label="Workspace views">
@@ -145,6 +170,9 @@
           </button>
           <button type="button" class="tab-pill tab-btn" data-tab="handover">
             3. Approved Handover <span id="handover-count-badge" class="pill-count">0</span>
+          </button>
+          <button type="button" class="tab-pill tab-btn" data-tab="class-handover">
+            4. Class Handover &amp; Release <span id="class-handover-badge" class="pill-count">0</span>
           </button>
         </nav>
       </div>
@@ -225,6 +253,13 @@
         </div>
       </div>
 
+      <!-- VIEW 4: Class Handover, Readiness, Releases & Responses -->
+      <div id="view-class-handover" class="view-panel" aria-label="Class handover and release workspace">
+        <div id="class-readiness-container" class="cards-stream" aria-live="polite"></div>
+        <div id="section-editor-container" class="cards-stream" aria-live="polite"></div>
+        <div id="published-handover-container" class="cards-stream" aria-live="polite"></div>
+      </div>
+
     </section>
 
   </main>
@@ -276,7 +311,7 @@
         </div>
 
         <div class="form-group">
-          <label for="current-password">PIN *</label>
+          <label for="current-password">PIN or password *</label>
           <div class="pin-input-row">
             <input
               type="password"
@@ -284,10 +319,9 @@
               name="password"
               class="form-input"
               autocomplete="current-password"
-              inputmode="numeric"
               minlength="4"
               maxlength="64"
-              placeholder="Enter 4+ digit PIN"
+              placeholder="Enter your PIN or password"
               enterkeyhint="done"
               required
             >

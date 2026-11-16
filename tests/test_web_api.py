@@ -44,9 +44,9 @@ async def test_client(tmp_path: Path) -> AsyncGenerator[httpx.AsyncClient, None]
         transport=transport, base_url="http://testserver"
     ) as client:
         async with app.router.lifespan_context(app):
-            # Log in — cookie is stored automatically by the async client
+            # Log in as the class teacher (TCH-OCHIENG / pin 5678)
             login_resp = await client.post(
-                "/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"}
+                "/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"}
             )
             assert login_resp.status_code == 200, login_resp.text
             yield client
@@ -245,7 +245,7 @@ async def test_review_decision_and_approved_handover_gating(test_client: httpx.A
     assert dec_resp.status_code == 200
     dec_data = dec_resp.json()
     assert dec_data["status"] == "accepted"
-    assert dec_data["reviewer_id"] == "TCH-BANDA"
+    assert dec_data["reviewer_id"] == "TCH-OCHIENG"
     assert len(dec_data["approved_content_hash"]) == 64
 
     # 5. After approval: approved handover now surfaces the accepted pattern
@@ -256,22 +256,27 @@ async def test_review_decision_and_approved_handover_gating(test_client: httpx.A
     surfaced = data_after["patterns"][0]
     assert surfaced["review"]["status"] == "accepted"
     assert surfaced["review"]["approved_content_hash"] == dec_data["approved_content_hash"]
-    assert surfaced["review"]["reviewer_id"] == "TCH-BANDA"
+    assert surfaced["review"]["reviewer_id"] == "TCH-OCHIENG"
     assert surfaced["review"]["hash_verified"] is True
 
 
 @pytest.mark.asyncio
 async def test_review_decision_requires_login(tmp_path: Path):
-    """Unauthenticated decision submission must return 401."""
+    """Unauthenticated generate/reviews/decision requests must return 401."""
     db_file = str(tmp_path / "test_unauth.db")
     app = create_app(db_path=db_file, mode="mock", seed_demo_data=True)
 
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
+            assert (await client.post("/api/learners/LRN-001/generate", json={"mode": "mock"})).status_code == 401
+            assert (await client.get("/api/learners/LRN-001/reviews")).status_code == 401
+
+            await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             await client.post("/api/learners/LRN-001/generate", json={"mode": "mock"})
             rev_resp = await client.get("/api/learners/LRN-001/reviews")
             rev_id = rev_resp.json()[0]["review_id"]
+            await client.post("/api/auth/logout")
 
             # No login — must be rejected
             dec_resp = await client.post(
@@ -284,6 +289,9 @@ async def test_review_decision_requires_login(tmp_path: Path):
 @pytest.mark.asyncio
 async def test_rejected_findings_remain_strictly_excluded(test_client: httpx.AsyncClient):
     """Verify that a rejected candidate finding never leaks into the approved handover."""
+    # Log in as class teacher (Ms. Ochieng) to inspect and adjudicate English findings
+    await test_client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
+
     # 1. Generate pattern for LRN-003
     gen_resp = await test_client.post("/api/learners/LRN-003/generate", json={"subject": "English", "mode": "mock"})
     assert gen_resp.status_code == 200
@@ -315,11 +323,11 @@ async def test_approval_survives_database_reload(tmp_path: Path):
     """Verify approved handover survives server restart and database reload."""
     db_file = str(tmp_path / "persist_test.db")
 
-    # Instance 1: Generate and Accept
+    # Instance 1: Generate and Accept (class teacher for Science)
     app1 = create_app(db_path=db_file, mode="mock", seed_demo_data=True)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app1), base_url="http://testserver") as client1:
         async with app1.router.lifespan_context(app1):
-            await client1.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
+            await client1.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             await client1.post("/api/learners/LRN-002/generate", json={"subject": "Science", "mode": "mock"})
             revs = (await client1.get("/api/learners/LRN-002/reviews")).json()
             rev_id = revs[0]["review_id"]
@@ -329,10 +337,11 @@ async def test_approval_survives_database_reload(tmp_path: Path):
     app2 = create_app(db_path=db_file, mode="mock", seed_demo_data=False)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app2), base_url="http://testserver") as client2:
         async with app2.router.lifespan_context(app2):
+            await client2.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             handover = (await client2.get("/api/learners/LRN-002/handover")).json()
             assert handover["accepted_pattern_count"] == 1
             assert handover["patterns"][0]["review"]["status"] == "accepted"
-            assert handover["patterns"][0]["review"]["reviewer_id"] == "TCH-BANDA"
+            assert handover["patterns"][0]["review"]["reviewer_id"] == "TCH-OCHIENG"
             assert handover["patterns"][0]["review"]["hash_verified"] is True
 
 
@@ -349,7 +358,7 @@ async def test_candidate_brief_persistence_and_revisioning(tmp_path: Path):
     app1 = create_app(db_path=db_file, mode="mock", seed_demo_data=True)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app1), base_url="http://testserver") as client1:
         async with app1.router.lifespan_context(app1):
-            await client1.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
+            await client1.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             gen1 = await client1.post("/api/learners/LRN-001/generate", json={"subject": "Mathematics", "mode": "mock"})
             assert gen1.status_code == 200
             data1 = gen1.json()
@@ -380,6 +389,7 @@ async def test_candidate_brief_persistence_and_revisioning(tmp_path: Path):
     app2 = create_app(db_path=db_file, mode="mock", seed_demo_data=False)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app2), base_url="http://testserver") as client2:
         async with app2.router.lifespan_context(app2):
+            await client2.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             restored_resp = await client2.get("/api/learners/LRN-001/brief")
             assert restored_resp.status_code == 200
             restored = restored_resp.json()["brief"]
@@ -440,10 +450,10 @@ async def test_config_reports_session_auth(test_client: httpx.AsyncClient):
     assert data["authentication_type"] == "pin_session_cookie"
     assert data["review_authority_available"] is True
     assert data["authenticated_teacher"] == {
-        "teacher_id": "TCH-BANDA",
-        "display_name": "Mr. Banda",
+        "teacher_id": "TCH-OCHIENG",
+        "display_name": "Ms. Ochieng",
     }
-    assert data["server_reviewer_id"] == "TCH-BANDA"
+    assert data["server_reviewer_id"] == "TCH-OCHIENG"
     teacher_ids = {t["teacher_id"] for t in data["available_teachers"]}
     assert {"TCH-BANDA", "TCH-OCHIENG"}.issubset(teacher_ids)
     assert "pin" in data["trust_notice"].lower()

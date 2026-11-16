@@ -43,8 +43,92 @@ _src_dir = str(Path(__file__).resolve().parent.parent.parent / "src")
 if _src_dir not in sys.path:
     sys.path.insert(0, _src_dir)
 
-from allps.models import AuditEntry, Evidence, EvidenceType, IngestionMethod, Learner
+from allps.auth import hash_pin
+from allps.models import (
+    AuditEntry,
+    Evidence,
+    EvidenceType,
+    IngestionMethod,
+    Learner,
+    SchoolClass,
+    TeacherAssignment,
+    TeacherRole,
+)
 from allps.storage.sqlite_store import SQLiteStore
+
+
+PILOT_TEACHERS: tuple[tuple[str, str, str], ...] = (
+    ("TCH-OCHIENG", "Ms. Ochieng", "5678"),
+    ("TCH-BANDA", "Mr. Banda", "1234"),
+    ("TCH-WANJIKU", "Ms. Wanjiku", "2345"),
+    ("TCH-OTIENO", "Mr. Otieno", "3456"),
+    ("TCH-KAMAU", "Mrs. Kamau", "4567"),
+)
+
+SCHOOL_CLASSES: tuple[SchoolClass, ...] = (
+    SchoolClass(
+        class_id="CLS-G3-BLUE",
+        display_name="Grade 3 Blue",
+        grade="Grade 3",
+        academic_year=2026,
+        term=3,
+    ),
+    SchoolClass(
+        class_id="CLS-G4-RED",
+        display_name="Grade 4 Red",
+        grade="Grade 4",
+        academic_year=2026,
+        term=3,
+    ),
+)
+
+TEACHER_ASSIGNMENTS: tuple[TeacherAssignment, ...] = (
+    TeacherAssignment(
+        assignment_id="ASN-G3B-OCHIENG",
+        teacher_id="TCH-OCHIENG",
+        class_id="CLS-G3-BLUE",
+        role=TeacherRole.CLASS_TEACHER,
+        subject=None,
+    ),
+    TeacherAssignment(
+        assignment_id="ASN-G3B-BANDA-MATH",
+        teacher_id="TCH-BANDA",
+        class_id="CLS-G3-BLUE",
+        role=TeacherRole.SUBJECT_TEACHER,
+        subject="Mathematics",
+    ),
+    TeacherAssignment(
+        assignment_id="ASN-G3B-WANJIKU-ENG",
+        teacher_id="TCH-WANJIKU",
+        class_id="CLS-G3-BLUE",
+        role=TeacherRole.SUBJECT_TEACHER,
+        subject="English",
+    ),
+    TeacherAssignment(
+        assignment_id="ASN-G3B-OTIENO-SCI",
+        teacher_id="TCH-OTIENO",
+        class_id="CLS-G3-BLUE",
+        role=TeacherRole.SUBJECT_TEACHER,
+        subject="Science",
+    ),
+    TeacherAssignment(
+        assignment_id="ASN-G4R-KAMAU",
+        teacher_id="TCH-KAMAU",
+        class_id="CLS-G4-RED",
+        role=TeacherRole.CLASS_TEACHER,
+        subject=None,
+    ),
+)
+
+
+async def seed_school_structure(store: SQLiteStore, *, seed_pilot_accounts: bool = True) -> None:
+    """Idempotently seed pilot teacher accounts, classes, and role assignments."""
+    for teacher_id, display_name, pin in (PILOT_TEACHERS if seed_pilot_accounts else []):
+        await store.add_teacher(teacher_id, display_name, hash_pin(pin))
+    for school_class in SCHOOL_CLASSES:
+        await store.add_class(school_class)
+    for assignment in TEACHER_ASSIGNMENTS:
+        await store.add_teacher_assignment(assignment)
 
 
 # ── Learners ──────────────────────────────────────────────────────
@@ -611,6 +695,7 @@ async def seed_store(
     *,
     reset: bool = False,
     actor: str = "cli",
+    seed_pilot_accounts: bool = True,
 ) -> dict[str, Any]:
     """Idempotently seed synthetic learners and evidence into an initialized store.
 
@@ -620,6 +705,8 @@ async def seed_store(
     cleared: dict[str, int] | None = None
     if reset:
         cleared = await store.reset_workspace_data(actor=actor)
+
+    await seed_school_structure(store, seed_pilot_accounts=seed_pilot_accounts)
 
     learners_added = 0
     learners_skipped = 0
@@ -633,6 +720,7 @@ async def seed_store(
         else:
             await store.add_learner(learner)
             learners_added += 1
+        await store.enroll_learner("CLS-G3-BLUE", learner.learner_id)
 
     evidence_added = 0
     evidence_skipped = 0

@@ -138,6 +138,7 @@ async def test_ingest_records_batch_dedup_and_partial_rejection(api_client):
 
     batch_payload = {
         "source_system": "native_school_results",
+        "class_id": "CLS-G3-BLUE",
         "records": [
             _sample_assessment(
                 learner_id="LRN-SIS-01",
@@ -196,7 +197,8 @@ async def test_ingest_records_batch_dedup_and_partial_rejection(api_client):
     assert summary["rejected_count"] == 2
     assert len(summary["errors"]) == 2
 
-    # Confirm learner auto-created with display_name and evidence persisted
+    # Confirm learner auto-created with display_name and evidence persisted for assigned teacher
+    await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
     learners_resp = await client.get("/api/learners")
     learners = {l["learner_id"]: l for l in learners_resp.json()}
     assert "LRN-SIS-01" in learners
@@ -335,9 +337,17 @@ async def test_e2e_ingest_approve_and_export_docs_with_strict_gating(api_client)
         _sample_assessment(learner_id=learner_id, term=2, score=70, observed_at="2025-07-04T09:00:00Z", event_id="E2E-T2"),
         _sample_assessment(learner_id=learner_id, term=3, score=56, observed_at="2025-10-10T09:00:00Z", event_id="E2E-T3"),
     ]
-    ingest_resp = await client.post("/api/ingest/records", json={"records": records}, headers=api_headers)
+    ingest_resp = await client.post(
+        "/api/ingest/records",
+        json={"class_id": "CLS-G3-BLUE", "records": records},
+        headers=api_headers,
+    )
     assert ingest_resp.status_code == 200
     assert ingest_resp.json()["accepted_count"] == 3
+
+    # Authenticate as class teacher (Ms. Ochieng)
+    login_resp = await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
+    assert login_resp.status_code == 200
 
     # 2. Generate candidate handover (deterministic mode -> enters PENDING review)
     gen_resp = await client.post(
@@ -361,10 +371,7 @@ async def test_e2e_ingest_approve_and_export_docs_with_strict_gating(api_client)
     assert pre_pdf.content.startswith(b"%PDF-1.4")
     assert b"No human-approved transition findings" in pre_pdf.content
 
-    # 4. Teacher logs in and accepts the finding
-    login_resp = await client.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
-    assert login_resp.status_code == 200
-
+    # 4. Class teacher accepts the finding
     dec_resp = await client.post(
         f"/api/reviews/{review_id}/decision",
         json={
@@ -387,7 +394,7 @@ async def test_e2e_ingest_approve_and_export_docs_with_strict_gating(api_client)
     assert pdf_bytes.startswith(b"%PDF-1.4")
     assert b"xref" in pdf_bytes
     assert pdf_bytes.rstrip().endswith(b"%%EOF")
-    assert b"TCH-BANDA" in pdf_bytes
+    assert b"TCH-OCHIENG" in pdf_bytes
     assert sha_hash.encode("ascii") in pdf_bytes
     assert b"Wanjiku Kamau" in pdf_bytes
     assert b"native_school_results" in pdf_bytes
@@ -407,7 +414,7 @@ async def test_e2e_ingest_approve_and_export_docs_with_strict_gating(api_client)
     assert md_resp.status_code == 200
     assert "text/markdown" in md_resp.headers["content-type"]
     assert sha_hash in md_resp.text
-    assert "TCH-BANDA" in md_resp.text
+    assert "TCH-OCHIENG" in md_resp.text
 
     json_resp = await client.get(f"/api/learners/{learner_id}/handover/export?format=json")
     assert json_resp.status_code == 200
@@ -439,7 +446,12 @@ async def test_rejected_finding_never_appears_in_exports_and_ui_has_print_contro
         _sample_assessment(learner_id=learner_id, term=2, score=70, observed_at="2025-07-04T09:00:00Z", event_id="REJ-T2"),
         _sample_assessment(learner_id=learner_id, term=3, score=60, observed_at="2025-10-10T09:00:00Z", event_id="REJ-T3"),
     ]
-    await client.post("/api/ingest/records", json={"records": records}, headers=api_headers)
+    await client.post(
+        "/api/ingest/records",
+        json={"class_id": "CLS-G3-BLUE", "records": records},
+        headers=api_headers,
+    )
+    await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
 
     gen_resp = await client.post(
         f"/api/learners/{learner_id}/generate",
@@ -448,7 +460,6 @@ async def test_rejected_finding_never_appears_in_exports_and_ui_has_print_contro
     review_id = gen_resp.json()["review_id"]
     assert review_id is not None
 
-    await client.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
     rej_resp = await client.post(
         f"/api/reviews/{review_id}/decision",
         json={

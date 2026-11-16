@@ -36,6 +36,18 @@ Core pillars of ALLPS:
 
 ## 3. Target Users
 
+### Hosted deployment preparation (November 2026)
+
+The working tree now includes an AMD Token Lab configuration and a Render
+deployment blueprint. These are preparation artifacts; the local verification
+does not establish that the teacher application is publicly deployed.
+See the [readiness review](docs/dev/v2_readiness_review.md) and
+[deployment guide](docs/dev/deployment.md).
+
+The local-only and zero-cloud-egress descriptions above apply to local inference.
+The optional hosted configuration sends synthesis payloads to AMD Token Lab and
+must use synthetic demonstration data until school data handling is authorized.
+
 ALLPS is designed specifically for public and community school ecosystems across Africa:
 
 1. **Primary & Secondary School Teachers**:

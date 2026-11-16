@@ -17,22 +17,26 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from allps.auth import get_ingest_api_key, hash_pin
+from allps.auth import get_ingest_api_key, hash_pin, verify_pin
 from allps.runtime import RuntimeRegistry
 from allps.services.analysis_service import AnalysisService
 from allps.services.evidence_service import EvidenceService
 from allps.services.export_service import ExportService
+from allps.services.handover_service import HandoverService
 from allps.services.intake_service import IntakeService
 from allps.services.review_service import ReviewService
 from allps.storage.sqlite_store import SQLiteStore
 from allps.web.routes import router
 
-# Synthetic pilot teachers — two accounts for the handover scenario.
+# Synthetic pilot teachers — class teacher, subject teachers, and unrelated class cohort.
 # PINs are hashed at import time; plaintext never stored.
 # Replace these with a proper provisioning step before real deployment.
 _PILOT_TEACHERS = [
-    ("TCH-BANDA", "Mr. Banda", "1234"),
     ("TCH-OCHIENG", "Ms. Ochieng", "5678"),
+    ("TCH-BANDA", "Mr. Banda", "1234"),
+    ("TCH-WANJIKU", "Ms. Wanjiku", "2345"),
+    ("TCH-OTIENO", "Mr. Otieno", "3456"),
+    ("TCH-KAMAU", "Mrs. Kamau", "4567"),
 ]
 
 
@@ -85,6 +89,10 @@ def create_app(
     allowed_origins: list[str] | None = None,
     ingest_api_key: str | None = None,
     allow_demo_reset: bool | None = None,
+    teacher_accounts: list[tuple[str, str, str]] | None = None,
+    seed_school: bool = True,
+    secure_cookies: bool = False,
+    hosted: bool = False,
 ) -> FastAPI:
     """Create and configure the ALLPS teacher website FastAPI instance."""
     _ensure_repo_root_on_path()
@@ -95,9 +103,23 @@ def create_app(
         store = SQLiteStore(db_path)
         await store.initialize()
 
-        # Seed pilot teacher accounts (idempotent — INSERT OR IGNORE)
-        for teacher_id, display_name, pin in _PILOT_TEACHERS:
+        # Seed pilot teacher accounts & school class/assignment structure (idempotent)
+        for teacher_id, display_name, pin in (_PILOT_TEACHERS if teacher_accounts is None else teacher_accounts):
             await store.add_teacher(teacher_id, display_name, hash_pin(pin))
+
+        try:
+            from data.synthetic.seed_data import seed_school_structure
+            if seed_school:
+                await seed_school_structure(store, seed_pilot_accounts=not hosted)
+        except Exception:
+            if hosted:
+                await store.close()
+                raise
+
+        # Ensure pre-existing demo learners (if any) belong to Grade 3 Blue
+        for demo_lid in ("LRN-001", "LRN-002", "LRN-003"):
+            if await store.learner_exists(demo_lid) and not await store.get_learner_classes(demo_lid):
+                await store.enroll_learner("CLS-G3-BLUE", demo_lid)
 
         # Seed synthetic Kenyan demonstration dataset if empty or requested
         if seed_demo_data:
@@ -107,14 +129,21 @@ def create_app(
 
             if count == 0:
                 from data.synthetic.seed_data import seed_store
-                await seed_store(store, reset=False, actor="startup_autoseed")
+                await seed_store(store, reset=False, actor="startup_autoseed", seed_pilot_accounts=not hosted)
 
         # Initialize services
+        if hosted:
+            for teacher_id, _, default_pin in _PILOT_TEACHERS:
+                existing = await store.get_teacher(teacher_id)
+                if existing and verify_pin(default_pin, existing["pin_hash"]):
+                    await store.close()
+                    raise ValueError("Hosted startup refused: database contains a default demo credential")
         ev_service = EvidenceService(store)
         an_service = AnalysisService(ev_service, store)
         rev_service = ReviewService(store)
+        handover_service = HandoverService(store, ev_service, an_service)
         intake_service = IntakeService(ev_service, store)
-        export_service = ExportService(store, rev_service)
+        export_service = ExportService(store, rev_service, handover_service=handover_service)
         registry = RuntimeRegistry()
 
         # Preload records to construct mock responses for offline mock mode
@@ -127,10 +156,14 @@ def create_app(
         app.state.evidence_service = ev_service
         app.state.analysis_service = an_service
         app.state.review_service = rev_service
+        app.state.handover_service = handover_service
         app.state.intake_service = intake_service
         app.state.export_service = export_service
         app.state.runtime_registry = registry
         app.state.default_mode = mode
+        app.state.secure_cookies = secure_cookies
+        app.state.hosted = hosted
+        app.state.is_synthetic = seed_demo_data
         app.state.mock_responses = mock_responses
         app.state.ingest_api_key = get_ingest_api_key(ingest_api_key)
 
@@ -163,6 +196,12 @@ def create_app(
 
     # Mount API routes
     app.include_router(router)
+
+    @app.get("/healthz", include_in_schema=False)
+    async def healthz() -> dict[str, str]:
+        async with app.state.store.db.execute("SELECT 1") as cursor:
+            await cursor.fetchone()
+        return {"status": "ok"}
 
     # Static assets
     static_dir = Path(__file__).resolve().parent / "static"
