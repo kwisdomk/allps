@@ -1200,3 +1200,85 @@ dialog::backdrop {
     padding: 6px 12px;
   }
 }
+
+/* ── Handover Export & Print Controls ───────────────────────────────── */
+
+.handover-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.handover-export-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.handover-print-meta {
+  display: none;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .top-bar,
+  .compartment-sidebar,
+  .tabs-header,
+  .no-print,
+  .side-panel,
+  .side-panel-overlay,
+  dialog {
+    display: none !important;
+  }
+
+  .dashboard-container {
+    display: block;
+    padding: 0;
+    margin: 0;
+    max-width: none;
+  }
+
+  .compartment-main {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    min-height: auto;
+  }
+
+  .view-panel {
+    display: none !important;
+  }
+
+  #view-handover {
+    display: flex !important;
+  }
+
+  .handover-print-meta {
+    display: block;
+  }
+
+  .approved-card {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}

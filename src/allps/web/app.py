@@ -16,10 +16,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from allps.auth import hash_pin
+from allps.auth import get_ingest_api_key, hash_pin
 from allps.runtime import RuntimeRegistry
 from allps.services.analysis_service import AnalysisService
 from allps.services.evidence_service import EvidenceService
+from allps.services.export_service import ExportService
+from allps.services.intake_service import IntakeService
 from allps.services.review_service import ReviewService
 from allps.storage.sqlite_store import SQLiteStore
 from allps.web.routes import router
@@ -47,6 +49,7 @@ def create_app(
     mode: str = "auto",
     seed_demo_data: bool = True,
     allowed_origins: list[str] | None = None,
+    ingest_api_key: str | None = None,
 ) -> FastAPI:
     """Create and configure the ALLPS teacher website FastAPI instance."""
 
@@ -77,6 +80,8 @@ def create_app(
         ev_service = EvidenceService(store)
         an_service = AnalysisService(ev_service, store)
         rev_service = ReviewService(store)
+        intake_service = IntakeService(ev_service, store)
+        export_service = ExportService(store, rev_service)
         registry = RuntimeRegistry()
 
         # Preload records to construct mock responses for offline mock mode
@@ -91,9 +96,12 @@ def create_app(
         app.state.evidence_service = ev_service
         app.state.analysis_service = an_service
         app.state.review_service = rev_service
+        app.state.intake_service = intake_service
+        app.state.export_service = export_service
         app.state.runtime_registry = registry
         app.state.default_mode = mode
         app.state.mock_responses = mock_responses
+        app.state.ingest_api_key = get_ingest_api_key(ingest_api_key)
 
         yield
 

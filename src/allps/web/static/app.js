@@ -189,6 +189,10 @@ const elements = {
 
   handoverList: document.getElementById("handover-list"),
   handoverCountBadge: document.getElementById("handover-count-badge"),
+  handoverPrintMeta: document.getElementById("handover-print-meta"),
+  btnPrintHandover: document.getElementById("btn-print-handover"),
+  btnExportHtml: document.getElementById("btn-export-html"),
+  btnExportPdf: document.getElementById("btn-export-pdf"),
 
   authBanner: document.getElementById("auth-status-banner"),
   btnAuthAction: document.getElementById("btn-auth-action"),
@@ -320,6 +324,23 @@ function bindEvents() {
 
   // Generate Handover
   elements.btnGenerate.addEventListener("click", handleGenerateHandover);
+
+  // Print / Export Approved Handover
+  if (elements.btnPrintHandover) {
+    elements.btnPrintHandover.addEventListener("click", () => {
+      if (!elements.btnPrintHandover.disabled) {
+        window.print();
+      }
+    });
+  }
+  [elements.btnExportHtml, elements.btnExportPdf].forEach((link) => {
+    if (!link) return;
+    link.addEventListener("click", (e) => {
+      if (link.classList.contains("is-disabled") || !link.getAttribute("href") || link.getAttribute("href") === "#") {
+        e.preventDefault();
+      }
+    });
+  });
 
   // Side Panel
   elements.sidePanelCloseBtn.addEventListener("click", closeSidePanel);
@@ -1195,6 +1216,45 @@ async function handleReviewDecision(
 
 // ── View 3: Approved Handover View ───────────────────────────────────────────
 
+function updateHandoverExportControls(learnerId, approvedCount) {
+  const enabled = Boolean(learnerId) && approvedCount > 0;
+  const encodedId = learnerId ? encodeURIComponent(learnerId) : "";
+
+  if (elements.handoverPrintMeta) {
+    const activeLearner = state.learners.find((l) => l.learner_id === learnerId);
+    const displayName = activeLearner ? activeLearner.display_name : learnerId || "";
+    elements.handoverPrintMeta.textContent = learnerId
+      ? `Learner: ${displayName} (${learnerId}) · Approved Findings: ${approvedCount}`
+      : "";
+  }
+
+  if (elements.btnPrintHandover) {
+    elements.btnPrintHandover.disabled = !enabled;
+  }
+  if (elements.btnExportHtml) {
+    if (enabled) {
+      elements.btnExportHtml.href = `/api/learners/${encodedId}/handover/export?format=html&download=false`;
+      elements.btnExportHtml.classList.remove("is-disabled");
+      elements.btnExportHtml.setAttribute("aria-disabled", "false");
+    } else {
+      elements.btnExportHtml.href = "#";
+      elements.btnExportHtml.classList.add("is-disabled");
+      elements.btnExportHtml.setAttribute("aria-disabled", "true");
+    }
+  }
+  if (elements.btnExportPdf) {
+    if (enabled) {
+      elements.btnExportPdf.href = `/api/learners/${encodedId}/handover/export?format=pdf&download=true`;
+      elements.btnExportPdf.classList.remove("is-disabled");
+      elements.btnExportPdf.setAttribute("aria-disabled", "false");
+    } else {
+      elements.btnExportPdf.href = "#";
+      elements.btnExportPdf.classList.add("is-disabled");
+      elements.btnExportPdf.setAttribute("aria-disabled", "true");
+    }
+  }
+}
+
 async function loadApprovedHandoverView() {
   if (!state.activeLearnerId) return;
 
@@ -1204,6 +1264,7 @@ async function loadApprovedHandoverView() {
     elements.handoverCountBadge.textContent = count;
     const sideApproved = document.getElementById("side-approved-count");
     if (sideApproved) sideApproved.textContent = count;
+    updateHandoverExportControls(state.activeLearnerId, count);
 
     if (count === 0) {
       elements.handoverList.innerHTML = `
@@ -1221,6 +1282,7 @@ async function loadApprovedHandoverView() {
       elements.handoverList.appendChild(card);
     });
   } catch (err) {
+    updateHandoverExportControls(state.activeLearnerId, 0);
     elements.handoverList.innerHTML = `
       <div class="empty-state" style="color: var(--danger);">
         <h3>Error loading approved handover</h3>

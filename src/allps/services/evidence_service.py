@@ -81,12 +81,54 @@ class EvidenceService:
         observed_at: str | datetime,
         source_event_id: str | None = None,
         subject: str | None = None,
+        learner_display_name: str | None = None,
     ) -> Evidence:
         """Record a new piece of evidence with provenance.
 
         Auto-creates the learner if they don't exist yet (Phase 1).
         Logs an audit entry for the tool call.
         Evidence is immutable once recorded.
+        """
+        evidence, _ = await self.record_evidence_with_status(
+            learner_id=learner_id,
+            evidence_type=evidence_type,
+            source_system=source_system,
+            ingestion_method=ingestion_method,
+            source_type=source_type,
+            source_reference=source_reference,
+            academic_year=academic_year,
+            term=term,
+            content=content,
+            observed_at=observed_at,
+            source_event_id=source_event_id,
+            subject=subject,
+            learner_display_name=learner_display_name,
+        )
+        return evidence
+
+    async def record_evidence_with_status(
+        self,
+        *,
+        learner_id: str,
+        evidence_type: str | EvidenceType,
+        source_system: str,
+        ingestion_method: str | IngestionMethod,
+        source_type: str,
+        source_reference: str,
+        academic_year: int,
+        term: int,
+        content: dict,
+        observed_at: str | datetime,
+        source_event_id: str | None = None,
+        subject: str | None = None,
+        learner_display_name: str | None = None,
+    ) -> tuple[Evidence, str]:
+        """Record evidence and return (evidence, outcome).
+
+        Outcome is one of:
+        - "created": newly persisted record
+        - "replayed": Level 1 idempotent replay via (source_system, source_event_id)
+        - "deduplicated": Level 2 canonical fingerprint match across exports
         """
         try:
             # Parse observed_at if string
@@ -148,7 +190,7 @@ class EvidenceService:
                             output_reference=existing.evidence_id,
                         )
                         await self._store.add_audit_entry(retry_audit)
-                        return existing
+                        return existing, "replayed"
                     else:
                         raise ValueError(f"Conflict: event {source_event_id} already exists with different {diff_field}")
 
@@ -170,7 +212,7 @@ class EvidenceService:
                     output_reference=existing_by_fp.evidence_id,
                 )
                 await self._store.add_audit_entry(dedup_audit)
-                return existing_by_fp
+                return existing_by_fp, "deduplicated"
 
 
             audit = AuditEntry(
@@ -190,9 +232,14 @@ class EvidenceService:
             async with self._store.transaction() as conn:
                 # Ensure learner exists (auto-create for Phase 1)
                 if not await self._store.learner_exists(learner_id, conn=conn):
+                    display_name = (
+                        learner_display_name.strip()
+                        if isinstance(learner_display_name, str) and learner_display_name.strip()
+                        else f"Learner {learner_id}"
+                    )
                     learner = Learner(
                         learner_id=learner_id,
-                        display_name=f"Learner {learner_id}",
+                        display_name=display_name,
                     )
                     await self._store.add_learner(learner, commit=False, conn=conn)
 
@@ -227,7 +274,7 @@ class EvidenceService:
                 logging.getLogger(__name__).error("Failed to record failure audit entry: %s", audit_err)
             raise
 
-        return evidence
+        return evidence, "created"
 
     ingest_evidence = record_evidence
 

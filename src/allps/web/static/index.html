@@ -166,7 +166,23 @@
 
       <!-- VIEW 3: Approved Handover -->
       <div id="view-handover" class="view-panel" aria-labelledby="view-handover-heading">
-        <span class="label-mono" style="display: block; margin-bottom: 8px;">Approved Transition Handover (Sovereign Profile)</span>
+        <div class="handover-toolbar">
+          <div>
+            <span class="label-mono">Approved Transition Handover (Sovereign Profile)</span>
+            <div id="handover-print-meta" class="handover-print-meta"></div>
+          </div>
+          <div class="handover-export-actions no-print">
+            <button type="button" id="btn-print-handover" class="btn btn-secondary btn-sm" disabled>
+              Print Handover
+            </button>
+            <a id="btn-export-html" class="btn btn-secondary btn-sm is-disabled" href="#" target="_blank" rel="noopener" aria-disabled="true">
+              Printable View
+            </a>
+            <a id="btn-export-pdf" class="btn btn-primary btn-sm is-disabled" href="#" aria-disabled="true">
+              Export PDF
+            </a>
+          </div>
+        </div>
         <div id="handover-list" class="cards-stream" aria-live="polite">
           <div class="empty-state">Loading approved handover...</div>
         </div>

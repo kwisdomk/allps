@@ -6,8 +6,9 @@ JSON fields (content, supporting_evidence, etc.) are stored as TEXT.
 """
 
 from contextlib import asynccontextmanager
-import json
 from datetime import datetime, timezone
+import json
+from typing import Sequence
 
 import aiosqlite
 
@@ -447,6 +448,41 @@ class SQLiteStore:
         if commit:
             await db.commit()
         return evidence
+
+    async def get_evidence_by_id(
+        self,
+        evidence_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> Evidence | None:
+        """Retrieve a single evidence record by its UUID."""
+        db = conn or self.db
+        async with db.execute(
+            "SELECT * FROM evidence WHERE evidence_id = ?",
+            (evidence_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return self._row_to_evidence(row)
+
+    async def get_evidence_by_ids(
+        self,
+        evidence_ids: Sequence[str],
+        conn: aiosqlite.Connection | None = None,
+    ) -> dict[str, Evidence]:
+        """Retrieve multiple evidence records keyed by evidence_id."""
+        unique_ids = [eid for eid in dict.fromkeys(evidence_ids) if eid]
+        if not unique_ids:
+            return {}
+        db = conn or self.db
+        placeholders = ",".join("?" for _ in unique_ids)
+        query = f"SELECT * FROM evidence WHERE evidence_id IN ({placeholders})"
+        found: dict[str, Evidence] = {}
+        async with db.execute(query, tuple(unique_ids)) as cursor:
+            async for row in cursor:
+                ev = self._row_to_evidence(row)
+                found[ev.evidence_id] = ev
+        return found
 
     async def get_evidence_by_fingerprint(
         self,

@@ -15,12 +15,19 @@ from typing import Any
 import uuid
 
 import aiosqlite
-from fastapi import APIRouter, Cookie, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Cookie, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from pydantic import BaseModel, Field, field_validator
 
 from allps.agent.contracts import HandoverStatus
 from allps.agent.orchestrator import AgentOrchestrator, OrchestrationResult
-from allps.auth import COOKIE_NAME, make_session_cookie, read_session_cookie, verify_pin
+from allps.auth import (
+    COOKIE_NAME,
+    extract_api_key_from_headers,
+    make_session_cookie,
+    read_session_cookie,
+    verify_ingest_api_key,
+    verify_pin,
+)
 from allps.models.evidence import Evidence, EvidenceType, IngestionMethod
 from allps.models.learner import Learner
 from allps.models.review import ReviewItem, ReviewStatus
@@ -28,6 +35,8 @@ from allps.policies.label_policy import check_for_prohibited_labels
 from allps.runtime import ExecutionMode, RuntimeRegistry
 from allps.services.analysis_service import AnalysisService
 from allps.services.evidence_service import EvidenceService
+from allps.services.export_service import ExportService
+from allps.services.intake_service import DuplicateFileError, IntakeService
 from allps.services.review_service import ConflictError, ReviewService
 from allps.storage.sqlite_store import SQLiteStore
 
@@ -138,6 +147,21 @@ class LoginRequest(BaseModel):
     pin: str = Field(..., min_length=4, max_length=64)
 
 
+class IngestRecordsRequest(BaseModel):
+    """Batch ingestion payload from an external/native school results system."""
+
+    source_system: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=120,
+        description="Default originating system identifier (e.g. 'school_sis').",
+    )
+    ingestion_method: str = Field(default="api", max_length=60)
+    source_type: str = Field(default="system", max_length=60)
+    source_reference: str | None = Field(default=None, max_length=200)
+    records: list[dict[str, Any]] = Field(..., min_length=1, max_length=5000)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Session helpers
 # ─────────────────────────────────────────────────────────────────────────────
@@ -160,6 +184,25 @@ def _require_teacher(request: Request) -> str:
             detail="Sign in required.",
         )
     return teacher_id
+
+
+def _require_ingest_api_key(request: Request) -> None:
+    """Enforce external system API-key authentication (fail-closed if unconfigured)."""
+    expected_key: str | None = getattr(request.app.state, "ingest_api_key", None)
+    if not expected_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="External ingestion API key is not configured on this server (ALLPS_INGEST_API_KEY).",
+        )
+    supplied = extract_api_key_from_headers(
+        authorization=request.headers.get("authorization"),
+        x_api_key=request.headers.get("x-api-key"),
+    )
+    if not verify_ingest_api_key(supplied, expected_key):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing ingestion API key.",
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -706,3 +749,132 @@ async def get_approved_handover(learner_id: str, request: Request) -> dict[str, 
 
     profile = await review_service.get_surfaced_profile(learner_id)
     return profile
+
+
+@router.get("/learners/{learner_id}/handover/export")
+async def export_approved_handover(
+    learner_id: str,
+    request: Request,
+    format: str = Query("pdf", description="pdf | html | md | json"),
+    download: bool = Query(True, description="Set true for attachment download, false for inline view"),
+) -> Response:
+    """Export the strictly human-approved learner handover document.
+
+    Enforces the Dual-View Gate: only ACCEPTED findings with verified SHA-256
+    content hashes and their cited evidence provenance are included.
+    """
+    store: SQLiteStore = request.app.state.store
+    export_service: ExportService = request.app.state.export_service
+
+    if not await store.learner_exists(learner_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Learner '{learner_id}' not found.",
+        )
+
+    try:
+        content, media_type, ext = await export_service.export_handover(learner_id, fmt=format)
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(val_err),
+        )
+
+    disposition = "attachment" if download else "inline"
+    safe_id = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in learner_id)
+    filename = f"allps_handover_{safe_id}.{ext}"
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'{disposition}; filename="{filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# External System Ingestion Endpoints (API-Key Authenticated)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@router.post("/ingest/records", status_code=status.HTTP_200_OK)
+async def ingest_external_records(
+    payload: IngestRecordsRequest,
+    request: Request,
+) -> dict[str, Any]:
+    """Ingest structured evidence records from a native school results or SIS system.
+
+    Protected by API-key auth (X-API-Key or Authorization: Bearer).
+    Supports assessments, attendance, observations, reflections, and projects,
+    with Level 1 (source_event_id) and Level 2 (canonical_fingerprint) dedup.
+    """
+    _require_ingest_api_key(request)
+    intake_service: IntakeService = request.app.state.intake_service
+
+    summary = await intake_service.ingest_records(
+        payload.records,
+        default_source_system=payload.source_system,
+        default_ingestion_method=payload.ingestion_method,
+        default_source_type=payload.source_type,
+        default_source_reference=payload.source_reference,
+    )
+    return summary.model_dump(mode="json")
+
+
+@router.post("/ingest/file", status_code=status.HTTP_201_CREATED)
+async def ingest_external_file(
+    request: Request,
+    file: UploadFile = File(...),
+    source_system: str = Form(..., min_length=1, max_length=120),
+    import_method: str = Form("csv_import", max_length=60),
+    imported_by: str | None = Form(None, max_length=120),
+    notes: str | None = Form(None, max_length=2000),
+) -> dict[str, Any]:
+    """Ingest a CSV or JSON school export file with SHA-256 ImportManifest tracking.
+
+    Protected by API-key auth (X-API-Key or Authorization: Bearer).
+    Re-uploading the same file bytes from the same source_system returns 409 Conflict.
+    """
+    _require_ingest_api_key(request)
+    intake_service: IntakeService = request.app.state.intake_service
+
+    file_bytes = await file.read()
+    try:
+        summary = await intake_service.ingest_file(
+            file_bytes=file_bytes,
+            file_name=file.filename or "upload",
+            source_system=source_system,
+            import_method=import_method,
+            imported_by=imported_by,
+            notes=notes,
+        )
+    except DuplicateFileError as dup_err:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "message": str(dup_err),
+                "existing_manifest": dup_err.manifest.model_dump(mode="json"),
+            },
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(val_err),
+        )
+
+    return summary.model_dump(mode="json")
+
+
+@router.get("/ingest/manifests")
+async def list_ingest_manifests(
+    request: Request,
+    source_system: str | None = Query(None),
+) -> list[dict[str, Any]]:
+    """List file import manifests (requires either ingest API key or authenticated teacher session)."""
+    teacher_id = _current_teacher_id(request)
+    if not teacher_id:
+        _require_ingest_api_key(request)
+    store: SQLiteStore = request.app.state.store
+    return await store.list_import_manifests(source_system=source_system)

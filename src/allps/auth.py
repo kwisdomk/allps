@@ -10,6 +10,7 @@ when the env var is set explicitly).
 
 from __future__ import annotations
 
+import hmac
 import os
 import secrets
 
@@ -56,3 +57,33 @@ def verify_pin(pin: str, hashed: str) -> bool:
         return bcrypt.checkpw(pin.encode(), hashed.encode())
     except Exception:
         return False
+
+
+def get_ingest_api_key(explicit_key: str | None = None) -> str | None:
+    """Return configured external ingestion API key, or None if unconfigured."""
+    raw = explicit_key if explicit_key is not None else os.environ.get("ALLPS_INGEST_API_KEY")
+    if not raw or not isinstance(raw, str):
+        return None
+    stripped = raw.strip()
+    return stripped or None
+
+
+def extract_api_key_from_headers(
+    authorization: str | None = None,
+    x_api_key: str | None = None,
+) -> str | None:
+    """Extract an API key from X-API-Key or Authorization: Bearer <token>."""
+    if x_api_key and x_api_key.strip():
+        return x_api_key.strip()
+    if authorization:
+        parts = authorization.strip().split(" ", 1)
+        if len(parts) == 2 and parts[0].lower() == "bearer" and parts[1].strip():
+            return parts[1].strip()
+    return None
+
+
+def verify_ingest_api_key(supplied_key: str | None, expected_key: str | None) -> bool:
+    """Constant-time verification of an external ingestion API key."""
+    if not supplied_key or not expected_key:
+        return False
+    return hmac.compare_digest(supplied_key.encode("utf-8"), expected_key.encode("utf-8"))
