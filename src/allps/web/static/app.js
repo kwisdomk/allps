@@ -34,7 +34,16 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const errorMsg = data && data.detail ? data.detail : `HTTP ${response.status}: ${response.statusText}`;
+      let errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+      if (data && data.detail !== undefined) {
+        if (typeof data.detail === "string") {
+          errorMsg = data.detail;
+        } else if (data.detail && typeof data.detail.message === "string") {
+          errorMsg = data.detail.message;
+        } else {
+          errorMsg = JSON.stringify(data.detail);
+        }
+      }
       const error = new Error(errorMsg);
       error.status = response.status;
       error.data = data;
@@ -127,6 +136,17 @@ class ApiClient {
   async getLatestBrief(learnerId) {
     return this._request(`/learners/${encodeURIComponent(learnerId)}/brief`);
   }
+
+  async getDbStatus(recentLimit = 5) {
+    return this._request(`/db/status?recent_limit=${encodeURIComponent(recentLimit)}`);
+  }
+
+  async reseedDatabase(mode = "merge") {
+    return this._request("/db/reseed", {
+      method: "POST",
+      body: JSON.stringify({ mode }),
+    });
+  }
 }
 
 // ── Application State & Controller ──────────────────────────────────────────
@@ -152,6 +172,9 @@ const state = {
   },
   currentTeacher: null,
   isGenerating: false,
+  dbStatus: null,
+  knownEvidenceIds: new Set(),
+  isDbBusy: false,
   // Stable observation draft state
   observationDraft: {
     source_event_id: crypto.randomUUID ? crypto.randomUUID() : `draft-${Date.now()}`,
@@ -197,6 +220,19 @@ const elements = {
   authBanner: document.getElementById("auth-status-banner"),
   btnAuthAction: document.getElementById("btn-auth-action"),
   reviewFeedbackBanner: document.getElementById("review-feedback-banner"),
+
+  // Workspace Status & DB Sync Controls
+  workspaceStatusBanner: document.getElementById("workspace-status-banner"),
+  workspaceStatusText: document.getElementById("workspace-status-text"),
+  btnDismissWorkspaceStatus: document.getElementById("btn-dismiss-workspace-status"),
+  dbNameLabel: document.getElementById("db-name-label"),
+  dbLastSync: document.getElementById("db-last-sync"),
+  recentDataList: document.getElementById("recent-data-list"),
+  btnRefreshData: document.getElementById("btn-refresh-data"),
+  btnSeedMerge: document.getElementById("btn-seed-merge"),
+  btnOpenResetDialog: document.getElementById("btn-open-reset-dialog"),
+  resetDbDialog: document.getElementById("reset-db-dialog"),
+  resetDialogDbName: document.getElementById("reset-dialog-db-name"),
 
   // Login Dialog
   loginDialog: document.getElementById("login-dialog"),
@@ -246,25 +282,29 @@ async function init() {
   bindEvents();
   await loadConfig();
   await loadLearners();
+  await loadDbStatus({ detectChanges: false });
+
   if (state.learners.length > 0) {
     state.activeLearnerId = state.learners[0].learner_id;
     elements.learnerSelect.value = state.activeLearnerId;
     await refreshAllViews();
+  } else {
+    renderEmptyWorkspaceState();
   }
 }
 
 function setupDialogLightDismiss(dialog) {
   if (!dialog || "closedBy" in HTMLDialogElement.prototype) return;
-  dialog.addEventListener("click", (event) => {
-    if (event.target !== dialog) return;
-    const rect = dialog.getBoundingClientRect();
-    const isDialogContent =
-      rect.top <= event.clientY &&
-      event.clientY <= rect.top + rect.height &&
-      rect.left <= event.clientX &&
-      event.clientX <= rect.left + rect.width;
-    if (isDialogContent) return;
-    dialog.close();
+  const outside = (e) => {
+    const r = dialog.getBoundingClientRect();
+    return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+  };
+  let pressedOutside = false;
+  dialog.addEventListener("pointerdown", (e) => {
+    pressedOutside = outside(e);
+  });
+  dialog.addEventListener("pointerup", (e) => {
+    if (pressedOutside && outside(e)) dialog.close();
   });
 }
 
@@ -300,7 +340,39 @@ function bindEvents() {
   }
 
   // Light-dismiss fallback for browsers without <dialog closedby="any">
-  [elements.loginDialog, elements.observationDialog, elements.previewDialog].forEach(setupDialogLightDismiss);
+  [
+    elements.loginDialog,
+    elements.observationDialog,
+    elements.previewDialog,
+    elements.resetDbDialog,
+  ].forEach(setupDialogLightDismiss);
+
+  // Workspace Status & DB Sync Controls
+  if (elements.btnDismissWorkspaceStatus) {
+    elements.btnDismissWorkspaceStatus.addEventListener("click", clearWorkspaceStatus);
+  }
+  if (elements.btnRefreshData) {
+    elements.btnRefreshData.addEventListener("click", handleRefreshWorkspace);
+  }
+  if (elements.btnSeedMerge) {
+    elements.btnSeedMerge.addEventListener("click", () => handleReseedDatabase("merge"));
+  }
+  if (
+    !("commandForElement" in HTMLButtonElement.prototype) &&
+    elements.btnOpenResetDialog &&
+    elements.resetDbDialog
+  ) {
+    elements.btnOpenResetDialog.addEventListener("click", () => elements.resetDbDialog.showModal());
+  }
+  if (elements.resetDbDialog) {
+    elements.resetDbDialog.addEventListener("close", () => {
+      const result = elements.resetDbDialog.returnValue;
+      elements.resetDbDialog.returnValue = "";
+      if (result === "confirm") {
+        handleReseedDatabase("reset");
+      }
+    });
+  }
 
   // Filters change
   const filterElements = [elements.filterSubject, elements.filterYear, elements.filterTerm, elements.filterType];
@@ -396,6 +468,7 @@ async function loadConfig() {
     }
   } catch (err) {
     console.error("Failed to load config:", err);
+    showWorkspaceStatus("error", `Failed to load system configuration: ${err.message}`);
   }
 }
 
@@ -570,6 +643,13 @@ async function loadLearners() {
   try {
     state.learners = await api.getLearners();
     elements.learnerSelect.innerHTML = "";
+    if (state.learners.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No learners in database";
+      elements.learnerSelect.appendChild(opt);
+      return;
+    }
     state.learners.forEach((l) => {
       const opt = document.createElement("option");
       opt.value = l.learner_id;
@@ -578,6 +658,258 @@ async function loadLearners() {
     });
   } catch (err) {
     console.error("Failed to load learners:", err);
+    showWorkspaceStatus("error", `Failed to load learners from database: ${err.message}`);
+  }
+}
+
+function showWorkspaceStatus(type, message) {
+  if (!elements.workspaceStatusBanner || !elements.workspaceStatusText) return;
+  elements.workspaceStatusBanner.className = `feedback-banner ${type}`;
+  elements.workspaceStatusText.textContent = message;
+  elements.workspaceStatusBanner.hidden = false;
+}
+
+function clearWorkspaceStatus() {
+  if (!elements.workspaceStatusBanner || !elements.workspaceStatusText) return;
+  elements.workspaceStatusBanner.hidden = true;
+  elements.workspaceStatusText.textContent = "";
+}
+
+function renderEmptyWorkspaceState() {
+  elements.evidenceCountBadge.textContent = "0";
+  elements.reviewsCountBadge.textContent = "0";
+  elements.handoverCountBadge.textContent = "0";
+  const sideEv = document.getElementById("side-evidence-count");
+  const sidePending = document.getElementById("side-pending-count");
+  const sideApproved = document.getElementById("side-approved-count");
+  if (sideEv) sideEv.textContent = "0";
+  if (sidePending) sidePending.textContent = "0";
+  if (sideApproved) sideApproved.textContent = "0";
+
+  elements.evidenceList.innerHTML = `
+    <div class="empty-state">
+      <h3>Database has no learners yet</h3>
+      <p>Click <strong>+ Seed Missing Demo Data</strong> in the sidebar or ingest records via API/MCP, then click <strong>↻ Refresh Data</strong>.</p>
+    </div>
+  `;
+  elements.reviewsList.innerHTML = `
+    <div class="empty-state">
+      <h3>No learners available</h3>
+      <p>Seed demo data or ingest learner evidence to start reviewing findings.</p>
+    </div>
+  `;
+  elements.handoverList.innerHTML = `
+    <div class="empty-state">
+      <h3>No approved handovers</h3>
+      <p>Seed or ingest learner records first.</p>
+    </div>
+  `;
+  updateHandoverExportControls(null, 0);
+  showWorkspaceStatus(
+    "conflict",
+    "Database currently has 0 learners. Click '+ Seed Missing Demo Data' to populate the demo cohort or ingest records via API/MCP."
+  );
+}
+
+function setDbActionButtonsDisabled(disabled) {
+  state.isDbBusy = disabled;
+  [elements.btnRefreshData, elements.btnSeedMerge, elements.btnOpenResetDialog].forEach((btn) => {
+    if (btn) btn.disabled = disabled;
+  });
+}
+
+async function loadDbStatus({ detectChanges = true } = {}) {
+  try {
+    const prev = state.dbStatus;
+    const status = await api.getDbStatus(5);
+    state.dbStatus = status;
+
+    if (elements.dbNameLabel) {
+      elements.dbNameLabel.textContent = status.db_name || "allps.db";
+      elements.dbNameLabel.title = `Active SQLite database: ${status.db_name || "allps.db"}`;
+    }
+    if (elements.resetDialogDbName) {
+      elements.resetDialogDbName.textContent = status.db_name || "the active database";
+    }
+    if (elements.dbLastSync) {
+      const checkedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      elements.dbLastSync.textContent =
+        `Total: ${status.learners_count} learners · ${status.evidence_count} evidence · Checked ${checkedAt}`;
+    }
+
+    if (elements.btnSeedMerge) {
+      elements.btnSeedMerge.disabled = state.isDbBusy || !status.allow_demo_reset;
+    }
+    if (elements.btnOpenResetDialog) {
+      elements.btnOpenResetDialog.disabled = state.isDbBusy || !status.allow_demo_reset;
+    }
+
+    const newIds = new Set();
+    const recent = status.recent_evidence || [];
+    if (state.knownEvidenceIds.size > 0) {
+      recent.forEach((item) => {
+        if (!state.knownEvidenceIds.has(item.evidence_id)) {
+          newIds.add(item.evidence_id);
+        }
+      });
+    }
+    recent.forEach((item) => state.knownEvidenceIds.add(item.evidence_id));
+
+    renderRecentDataList(recent, newIds);
+
+    if (detectChanges && prev) {
+      const deltaLearners = status.learners_count - prev.learners_count;
+      const deltaEvidence = status.evidence_count - prev.evidence_count;
+      const deltaPending = status.pending_reviews_count - prev.pending_reviews_count;
+      const deltaAccepted = status.accepted_reviews_count - prev.accepted_reviews_count;
+      const latestChanged = status.latest_evidence_recorded_at !== prev.latest_evidence_recorded_at;
+
+      if (
+        deltaLearners !== 0 ||
+        deltaEvidence !== 0 ||
+        deltaPending !== 0 ||
+        deltaAccepted !== 0 ||
+        latestChanged
+      ) {
+        const parts = [];
+        if (deltaLearners !== 0) parts.push(`${deltaLearners > 0 ? "+" : ""}${deltaLearners} learner(s)`);
+        if (deltaEvidence !== 0) parts.push(`${deltaEvidence > 0 ? "+" : ""}${deltaEvidence} evidence`);
+        if (deltaPending !== 0) parts.push(`${deltaPending > 0 ? "+" : ""}${deltaPending} pending review(s)`);
+        if (deltaAccepted !== 0) parts.push(`${deltaAccepted > 0 ? "+" : ""}${deltaAccepted} approved`);
+        const summaryText = parts.length > 0 ? parts.join(", ") : "updated timestamps";
+        showWorkspaceStatus("success", `Refreshed from database: detected ${summaryText}.`);
+      } else if (status.learners_count === 0) {
+        showWorkspaceStatus(
+          "conflict",
+          "Database is currently empty (0 learners). Seed demo data or ingest new records to begin."
+        );
+      } else {
+        showWorkspaceStatus(
+          "info",
+          `Refreshed: database is up to date (${status.learners_count} learners, ${status.evidence_count} evidence records).`
+        );
+      }
+    }
+
+    return status;
+  } catch (err) {
+    console.error("Failed to load DB status:", err);
+    if (elements.dbLastSync) {
+      elements.dbLastSync.textContent = "Status check failed";
+    }
+    if (elements.recentDataList) {
+      elements.recentDataList.innerHTML = `<div class="recent-data-empty" style="color: var(--apple-red-text);">Error reading recent data: ${escapeHtml(err.message)}</div>`;
+    }
+    showWorkspaceStatus("error", `Database status check failed: ${err.message}`);
+    return null;
+  }
+}
+
+function renderRecentDataList(recent, newIds = new Set()) {
+  if (!elements.recentDataList) return;
+  if (!recent || recent.length === 0) {
+    elements.recentDataList.innerHTML = `<div class="recent-data-empty">No evidence records in database yet.</div>`;
+    return;
+  }
+
+  elements.recentDataList.innerHTML = "";
+  recent.forEach((item) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    const isNew = newIds.has(item.evidence_id);
+    btn.className = `recent-data-item${isNew ? " is-new" : ""}`;
+    const subjectText = item.subject || "General";
+    const recordedTime = item.recorded_at
+      ? new Date(item.recorded_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+      : "";
+    btn.title = `${item.learner_id} · ${item.evidence_type} · ${item.source_system} (${item.evidence_id})`;
+    btn.innerHTML = `
+      <span class="recent-data-top">
+        <span>${escapeHtml(item.learner_id)} · ${escapeHtml(item.evidence_type.replace(/_/g, " "))}</span>
+        <span>${isNew ? "NEW" : escapeHtml(recordedTime)}</span>
+      </span>
+      <span class="recent-data-sub">${escapeHtml(subjectText)} · ${escapeHtml(item.source_system)}</span>
+    `;
+    btn.addEventListener("click", async () => {
+      if (item.learner_id && item.learner_id !== state.activeLearnerId) {
+        const exists = state.learners.some((l) => l.learner_id === item.learner_id);
+        if (exists) {
+          state.activeLearnerId = item.learner_id;
+          elements.learnerSelect.value = item.learner_id;
+          await refreshAllViews();
+        }
+      }
+      openSidePanel(item.evidence_id);
+    });
+    elements.recentDataList.appendChild(btn);
+  });
+}
+
+async function handleRefreshWorkspace() {
+  if (state.isDbBusy) return;
+  setDbActionButtonsDisabled(true);
+  const prevText = elements.btnRefreshData ? elements.btnRefreshData.textContent : "↻ Refresh Data";
+  if (elements.btnRefreshData) elements.btnRefreshData.textContent = "Refreshing...";
+
+  try {
+    await loadConfig();
+    const prevLearner = state.activeLearnerId;
+    await loadLearners();
+
+    if (state.learners.length === 0) {
+      state.activeLearnerId = null;
+      renderEmptyWorkspaceState();
+    } else {
+      const stillExists = state.learners.some((l) => l.learner_id === prevLearner);
+      state.activeLearnerId = stillExists ? prevLearner : state.learners[0].learner_id;
+      elements.learnerSelect.value = state.activeLearnerId;
+      await refreshAllViews();
+    }
+
+    await loadDbStatus({ detectChanges: true });
+  } catch (err) {
+    showWorkspaceStatus("error", `Workspace refresh failed: ${err.message}`);
+  } finally {
+    setDbActionButtonsDisabled(false);
+    if (elements.btnRefreshData) elements.btnRefreshData.textContent = prevText;
+  }
+}
+
+async function handleReseedDatabase(mode = "merge") {
+  if (state.isDbBusy) return;
+  setDbActionButtonsDisabled(true);
+  const targetBtn = mode === "reset" ? elements.btnOpenResetDialog : elements.btnSeedMerge;
+  const prevText = targetBtn ? targetBtn.textContent : "";
+  if (targetBtn) {
+    targetBtn.textContent = mode === "reset" ? "Resetting..." : "Seeding...";
+  }
+
+  try {
+    const res = await api.reseedDatabase(mode);
+    if (mode === "reset") {
+      state.knownEvidenceIds.clear();
+    }
+    clearReviewFeedback();
+    await loadLearners();
+    if (state.learners.length > 0) {
+      const stillExists = state.learners.some((l) => l.learner_id === state.activeLearnerId);
+      state.activeLearnerId = stillExists ? state.activeLearnerId : state.learners[0].learner_id;
+      elements.learnerSelect.value = state.activeLearnerId;
+      await refreshAllViews();
+    } else {
+      state.activeLearnerId = null;
+      renderEmptyWorkspaceState();
+    }
+    await loadDbStatus({ detectChanges: false });
+
+    const bannerKind =
+      mode === "merge" && res.learners_added === 0 && res.evidence_added === 0 ? "info" : "success";
+    showWorkspaceStatus(bannerKind, res.message || "Database seed completed.");
+  } catch (err) {
+    showWorkspaceStatus("error", `Database ${mode} failed: ${err.message}`);
+  } finally {
+    setDbActionButtonsDisabled(false);
+    if (targetBtn && prevText) targetBtn.textContent = prevText;
   }
 }
 
@@ -1019,6 +1351,7 @@ async function handleGenerateHandover() {
 
     // Reload reviews to show newly persisted patterns
     await loadReviewsView();
+    await loadDbStatus({ detectChanges: false });
   } catch (err) {
     elements.generationResultContainer.innerHTML = `
       <div class="generation-status-card inference_failed">
@@ -1195,6 +1528,7 @@ async function handleReviewDecision(
     );
     await loadReviewsView();
     await loadApprovedHandoverView();
+    await loadDbStatus({ detectChanges: false });
   } catch (err) {
     if (err.status === 409) {
       showReviewFeedback(
@@ -1552,6 +1886,8 @@ async function handleSaveObservation() {
     state.observationDraft.context = "";
 
     await loadEvidenceView();
+    await loadDbStatus({ detectChanges: false });
+    showWorkspaceStatus("success", `Observation saved for ${state.activeLearnerId}.`);
   } catch (err) {
     // Preserve values! Reopen form with error message
     elements.previewDialog.close();

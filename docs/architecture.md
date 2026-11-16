@@ -92,7 +92,7 @@ Built with FastMCP over standard stdio JSON-RPC 2.0. Exposes seven domain-bounde
 - **Verification Status**: **Fully Verified** via `src/allps/agent/mcp_agent.py` and `examples/run_agentic_mcp_import.py` (Trace ID `1cb86194-619c-43ce-a079-95f8cd791d60`).
 
 ### 2.3. Dual-Server Agentic Orchestration (`src/allps/agent/mcp_agent.py`)
-- Constructed with `pydantic-ai==2.56.0` connecting simultaneously to two independent MCP servers via `StdioTransport`:
+- Constructed with `pydantic-ai` (`>=2.56.0`) connecting simultaneously to two independent MCP servers via `StdioTransport`:
   1. Borrowed official Filesystem MCP server (`list_directory`, `read_text_file`).
   2. Custom ALLPS FastMCP server (`ingest_evidence`, `get_learner_history`, `analyse_longitudinal_pattern`, `flag_pattern_for_review`).
 - Uses local open-weights `allps-qwen35-base-4b` via LM Studio. The model autonomously selects tools, reads external school files, catches validation errors, ingests valid records, retrieves learner history, runs longitudinal analysis, and enters findings into teacher review.
@@ -106,25 +106,28 @@ Built with FastMCP over standard stdio JSON-RPC 2.0. Exposes seven domain-bounde
   - Passes raw output through `OutputValidator` before any review item or brief is written to SQLite.
 
 ### 2.5. Existing Deterministic Backend Pipeline (`src/allps/services/`)
-- **`EvidenceService`**: Enforces timezone awareness, payload integrity, and idempotent replay on `(source_system, source_event_id)`.
+- **`EvidenceService`**: Enforces timezone awareness, payload integrity, canonical SHA-256 content fingerprinting, and idempotent replay on `(source_system, source_event_id)`.
+- **`IntakeService`**: Orchestrates API-key authenticated batch JSON and CSV/JSON file ingestion with `ImportManifest` tracking and per-row validation isolation.
 - **`AnalysisService`**: Evaluates 9-key comparability (grade, subject, measured skill, form identity & version, language, rubric scale, assessment stage). Distinguishes true zero from missing outcomes (`absent`, `not_administered`).
-- **`ReviewService`**: Enforces the human-in-the-loop review boundary, computes SHA-256 snapshots, and prevents autonomous bot approvals.
+- **`ReviewService`**: Enforces the human-in-the-loop review boundary, `expected_revision` concurrency locking, explicit teacher corrections, SHA-256 snapshots, and autonomous agent blocking.
+- **`ExportService`**: Generates handover documents (PDF, HTML, Markdown, JSON) strictly from human-accepted findings with verified SHA-256 snapshots and cited evidence provenance.
 
 ### 2.6. Local Open-Weight Qwen Inference
-- **Target Model**: `allps-qwen35-base-4b` (`qwen2.5-3b` / `qwen2.5-4b` 4-bit quantized GGUF) served locally via LM Studio on `http://127.0.0.1:1234/v1`.
+- **Target Model**: `allps-qwen35-base-4b` (`qwen3.5-4b` 4-bit quantized GGUF) served locally via LM Studio on `http://127.0.0.1:1234/v1`.
 - **Privacy & Sovereignty**: Student records for minors never leave the local machine or host institution.
-- **Performance**: 3.2 GiB VRAM footprint, <5s per synthesis cycle. Refuses silent fallback when explicitly run in `live` mode.
+- **Performance**: ~3.2 GiB VRAM footprint; variable local inference latency (~0.5s–33s depending on prompt complexity). Refuses silent fallback when explicitly run in `live` mode.
 
 ### 2.7. SQLite Provenance & Immutability (`src/allps/storage/sqlite_store.py`)
-- Async SQLite storage using `aiosqlite`.
-- Relational schema: `learners`, `evidence`, `patterns`, `review_items`, `audit_log`, `candidate_briefs`.
+- Async SQLite storage using `aiosqlite` (WAL mode).
+- Relational schema: `teachers`, `learners`, `evidence`, `patterns`, `review_items`, `audit_log`, `candidate_briefs`, `import_manifests`.
 - Domain models are frozen (`model_config = {"frozen": True}`). Evidence is append-only via MCP.
 - The `candidate_briefs` table provides INT-01 reload persistence, ensuring full candidate brief restoration upon browser refresh.
 
-### 2.8. Teacher Review and Publication Authority
+### 2.8. Teacher Review, PIN Session Auth, and Publication Authority
+- **Educator Session Auth (`src/allps/auth.py`)**: Teachers sign in via PIN (`bcrypt`-hashed in `teachers`) to obtain a signed `HttpOnly` cookie session (`allps_session`); initial decisions and explicit corrections enforce `expected_revision` optimistic locking.
 - **Dual-View Separation**: Unreviewed (`pending`), rejected, and `needs_context` patterns remain strictly isolated in the teacher review inbox.
 - **Cryptographic Snapshotting**: Upon teacher acceptance, `ReviewService` generates an immutable SHA-256 hash of the pattern text and cited evidence IDs.
-- **Published Profile**: Only patterns with verified teacher acceptance and valid hash snapshots are exposed in `get_surfaced_profile` and the web handover view.
+- **Published Profile**: Only patterns with verified teacher acceptance and valid hash snapshots are exposed in `get_surfaced_profile`, the web handover view, and `ExportService` documents.
 
 ---
 

@@ -11,6 +11,7 @@ Usage:
 """
 
 import asyncio
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 import sys
@@ -34,14 +35,18 @@ async def main():
     parser.add_argument("--url", default="http://127.0.0.1:1234/v1", help="LM Studio endpoint")
     parser.add_argument(
         "--trace-out",
-        default="data/trace_agentic_mcp_run.json",
-        help="Path for saving execution trace",
+        default=None,
+        help="Path for saving execution trace (defaults to a timestamped file under tmp/traces/)",
     )
     args = parser.parse_args()
 
     db_path = str(repo_root / args.db)
     imports_dir = str(repo_root / "data" / "mcp_imports")
-    trace_path = str(repo_root / args.trace_out)
+    if args.trace_out:
+        trace_path = str(repo_root / args.trace_out)
+    else:
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        trace_path = str(repo_root / "tmp" / "traces" / f"trace_agentic_mcp_{ts}.json")
 
     print("=" * 75)
     print("ALLPS — FINAL AGENTIC MCP INTEGRATION RUNNER")

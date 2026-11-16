@@ -31,17 +31,19 @@ Each learner has 8-9 evidence records spanning assessments, attendance,
 observations, and reflections.
 """
 
+import argparse
 import asyncio
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 # Ensure src is in sys.path when running as a standalone script
 _src_dir = str(Path(__file__).resolve().parent.parent.parent / "src")
 if _src_dir not in sys.path:
     sys.path.insert(0, _src_dir)
 
-from allps.models import Evidence, EvidenceType, IngestionMethod, Learner
+from allps.models import AuditEntry, Evidence, EvidenceType, IngestionMethod, Learner
 from allps.storage.sqlite_store import SQLiteStore
 
 
@@ -604,28 +606,186 @@ LEARNER_C_EVIDENCE = [
 ALL_EVIDENCE = LEARNER_A_EVIDENCE + LEARNER_B_EVIDENCE + LEARNER_C_EVIDENCE
 
 
-async def seed_database(db_path: str = "allps_dev.db") -> None:
-    """Seed a database with all synthetic learners and evidence."""
+async def seed_store(
+    store: SQLiteStore,
+    *,
+    reset: bool = False,
+    actor: str = "cli",
+) -> dict[str, Any]:
+    """Idempotently seed synthetic learners and evidence into an initialized store.
+
+    When reset=True, clears existing workspace data (preserving teacher accounts
+    and audit log) before seeding fresh demonstration records.
+    """
+    cleared: dict[str, int] | None = None
+    if reset:
+        cleared = await store.reset_workspace_data(actor=actor)
+
+    learners_added = 0
+    learners_skipped = 0
+    existing_fps: set[str] = set()
+
+    for learner in LEARNERS:
+        if await store.learner_exists(learner.learner_id):
+            learners_skipped += 1
+            for existing in await store.get_evidence_for_learner(learner.learner_id):
+                existing_fps.add(existing.canonical_fingerprint)
+        else:
+            await store.add_learner(learner)
+            learners_added += 1
+
+    evidence_added = 0
+    evidence_skipped = 0
+    for evidence in ALL_EVIDENCE:
+        fp = evidence.canonical_fingerprint
+        already_exists = (
+            fp in existing_fps
+            or await store.get_evidence_by_id(evidence.evidence_id) is not None
+            or await store.get_evidence_by_fingerprint(fp) is not None
+            or (
+                evidence.source_event_id is not None
+                and await store.get_evidence_by_source_event(
+                    evidence.source_system, evidence.source_event_id
+                )
+                is not None
+            )
+        )
+        if already_exists:
+            evidence_skipped += 1
+            continue
+
+        await store.add_evidence(evidence)
+        existing_fps.add(fp)
+        evidence_added += 1
+
+    if reset or learners_added > 0 or evidence_added > 0:
+        await store.add_audit_entry(
+            AuditEntry(
+                tool_name="seed_database",
+                input_summary={
+                    "actor": actor,
+                    "reset": reset,
+                    "learners_added": learners_added,
+                    "learners_skipped": learners_skipped,
+                    "evidence_added": evidence_added,
+                    "evidence_skipped": evidence_skipped,
+                },
+                output_reference=None,
+                approval_state="seeded",
+            )
+        )
+
+    status = await store.get_database_status()
+    return {
+        "reset": reset,
+        "cleared": cleared,
+        "learners_added": learners_added,
+        "learners_skipped": learners_skipped,
+        "evidence_added": evidence_added,
+        "evidence_skipped": evidence_skipped,
+        "total_learners": status["learners_count"],
+        "total_evidence": status["evidence_count"],
+        "status": status,
+    }
+
+
+async def seed_database(
+    db_path: str = "allps_dev.db",
+    *,
+    reset: bool = False,
+) -> dict[str, Any]:
+    """Seed a database with synthetic learners and evidence (idempotent by default)."""
     store = SQLiteStore(db_path)
     await store.initialize()
 
     try:
-        for learner in LEARNERS:
-            await store.add_learner(learner)
+        summary = await seed_store(store, reset=reset, actor="cli")
+        if reset:
+            print(f"  Reset workspace data in: {db_path}")
+        print(
+            f"  Learners: +{summary['learners_added']} added, "
+            f"{summary['learners_skipped']} already present "
+            f"(total: {summary['total_learners']})"
+        )
+        print(
+            f"  Evidence: +{summary['evidence_added']} added, "
+            f"{summary['evidence_skipped']} already present "
+            f"(total: {summary['total_evidence']})"
+        )
+        if (
+            not reset
+            and summary["learners_added"] == 0
+            and summary["evidence_added"] == 0
+        ):
             print(
-                f"  Added learner: {learner.display_name} "
-                f"({learner.learner_id})"
+                "\nDatabase already contains all synthetic demo records. "
+                "Pass --reset to clear and re-seed from scratch."
             )
+        else:
+            print(f"\nDatabase seeded at: {db_path}")
+        return summary
+    finally:
+        await store.close()
 
-        for evidence in ALL_EVIDENCE:
-            await store.add_evidence(evidence)
 
-        print(f"  Added {len(ALL_EVIDENCE)} evidence records")
-        print(f"\nDatabase seeded at: {db_path}")
+async def print_database_status(db_path: str = "allps_dev.db") -> dict[str, Any]:
+    """Inspect and print database counts and recent records without modifying data."""
+    store = SQLiteStore(db_path)
+    await store.initialize()
+    try:
+        status = await store.get_database_status()
+        print(f"Database status: {db_path}")
+        print(
+            f"  Learners: {status['learners_count']} | "
+            f"Evidence: {status['evidence_count']} | "
+            f"Patterns: {status['patterns_count']}"
+        )
+        print(
+            f"  Reviews: pending={status['pending_reviews_count']}, "
+            f"accepted={status['accepted_reviews_count']}, "
+            f"rejected={status['rejected_reviews_count']}, "
+            f"needs_context={status['needs_context_reviews_count']}"
+        )
+        print(
+            f"  Imports: {status['import_manifests_count']} | "
+            f"Latest evidence recorded: {status['latest_evidence_recorded_at'] or 'none'}"
+        )
+        if status["recent_evidence"]:
+            print("  Recent evidence:")
+            for item in status["recent_evidence"]:
+                subj = item["subject"] or "General"
+                print(
+                    f"    - [{item['learner_id']}] {item['evidence_type']} ({subj}) "
+                    f"via {item['source_system']} at {item['recorded_at']}"
+                )
+        return status
     finally:
         await store.close()
 
 
 if __name__ == "__main__":
-    db = sys.argv[1] if len(sys.argv) > 1 else "allps_dev.db"
-    asyncio.run(seed_database(db))
+    parser = argparse.ArgumentParser(
+        description="Seed or inspect the ALLPS synthetic demonstration database."
+    )
+    parser.add_argument(
+        "db_path",
+        nargs="?",
+        default="allps_dev.db",
+        help="Target SQLite database file (default: allps_dev.db).",
+    )
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Clear existing learner/evidence/review data before seeding.",
+    )
+    parser.add_argument(
+        "--status",
+        action="store_true",
+        help="Inspect counts and recent records without modifying the database.",
+    )
+    args = parser.parse_args()
+
+    if args.status:
+        asyncio.run(print_database_status(args.db_path))
+    else:
+        asyncio.run(seed_database(args.db_path, reset=args.reset))

@@ -117,20 +117,20 @@ For full details, see [architecture.md](docs/architecture.md) and [`architecture
 | **Agent & Protocol** | **Model Context Protocol (FastMCP + MCP Python SDK)** | Standard JSON-RPC 2.0 stdio protocol for tool-using agents |
 | **Agent Framework** | **Pydantic AI** | Model-directed multi-server orchestration with structured output |
 | **Local LLM Engine** | **LM Studio (`v0.3.0+`)** or **Ollama** | Local OpenAI-compatible API on `127.0.0.1:1234` / `11434` |
-| **Local Model** | **`allps-qwen35-base-4b`** (`Qwen2.5-3B` / `4B` 4-bit GGUF) | Fits in **<3.5 GB VRAM**, sub-5s local inference, offline privacy |
+| **Local Model** | **`allps-qwen35-base-4b`** (`Qwen3.5-4B` 4-bit GGUF) | Fits in **~3.2 GiB VRAM**, offline local privacy (variable latency ~0.5s–33s) |
 | **Frontend UI** | **Vanilla HTML5 / Modern CSS3 (Apple HIG)** | Zero npm/node/webpack build dependencies, instant loading, mobile responsive |
-| **Web Server** | **FastAPI + Uvicorn** | High-performance asynchronous REST API for local teacher workspace |
-| **Testing** | **Pytest + pytest-asyncio + AnyIO** | 14 test layers, 252 automated tests covering all critical invariants |
+| **Web Server** | **FastAPI + Uvicorn + PIN Session Auth** | Asynchronous REST API with signed `HttpOnly` cookies, external intake, and PDF/HTML/MD/JSON handover export |
+| **Testing** | **Pytest + pytest-asyncio + AnyIO** | Automated unit, service, governance, MCP, intake, export, and web API suites |
 
 ---
 
 ## 6. Setup & Installation Instructions
 
 ### Prerequisites
-- Python 3.11 or higher
+- Python 3.11 or higher (tested on Python 3.14)
 - Git
-- *(Optional)* LM Studio or Ollama with `Qwen2.5-3B` or `Qwen2.5-Coder-3B` / `Qwen3.5` 4-bit GGUF
-- *(Optional)* Node.js 18+ (only needed if running the external filesystem MCP server)
+- *(Optional)* LM Studio (`v0.3.0+`) or Ollama with `qwen3.5-4b` (`Q4_K_M` GGUF)
+- *(Optional)* Node.js 18+ (only needed if running the external `@modelcontextprotocol/server-filesystem` MCP server)
 
 ### Step 1: Clone Repository
 ```bash
@@ -138,69 +138,109 @@ git clone https://github.com/kwisdomk/ALLPS.git
 cd ALLPS
 ```
 
-### Step 2: Set Up Virtual Environment
-```bash
+### Step 2: Set Up & Activate Virtual Environment
+On Windows in this repository checkout, activate the existing `.venv-dev` environment (or create a fresh `.venv` on a clean clone):
+
+```powershell
+# Windows (PowerShell — existing repo checkout)
+.\.venv-dev\Scripts\Activate.ps1
+
+# Windows (PowerShell — fresh clone)
 python -m venv .venv
-
-# On Linux/macOS:
-source .venv/bin/activate
-
-# On Windows (PowerShell):
-.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 ```
+
+```bash
+# Linux/macOS (fresh clone)
+python -m venv .venv
+source .venv/bin/activate
+```
+
+> *Note on Windows: Always run `python` from the activated virtual environment (or call `.\.venv-dev\Scripts\python.exe` directly) so PowerShell does not resolve the Microsoft Store `WindowsApps\python.exe` alias.*
 
 ### Step 3: Install ALLPS & Dependencies
 ```bash
 pip install -e ".[dev]"
 ```
+This installs all core, web (`fastapi`, `uvicorn`, `python-multipart`, `itsdangerous`, `bcrypt`), and test (`pytest`, `pytest-asyncio`, `httpx`) dependencies, plus the `allps-web`, `allps-mcp`, and `allps-mcp-import` CLI scripts.
 
-### Step 4: Configure Local AI Engine (Optional for Live Mode)
+*(Optional — required only for the dual-server filesystem MCP agent)*:
+```bash
+npm install
+```
+
+### Step 4: Configure Local AI Engine *(Optional for Live Mode)*
 1. Launch **LM Studio** (or Ollama).
-2. Download `Qwen2.5-3B-Instruct` (or 4B 4-bit GGUF).
-3. Start the local server on `http://127.0.0.1:1234/v1` with identifier `allps-qwen35-base-4b`.
+2. Download `qwen3.5-4b` (`Q4_K_M` GGUF).
+3. Start the local server on `http://127.0.0.1:1234/v1` with model identifier `allps-qwen35-base-4b` and context length `8192`.
 > *Note: If LM Studio is not running, ALLPS automatically and safely engages deterministic fallback in `auto` mode.*
 
-### Step 5: Seed Synthetic Demonstration Cohort
+### Step 5: Seed Synthetic Demonstration Cohort *(Optional)*
+The web server automatically seeds an empty database on startup (unless `--no-seed` is passed). To seed or inspect a SQLite database manually from the CLI using the positional database path:
+
 ```bash
-python -m data.synthetic.seed_data --target allps_demo.db
+# Idempotent seed (safe to re-run; skips existing records)
+python -m data.synthetic.seed_data allps_demo.db
+
+# Inspect database counts and recent records without modifying data
+python -m data.synthetic.seed_data --status allps_demo.db
+
+# Clear workspace data and re-seed from scratch
+python -m data.synthetic.seed_data --reset allps_demo.db
 ```
 
 ---
 
 ## 7. Usage Instructions
 
-### ⚡ Automated Test Suite Execution (Fastest Verification)
-Run all 252 automated unit, service, MCP, and integration tests across 14 test layers:
+### Automated Test Suite Execution (Fastest Verification)
+Run the automated unit, service, governance, MCP, intake, export, and web integration test suites:
 ```bash
-python -m pytest
+python -m pytest -q
 ```
 
-### ⚡ End-to-End Multi-Outcome Demonstration (<60s)
+### End-to-End Multi-Outcome Demonstration (<60s)
 Executes all five canonical outcomes (accepted trend, accepted persistence, rejected divergence, safe abstention, policy violation rejection):
 ```bash
 python examples/demo_e2e.py --mode auto
+# Or force 100% offline deterministic mock mode:
+python examples/demo_e2e.py --mode mock
 ```
 
-### ⚡ Real MCP Wire Protocol Demonstration
-Exercises our 7 FastMCP tools over real stdio transport using the official Python MCP SDK, including non-agent permission gate verification:
+### Real MCP Wire Protocol Demonstration & Standalone MCP Server
+Exercises the 7 FastMCP tools over real stdio transport using the official Python MCP SDK, including non-agent permission gate verification:
 ```bash
 python examples/demonstrate_mcp_wire_protocol.py
 ```
 
-### ⚡ Dual-Server Pydantic AI MCP Agent Run
-Demonstrates a model-directed agent reading raw school records via the Filesystem MCP server and ingesting them into ALLPS:
-```bash
-python examples/run_agentic_mcp_import.py
+To run the standalone ALLPS MCP stdio server directly against a target database:
+```powershell
+$env:ALLPS_DB_PATH="Q:\ALLPS\allps_demo.db"
+python -m allps.mcp.server
+# or: allps-mcp
 ```
 
-### ⚡ Start the Local Teacher Workspace (Web UI)
+### Dual-Server Pydantic AI MCP Agent Run *(Requires LM Studio + Node.js)*
+Demonstrates a model-directed agent reading raw school records via the Filesystem MCP server and ingesting them into ALLPS (default `--trace-out` writes safely to a timestamped file under `tmp/traces/` so the preserved baseline trace is never overwritten):
+```bash
+python examples/run_agentic_mcp_import.py --learner LRN-001 --db data/allps_mcp_live.db --trace-out tmp/my_trace.json
+```
+
+### Start the Local Teacher Workspace (Web UI)
 Launches the FastAPI backend and serves the educator workspace Single Page Application:
 ```bash
-python -m allps.web.app --port 8000 --mode auto
+python -m allps.web.app --host 127.0.0.1 --port 8000 --db allps_demo.db --mode auto
+# Or via the installed console script:
+allps-web --host 127.0.0.1 --port 8000 --db allps_demo.db --mode auto
 ```
-Open your browser to: **`http://127.0.0.1:8000`** and sign in with one of the seeded pilot educator PIN accounts:
+Open your browser to **`http://127.0.0.1:8000`** and click **Sign In** with one of the seeded pilot educator PIN accounts:
 - **Mr. Banda** (`TCH-BANDA`, PIN `1234`)
 - **Ms. Ochieng** (`TCH-OCHIENG`, PIN `5678`)
+
+Workspace capabilities available in the UI and REST API:
+- **Database & Sync Sidebar**: Inspect live database counts and recent records (`Refresh Data`), idempotently add missing demo records (`+ Seed Missing Demo Data`), or reset and re-seed (`Reset & Re-seed DB`).
+- **Approved Handover Export**: Export human-approved learner profiles as **PDF**, **HTML** (printable view), **Markdown**, or **JSON** (`/api/learners/{id}/handover/export?format=pdf|html|md|json`).
+- **External System Intake API**: Batch JSON (`POST /api/ingest/records`) and CSV/JSON file upload (`POST /api/ingest/file`, `GET /api/ingest/manifests`) with canonical SHA-256 deduplication, protected by `ALLPS_INGEST_API_KEY`.
 
 ---
 
@@ -341,9 +381,12 @@ and uses ignored `tmp/demo_video/` files, with paths resolved from the repositor
 Existing database paths and the older `temp_audio/` files are preserved.
 
 - [Video Demonstration (YouTube)](https://youtu.be/MXhL38vzq-s) — Official 2m 45s challenge walkthrough demonstrating local AI synthesis, FastMCP stdio wire protocol, and sovereign human review gate.
-- [architecture.md](docs/architecture.md) — Comprehensive system architecture, component breakdown, and tool call boundaries.
-- [evals.md](docs/evals.md) — Nine real evaluation tasks, observed pass/fail outcomes, the unresolved CUDA allocation failure, and development repairs.
-- [development_research.md](docs/development_research.md) — Technical research record, African classroom constraints, architectural experiments, and limitations.
-- [roadmap.md](docs/roadmap.md) — Implementation roadmap, milestone tracking, and completed deliverables.
-- [docs/SUBMISSION.md](docs/SUBMISSION.md) — Official challenge submission materials and video demonstration outline.
+- [docs/architecture.md](docs/architecture.md) & [docs/architecture_map.md](docs/architecture_map.md) — System architecture, component breakdown, and tool call boundaries.
+- [docs/contracts.md](docs/contracts.md) & [docs/ai_contract.md](docs/ai_contract.md) — Data contracts, review gate boundaries, and AI citation/label rules.
+- [docs/data_quality.md](docs/data_quality.md) & [docs/evidence_format.md](docs/evidence_format.md) — 9-key comparability rules, missingness semantics, and evidence payload schemas.
+- [docs/evals.md](docs/evals.md) — Nine real evaluation tasks, observed pass/fail outcomes, the unresolved CUDA allocation failure, and development repairs.
+- [docs/development_research.md](docs/development_research.md) — Technical research record, African classroom constraints, architectural experiments, and limitations.
+- [docs/roadmap.md](docs/roadmap.md) — Implementation roadmap, milestone tracking, and completed deliverables.
+- [docs/submission.md](docs/submission.md) — Official challenge submission materials and video demonstration outline.
+- [docs/closeout/README.md](docs/closeout/README.md) — Post-submission repository audit, preservation manifest, and operator guides.
 - [LICENSE](LICENSE) — OSI-Approved MIT License.

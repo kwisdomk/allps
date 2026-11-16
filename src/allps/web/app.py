@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import asynccontextmanager
+import os
 from pathlib import Path
 import sys
 from typing import Any, AsyncGenerator
@@ -35,13 +36,46 @@ _PILOT_TEACHERS = [
 ]
 
 
+def _ensure_repo_root_on_path() -> None:
+    """Allow console entrypoints (e.g. allps-web) to resolve repo-local data/ and examples/."""
+    repo_root = Path(__file__).resolve().parents[3]
+    if (repo_root / "data" / "synthetic" / "seed_data.py").is_file():
+        root_str = str(repo_root)
+        if root_str not in sys.path:
+            sys.path.insert(0, root_str)
+
+
 def _build_default_mock_responses(records_by_learner: dict[str, list[Any]]) -> dict[str, str]:
     """Import and build dynamic mock responses from demo_e2e for offline deterministic testing."""
+    _ensure_repo_root_on_path()
     try:
         from examples.demo_e2e import build_mock_responses
         return build_mock_responses(records_by_learner)
     except Exception:
         return {}
+
+
+async def build_mock_responses_from_store(
+    store: SQLiteStore,
+    ev_service: EvidenceService,
+) -> dict[str, str]:
+    """Load current evidence for demonstration learners and build mock synthesis responses."""
+    records_by_learner: dict[str, list[Any]] = {}
+    for lid in ("LRN-001", "LRN-002", "LRN-003"):
+        if await store.learner_exists(lid):
+            records_by_learner[lid] = await ev_service.get_learner_history(lid)
+    return _build_default_mock_responses(records_by_learner)
+
+
+def _resolve_allow_demo_reset(explicit: bool | None) -> bool:
+    env_val = os.environ.get("ALLPS_ALLOW_DEMO_RESET")
+    if explicit is not None:
+        if env_val is not None and env_val.strip().lower() in ("0", "false", "no"):
+            return False
+        return explicit
+    if env_val is not None:
+        return env_val.strip().lower() not in ("0", "false", "no")
+    return True
 
 
 def create_app(
@@ -50,8 +84,10 @@ def create_app(
     seed_demo_data: bool = True,
     allowed_origins: list[str] | None = None,
     ingest_api_key: str | None = None,
+    allow_demo_reset: bool | None = None,
 ) -> FastAPI:
     """Create and configure the ALLPS teacher website FastAPI instance."""
+    _ensure_repo_root_on_path()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -65,16 +101,13 @@ def create_app(
 
         # Seed synthetic Kenyan demonstration dataset if empty or requested
         if seed_demo_data:
-            from data.synthetic.seed_data import ALL_EVIDENCE, LEARNERS
             async with store.db.execute("SELECT COUNT(*) AS cnt FROM learners") as cursor:
                 row = await cursor.fetchone()
                 count = row["cnt"] if row else 0
 
             if count == 0:
-                for learner in LEARNERS:
-                    await store.add_learner(learner)
-                for ev in ALL_EVIDENCE:
-                    await store.add_evidence(ev)
+                from data.synthetic.seed_data import seed_store
+                await seed_store(store, reset=False, actor="startup_autoseed")
 
         # Initialize services
         ev_service = EvidenceService(store)
@@ -85,14 +118,12 @@ def create_app(
         registry = RuntimeRegistry()
 
         # Preload records to construct mock responses for offline mock mode
-        records_by_learner: dict[str, list[Any]] = {}
-        for lid in ("LRN-001", "LRN-002", "LRN-003"):
-            if await store.learner_exists(lid):
-                records_by_learner[lid] = await ev_service.get_learner_history(lid)
-        mock_responses = _build_default_mock_responses(records_by_learner)
+        mock_responses = await build_mock_responses_from_store(store, ev_service)
 
         # Store in app state
         app.state.store = store
+        app.state.db_path = db_path
+        app.state.allow_demo_reset = _resolve_allow_demo_reset(allow_demo_reset)
         app.state.evidence_service = ev_service
         app.state.analysis_service = an_service
         app.state.review_service = rev_service
@@ -156,9 +187,10 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--db", default="allps_demo.db")
     parser.add_argument("--mode", default="auto", choices=["auto", "live", "deterministic", "mock"])
+    parser.add_argument("--no-seed", action="store_true", help="Start without auto-seeding an empty database")
     args = parser.parse_args()
 
-    app = create_app(db_path=args.db, mode=args.mode, seed_demo_data=True)
+    app = create_app(db_path=args.db, mode=args.mode, seed_demo_data=not args.no_seed)
 
     print(f"\n==================================================================")
     print(f" ALLPS Teacher Website")
