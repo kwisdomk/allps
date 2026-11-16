@@ -64,7 +64,7 @@ collected 252 items
 
 ## 3. Verification of Documented Startup Commands
 
-Every command documented in [`README.md`](../../README.md) and [`ARCHITECTURE.md`](../../ARCHITECTURE.md) was executed and audited:
+Every command documented in [`README.md`](../../README.md) and [`ARCHITECTURE.md`](../architecture.md) (now `docs/architecture.md`) was executed and audited:
 
 ### 3.1 Synthetic Seed Ingestion
 * **Command**: `python -m data.synthetic.seed_data allps_demo.db`

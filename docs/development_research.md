@@ -112,11 +112,11 @@ flowchart TD
 1. **CUDA Out-of-Memory on 7B+ Distilled Models**:
    As documented in [evals.md](evals.md), running unquantized 7B models on 8GB VRAM fails. Future experiments include testing partial CPU layer offloading (`n_gpu_layers = 16`), 3-bit GGUF quantization, and evaluating smaller 1.5B distillation models (`Qwen2.5-1.5B-Instruct`).
 
-2. **Prototype Reviewer Identity vs. Production SSO**:
-   The web interface uses a server-configured reviewer ID (`--reviewer TCH-BANDA`) to demonstrate human adjudication. While autonomous agents are blocked, this string is **not an authenticated cryptographic identity**. A production deployment requires OpenID Connect, SAML, or WebAuthn integration.
+2. **Prototype PIN Authentication vs. Enterprise SSO**:
+   The initial prototype used a server-configured reviewer ID (`--reviewer TCH-BANDA`) and was subsequently upgraded to local PIN-authenticated, HMAC-signed `HttpOnly` session cookies against seeded pilot educator accounts (`TCH-BANDA`, `TCH-OCHIENG`). While autonomous agents remain hard-blocked, production school deployments still require formal account provisioning and OpenID Connect, SAML, or WebAuthn integration.
 
-3. **External Borrowed MCP Server Verification**:
-   While the seven-tool FastMCP server (`allps.mcp.server`) has been proven over stdio transport using official MCP SDK sessions, cross-server importing from external filesystem MCP servers remains unverified pending live protocol traces.
+3. **Dual-Server MCP Verification & Production Scaling**:
+   Both the seven-tool FastMCP server (`allps.mcp.server`) and dual-server Pydantic AI orchestration (`@modelcontextprotocol/server-filesystem` + `allps.mcp.server`) have been verified over stdio transport with preserved live traces ([`data/trace_agentic_mcp_run.json`](../data/trace_agentic_mcp_run.json)). Multi-school federated sync over HTTP/SSE transports remains future work.
 
 ---
 

@@ -24,7 +24,7 @@ was integrated into `dev` at `be56993`. The starting tracked file tree matched
 | `allps_full_codebase.txt` | `exports/allps_full_codebase.txt` (ignored local artifact) |
 
 No document contents were combined or discarded. `docs/contracts.md` and
-`docs/SUBMISSION.md` remain separate documents. Links within moved documents
+`docs/submission.md` remain separate documents. Links within moved documents
 were rebased, and machine-specific `file:///Q:/ALLPS/...` links were converted
 to repository-relative links. Source-module documentation references were updated.
 
