@@ -496,3 +496,167 @@ def test_simple_pdf_builder_handles_multipage_and_unicode():
     assert b"Page 2 of " in raw
     assert raw.rstrip().endswith(b"%%EOF")
 
+
+# ── Wide Mark-Sheet CSV & Teacher-Session UI Class Import ───────────────────
+
+
+@pytest.mark.asyncio
+async def test_ingest_wide_marksheet_csv_zero_invented_defaults_and_retry(api_client):
+    """Wide CSV mark sheet parses subjects, fractions, statuses, and ignores summary columns without inventing max_score."""
+    client, _ = api_client
+    api_headers = {"X-API-Key": INGEST_KEY}
+
+    # Row 1 uses explicit header (100), fraction (42/50), and 'absent'; English lacks max_score unless form supplies it.
+    wide_csv = (
+        "admission_no,student_name,Mathematics (100),English,Science,Total,Rank\n"
+        "LRN-WIDE-01,Amina Hassan,78,84,absent,162,1\n"
+        "LRN-WIDE-02,Brian Otieno,42/50,0,-,42,2\n"
+    ).encode("utf-8")
+
+    # 1. Upload WITHOUT default max_score -> English numeric scores fail without inventing 100,
+    #    while Mathematics (100), fraction 42/50, and 'absent' succeed.
+    resp_partial = await client.post(
+        "/api/ingest/file",
+        headers=api_headers,
+        data={
+            "source_system": "native_marksheet",
+            "class_id": "CLS-G3-BLUE",
+            "academic_year": "2026",
+            "term": "1",
+            "observed_at": "2026-03-20",
+        },
+        files={"file": ("term1_marks.csv", wide_csv, "text/csv")},
+    )
+    assert resp_partial.status_code == 201, resp_partial.text
+    summary1 = resp_partial.json()
+    assert summary1["manifest"]["accepted_count"] == 3  # Math LRN-01, Science absent LRN-01, Math 42/50 LRN-02
+    assert summary1["manifest"]["rejected_count"] == 2  # English LRN-01, English LRN-02 missing max_score
+    assert all("max_score" in e["error"] for e in summary1["errors"])
+
+    # 2. Purely-rejected file does NOT lock out re-upload with corrected form defaults
+    no_max_csv = (
+        "learner_id,learner_name,English\n"
+        "LRN-WIDE-03,Grace Njeri,71\n"
+    ).encode("utf-8")
+    resp_fail_all = await client.post(
+        "/api/ingest/file",
+        headers=api_headers,
+        data={
+            "source_system": "native_marksheet_retry",
+            "class_id": "CLS-G3-BLUE",
+            "academic_year": "2026",
+            "term": "1",
+            "observed_at": "2026-03-20",
+        },
+        files={"file": ("english_only.csv", no_max_csv, "text/csv")},
+    )
+    assert resp_fail_all.status_code == 201, resp_fail_all.text
+    assert resp_fail_all.json()["manifest"]["accepted_count"] == 0
+    assert resp_fail_all.json()["manifest"]["rejected_count"] == 1
+
+    # Retrying exact same file with max_score=100 now succeeds (no 409 lockout!)
+    resp_retry_ok = await client.post(
+        "/api/ingest/file",
+        headers=api_headers,
+        data={
+            "source_system": "native_marksheet_retry",
+            "class_id": "CLS-G3-BLUE",
+            "academic_year": "2026",
+            "term": "1",
+            "observed_at": "2026-03-20",
+            "max_score": "100",
+        },
+        files={"file": ("english_only.csv", no_max_csv, "text/csv")},
+    )
+    assert resp_retry_ok.status_code == 201, resp_retry_ok.text
+    assert resp_retry_ok.json()["manifest"]["accepted_count"] == 1
+
+    # Verify stored records as class teacher (true zero, fraction, absent status, no 'Total'/'Rank' subjects)
+    await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
+    ev1 = (await client.get("/api/learners/LRN-WIDE-01/evidence")).json()
+    subjects1 = {r["subject"] for r in ev1}
+    assert subjects1 == {"Mathematics", "Science"}
+    sci = next(r for r in ev1 if r["subject"] == "Science")
+    assert sci["is_missing_outcome"] is True
+    assert sci["missing_status"] == "absent"
+
+    ev2 = (await client.get("/api/learners/LRN-WIDE-02/evidence")).json()
+    assert len(ev2) == 1
+    assert ev2[0]["score"] == 42
+    assert ev2[0]["max_score"] == 50
+
+
+@pytest.mark.asyncio
+async def test_teacher_session_class_import_auth_and_subject_scoping(api_client):
+    """Teacher UI import endpoint enforces session auth, class assignment, and subject-teacher scope."""
+    client, _ = api_client
+    csv_bytes = (
+        "learner_id,learner_name,Mathematics (100),English (100)\n"
+        "LRN-G4-01,Samuel Kiprop,81,74\n"
+    ).encode("utf-8")
+
+    # 1. Unauthenticated -> 401
+    unauth = await client.post(
+        "/api/classes/CLS-G4-RED/import",
+        data={"source_system": "school_report_csv", "academic_year": "2026", "term": "1", "observed_at": "2026-03-15"},
+        files={"file": ("g4.csv", csv_bytes, "text/csv")},
+    )
+    assert unauth.status_code == 401
+
+    # 2. Subject teacher (Mr. Banda -> Mathematics only in CLS-G3-BLUE) cannot import to CLS-G4-RED -> 403
+    await client.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
+    wrong_cls = await client.post(
+        "/api/classes/CLS-G4-RED/import",
+        data={"source_system": "school_report_csv", "academic_year": "2026", "term": "1", "observed_at": "2026-03-15"},
+        files={"file": ("g4.csv", csv_bytes, "text/csv")},
+    )
+    assert wrong_cls.status_code == 403
+
+    # 3. Subject teacher in assigned class (CLS-G3-BLUE) -> Mathematics accepted, English rejected!
+    subj_csv = (
+        "learner_id,learner_name,Mathematics (100),English (100)\n"
+        "LRN-001,Learner 001,88,79\n"
+    ).encode("utf-8")
+    subj_resp = await client.post(
+        "/api/classes/CLS-G3-BLUE/import",
+        data={"source_system": "banda_math_sheet", "academic_year": "2026", "term": "3", "observed_at": "2026-10-12"},
+        files={"file": ("math_and_eng.csv", subj_csv, "text/csv")},
+    )
+    assert subj_resp.status_code == 201, subj_resp.text
+    subj_data = subj_resp.json()
+    assert subj_data["manifest"]["accepted_count"] == 1
+    assert subj_data["manifest"]["rejected_count"] == 1
+    assert subj_data["manifest"]["imported_by"] == "TCH-BANDA"
+    assert "assigned subjects" in subj_data["errors"][0]["error"]
+
+    # 4. Class teacher (Mrs. Kamau on empty CLS-G4-RED) imports all subjects and enrolls new learner
+    await client.post("/api/auth/login", json={"teacher_id": "TCH-KAMAU", "pin": "4567"})
+    ct_resp = await client.post(
+        "/api/classes/CLS-G4-RED/import",
+        data={
+            "source_system": "kamau_term1_sheet",
+            "academic_year": "2026",
+            "term": "1",
+            "observed_at": "2026-03-15",
+            "grade": "Grade 4",
+            "assessment_stage": "end_term",
+            "comparison_authorized": "true",
+        },
+        files={"file": ("g4_term1.csv", csv_bytes, "text/csv")},
+    )
+    assert ct_resp.status_code == 201, ct_resp.text
+    ct_data = ct_resp.json()
+    assert ct_data["manifest"]["accepted_count"] == 2
+    assert ct_data["manifest"]["rejected_count"] == 0
+
+    g4_learners = (await client.get("/api/learners?class_id=CLS-G4-RED")).json()
+    assert [l["learner_id"] for l in g4_learners] == ["LRN-G4-01"]
+    assert g4_learners[0]["display_name"] == "Samuel Kiprop"
+
+    # 5. Verify SPA HTML and JS serve the import modal and class import endpoint
+    index_html = (await client.get("/")).text
+    app_js = (await client.get("/static/app.js")).text
+    assert 'id="import-dialog"' in index_html
+    assert 'id="import-form"' in index_html
+    assert "/import`" in app_js or "/import" in app_js
+

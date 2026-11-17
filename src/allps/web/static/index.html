@@ -322,6 +322,140 @@
     </div>
   </dialog>
 
+  <!-- Import School Report / Marks Dialog -->
+  <dialog id="import-dialog" closedby="any" aria-labelledby="dialog-import-heading">
+    <button type="button" id="btn-close-import" class="close-dialog" aria-label="Close import dialog">×</button>
+    <div class="eyebrow">IMPORT SCHOOL MARKS &amp; REPORTS</div>
+    <h2 id="dialog-import-heading">Import class report file</h2>
+    <p id="import-class-context" class="detail-subtitle">
+      Upload a wide CSV mark sheet (one row per learner with subject columns) or a canonical ALLPS CSV/JSON export.
+    </p>
+
+    <form id="import-form" method="post" enctype="multipart/form-data" aria-labelledby="dialog-import-heading" novalidate>
+      <div id="import-error-alert" class="field-error-banner" role="alert" tabindex="-1" hidden></div>
+      <div id="import-result-summary" class="import-summary" role="status" aria-live="polite" hidden></div>
+
+      <div class="form-field">
+        <label for="import-file">Report file (.csv or .json) *</label>
+        <input
+          type="file"
+          id="import-file"
+          name="file"
+          accept=".csv,.json,text/csv,application/json"
+          aria-describedby="import-file-help"
+          autofocus
+          required
+        >
+        <div id="import-file-help" class="form-hint">
+          Wide CSV example: <code>learner_id,learner_name,Mathematics (100),English (100),Science (100)</code>.
+          Supports scores (<code>78</code>), fractions (<code>42/50</code>), and statuses (<code>absent</code>, <code>na</code>).
+          <button type="button" class="text-link inline-template-link" data-action="download-wide-csv-template">
+            Download sample wide CSV template
+          </button>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="import-source-system">Source system *</label>
+          <input
+            type="text"
+            id="import-source-system"
+            name="source_system"
+            value="school_report_csv"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
+            required
+          >
+        </div>
+        <div class="form-field">
+          <label for="import-max-score">Default max score</label>
+          <input
+            type="number"
+            id="import-max-score"
+            name="max_score"
+            min="1"
+            step="any"
+            inputmode="decimal"
+            aria-describedby="import-max-help"
+          >
+          <p id="import-max-help">Used when CSV columns omit <code>(100)</code> or <code>score/max</code>.</p>
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-field">
+          <label for="import-year">Academic year</label>
+          <input type="number" id="import-year" name="academic_year" min="2000" max="2100" inputmode="numeric">
+        </div>
+        <div class="form-field">
+          <label for="import-term">Term</label>
+          <select id="import-term" name="term">
+            <option value="">From file</option>
+            <option value="1">Term 1</option>
+            <option value="2">Term 2</option>
+            <option value="3">Term 3</option>
+            <option value="4">Term 4</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="import-observed-at">Assessment date</label>
+          <input type="date" id="import-observed-at" name="observed_at">
+        </div>
+      </div>
+
+      <fieldset class="import-fieldset">
+        <legend>Assessment &amp; comparability metadata (optional)</legend>
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="import-grade">Grade</label>
+            <input type="text" id="import-grade" name="grade" maxlength="60">
+          </div>
+          <div class="form-field">
+            <label for="import-stage">Assessment stage</label>
+            <select id="import-stage" name="assessment_stage">
+              <option value="">Not specified</option>
+              <option value="opener">Opener</option>
+              <option value="cat">CAT</option>
+              <option value="midterm">Midterm</option>
+              <option value="end_term">End term</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="import-form-name">Form / paper name</label>
+            <input type="text" id="import-form-name" name="form" maxlength="120">
+          </div>
+          <div class="form-field">
+            <label for="import-form-version">Form version</label>
+            <input type="text" id="import-form-version" name="form_version" maxlength="60">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="import-language">Language</label>
+            <input type="text" id="import-language" name="language" maxlength="60">
+          </div>
+          <div class="form-field">
+            <label for="import-notes">Import note</label>
+            <input type="text" id="import-notes" name="notes" maxlength="500">
+          </div>
+        </div>
+        <div class="checkbox-field">
+          <input type="checkbox" id="import-comparison-authorized" name="comparison_authorized" value="true">
+          <label for="import-comparison-authorized">
+            Mark records as comparable across terms (same instrument, skill, and scale)
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="dialog-button-row">
+        <button type="button" id="btn-cancel-import" class="button secondary">Close</button>
+        <button type="submit" id="btn-submit-import" class="button primary">Import file</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Reset & Re-seed Confirmation Dialog (Local Demo Only) -->
   <dialog id="reset-db-dialog" closedby="any" aria-labelledby="dialog-reset-heading">
     <div class="eyebrow">LOCAL DEMO DATABASE</div>
