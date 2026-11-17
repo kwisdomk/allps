@@ -1,8 +1,14 @@
 # Hosted ALLPS demonstration
 
-This deploys the teacher interface and FastAPI together on Render, using one
-worker and SQLite on a persistent disk. Vercel can retain the informational portal.
-The current Render blueprint enables synthetic data. It is not a real-school pilot.
+The teacher interface and FastAPI run together on Render with one worker and
+SQLite. The current judge service uses Render Free and synthetic data; its local
+database is ephemeral. Saved reviews and releases are lost on restart, redeploy
+or idle spin-down, and the synthetic dataset is seeded again at startup.
+No Supabase or PostgreSQL integration is used. This is not a real-school pilot.
+
+The checked-in `render.yaml` still describes a paid Starter service with a
+persistent disk. It does not represent the manually configured Free service;
+do not apply that blueprint when the deployment budget is free-only.
 
 ## Secrets and provisioning
 
@@ -28,7 +34,7 @@ Required environment variables:
 | ALLPS_AI_MODEL | Gemma-4-31B-IT; exact user-supplied catalog ID |
 | ALLPS_AI_API_KEY | Full Token Lab key; never placed in frontend code |
 | ALLPS_SESSION_SECRET | At least 32 random characters; stable across restarts |
-| ALLPS_DB_PATH | /var/data/allps.db on Render |
+| ALLPS_DB_PATH | Absolute writable SQLite path; ephemeral on Free. `/var/data/allps.db` requires an attached paid disk. |
 | ALLPS_SYNTHETIC_DEMO | true for the separate demonstration service |
 | ALLPS_TEACHERS_JSON | JSON array of teacher_id, display_name, password |
 
@@ -53,14 +59,14 @@ The judge-demo release branch is `release/judges-amd-demo-20261117`. Select this
 branch when configuring a manual Web Service. Use `pip install .` to build and
 `uvicorn allps.web.deployment:create_hosted_app --factory --host 0.0.0.0 --port $PORT --workers 1`
 to start. Configure `/healthz` as the health check. Copy private values from
-the local `.env` without the surrounding single quotes, and change
-`ALLPS_DB_PATH` to `/var/data/allps.db` on Render. Attach the persistent disk
-at `/var/data` before starting the service.
+the local `.env` without the surrounding single quotes. Keep the configured
+absolute SQLite path on the existing Free service; changing that path selects
+a different database. A new disposable Free service can use `/tmp/allps-demo.db`.
 
 1. Review and push the selected application changes plus `render.yaml` to a
    release branch; do not deploy an older GitHub revision.
-2. Connect Render and select that branch/repository for a Blueprint deployment.
-3. Review the billable Starter service and 1 GB persistent disk before creation.
+2. Select that branch/repository for a manual Render Web Service deployment.
+3. Choose Free and skip the disk. The existing paid blueprint is not this configuration.
 4. Supply the AMD key and educator-account JSON as secrets; never commit them.
 5. Confirm `/healthz`, sign-in, and genuine `live_ai` synthesis using the catalog
    model. Hosted generation rejects client attempts to choose mock/deterministic.
@@ -77,10 +83,51 @@ The variables are `ALLPS_DEMO_CLASS_PASSWORD` (Ochieng) and
 `ALLPS_DEMO_SUBJECT_PASSWORD` (Banda). The script reports actual runtime methods,
 checks subject-scoped exports, and verifies explicit acknowledgment.
 
-7. Complete browser verification on desktop and mobile, then restart/redeploy
-   the service and confirm the released report persists.
-8. Add an application subdomain to Render only after verification. Keep the
-   existing informational portal available until the new application is verified.
+7. Complete browser verification on desktop and mobile. On Free, a restart
+   restores the synthetic seed rather than preserving the released report.
+8. Configure and verify the custom domain as described below.
+
+## Direct custom domain: allps.kwaix.dev
+
+For testing the public application with LM Studio on a local computer, see
+[local inference through HTTPS](local_inference_https.md). Its private provider
+profiles let the operator switch to the restricted relay and restore AMD without
+changing educator accounts or weakening the teacher review gate.
+
+Serve both `/` and `/api/*` from the same Render service through the custom
+domain. This preserves the existing same-origin client and Secure, HttpOnly,
+SameSite=Strict session cookies. No Vercel proxy or cross-origin cookie change
+is required. Users sign in again on the custom domain because cookies from
+`allps-judges.onrender.com` are not shared with it.
+
+1. In Render, open `allps-judges` -> Settings -> Custom Domains, add
+   `allps.kwaix.dev`, and save.
+2. DNS is authoritative at Name.com. In `kwaix.dev` -> Manage DNS Records,
+   edit only the existing `allps` CNAME:
+
+   | Field | Value |
+   | --- | --- |
+   | Type | CNAME |
+   | Host | allps |
+   | Answer | allps-judges.onrender.com |
+   | TTL | Existing/default value |
+
+   Enter a hostname without `https://` or a path. Preserve root, www, MX, TXT
+   and other unrelated records and the existing nameservers. If conflicting
+   A/AAAA records exist at the exact `allps` hostname, reconcile only those
+   records with Render's instructions.
+3. Return to Render and click Verify. Wait for domain verification and TLS
+   certificate issuance; do not bypass certificate warnings.
+4. Confirm HTTP redirects to HTTPS, `/healthz` returns 200, static assets load,
+   signed-out learner access returns 401, and class/subject teacher sign-in
+   works through `https://allps.kwaix.dev`.
+5. Check the actual teacher journey in a browser. DNS propagation alone does
+   not establish working authentication or presentation.
+
+Before this change the `allps` CNAME pointed to `cname.vercel-dns.com`.
+Keep that value as the DNS rollback reference while the old Vercel project
+assignment remains available. The main `kwaix.dev` site is independent of
+this subdomain change.
 
 ## Production acceptance still required
 
@@ -91,16 +138,22 @@ checks subject-scoped exports, and verifies explicit acknowledgment.
 - Cloud inference transmits the synthesis payload to AMD. The old local-only,
   zero-egress statements do not apply to this hosted configuration. Use synthetic
   data until school authorization and data handling terms are established.
-- Use a single instance/worker with this SQLite design. Do not put the database
-  on ephemeral storage or scale multiple services against separate copies.
+- Use a single instance/worker with this SQLite design. Ephemeral storage is
+  acceptable only for the explicitly disposable synthetic judge demo. Durable
+  school use requires persistent storage and tested recovery. Do not scale
+  multiple services against separate database copies.
 - Schedule consistent SQLite backups using SQLite's backup API, export copies
   outside the service, and prove restore into an isolated database. Disk snapshots
   alone are not a demonstrated database recovery process.
 - Real-school deployment requires school/account/class provisioning, credential
   lifecycle, tenancy decisions, monitoring, restore evidence and a reviewed
   release. Disabling synthetic seeding does not supply those workflows.
-- Reproducible dependency locking and a clean Linux install still need verification.
+- Linux installation, tests and wheel-startup CI passed for `2452d7b`; rerun
+  those checks for subsequent releases. Dependency locking remains unverified.
 
 References: [Render FastAPI](https://render.com/docs/deploy-fastapi),
 [persistent disks](https://render.com/docs/disks),
-[secret configuration](https://render.com/docs/configure-environment-variables).
+[secret configuration](https://render.com/docs/configure-environment-variables),
+[custom domains](https://render.com/docs/custom-domains),
+[subdomain DNS](https://render.com/docs/configure-other-dns),
+[Name.com CNAME records](https://www.name.com/support/articles/115004895548-adding-a-cname-record).

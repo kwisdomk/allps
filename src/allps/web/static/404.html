@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#f8f8f6">
+    <title>404 | Page not found — ALLPS</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --canvas: #f8f8f6;
+        --surface: #fff;
+        --surface-alt: #f0f0ed;
+        --ink: #0f0f0e;
+        --secondary: #4a4a46;
+        --muted: #5c5c57;
+        --border: rgba(0, 0, 0, .09);
+        --border-hover: rgba(0, 0, 0, .2);
+        --emerald: #047857;
+        --glow: rgba(5, 150, 105, .11);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --canvas: #0a0a0a;
+          --surface: #111;
+          --surface-alt: #161616;
+          --ink: #f5f5f5;
+          --secondary: #a3a3a3;
+          --muted: #8a8a8a;
+          --border: rgba(255, 255, 255, .08);
+          --border-hover: rgba(255, 255, 255, .2);
+          --emerald: #10b981;
+          --glow: rgba(16, 185, 129, .14);
+        }
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 32px 20px;
+        background: var(--canvas);
+        color: var(--ink);
+        font: 16px/1.6 Geist, "Segoe UI", system-ui, sans-serif;
+      }
+      main {
+        width: min(100%, 720px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+        text-align: center;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--secondary);
+        font: 12px/1.4 "Geist Mono", Consolas, monospace;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+      .brand-mark {
+        width: 27px;
+        height: 27px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--border-hover);
+        border-radius: 8px;
+        color: var(--emerald);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+      .signal {
+        position: relative;
+        width: 90px;
+        height: 90px;
+        display: grid;
+        place-items: center;
+        color: var(--emerald);
+      }
+      .signal::before {
+        position: absolute;
+        inset: 2px;
+        border-radius: 50%;
+        background: var(--glow);
+        content: "";
+        filter: blur(18px);
+      }
+      .signal svg { position: relative; width: 68px; height: 68px; }
+      h1 {
+        margin: 0;
+        font: 600 clamp(30px, 6vw, 46px)/1.15 "Geist Mono", Consolas, monospace;
+        letter-spacing: -.055em;
+      }
+      h1 span { color: var(--emerald); }
+      .message {
+        max-width: 510px;
+        margin: 14px auto 0;
+        color: var(--secondary);
+        font: 14px/1.8 "Geist Mono", Consolas, monospace;
+      }
+      .terminal {
+        width: min(100%, 440px);
+        padding: 19px 22px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface-alt);
+        color: var(--muted);
+        font: 12px/1.9 "Geist Mono", Consolas, monospace;
+        text-align: left;
+      }
+      .prompt { color: var(--emerald); }
+      .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+      a {
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        padding: 9px 15px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--surface);
+        color: var(--secondary);
+        font: 12px/1.4 "Geist Mono", Consolas, monospace;
+        text-decoration: none;
+        transition: color .18s ease, border-color .18s ease, transform .18s ease;
+      }
+      a:hover { color: var(--emerald); border-color: var(--emerald); transform: translateY(-1px); }
+      a:focus-visible { outline: 2px solid var(--emerald); outline-offset: 3px; }
+      .arrow { font-size: 16px; }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">a↗</span> ALLPS · Learner continuity</div>
+
+      <div class="signal" aria-hidden="true">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="9" y="13" width="46" height="38" rx="7" stroke="currentColor" stroke-width="1.5" />
+          <path d="M9 23h46M18 18h.01M23 18h.01M28 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          <path d="m25 33-6 5 6 5m14-10 6 5-6 5m-4-12-6 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+
+      <section aria-labelledby="page-title">
+        <h1 id="page-title"><span>404</span> | Record not found</h1>
+        <p class="message">This page isn’t in the ALLPS workspace. The address may be incomplete or the page may have moved.</p>
+      </section>
+
+      <div class="terminal" aria-label="Page lookup status">
+        <div><span class="prompt">allps@workspace:~$</span> locate page</div>
+        <div>lookup: no page found at this address</div>
+        <div><span class="prompt">allps@workspace:~$</span> _</div>
+      </div>
+
+      <nav class="actions" aria-label="404 navigation">
+        <a href="/" aria-label="Return to the ALLPS workspace"><span class="arrow" aria-hidden="true">←</span> Return to workspace</a>
+        <a href="https://kwaix.dev" aria-label="Visit KWAIX Hub">KWAIX Hub <span class="arrow" aria-hidden="true">↗</span></a>
+      </nav>
+    </main>
+  </body>
+</html>

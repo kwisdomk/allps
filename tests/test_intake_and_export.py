@@ -477,9 +477,10 @@ async def test_rejected_finding_never_appears_in_exports_and_ui_has_print_contro
 
     index_resp = await client.get("/")
     assert index_resp.status_code == 200
-    assert "btn-print-handover" in index_resp.text
-    assert "btn-export-pdf" in index_resp.text
-    assert "btn-export-html" in index_resp.text
+    app_js_resp = await client.get("/static/app.js")
+    assert app_js_resp.status_code == 200
+    assert "/handover/export?format=html&download=false" in app_js_resp.text
+    assert "/handover/export?format=pdf&download=true" in app_js_resp.text
 
 
 def test_simple_pdf_builder_handles_multipage_and_unicode():
