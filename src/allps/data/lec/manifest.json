@@ -1,0 +1,28 @@
+{
+  "calendar": "fictional",
+  "counts": {
+    "classes": 6,
+    "evidence_records": 180,
+    "item_opportunities": 720,
+    "learners": 10,
+    "scheduled_checkins": 90,
+    "skipped_items": 36,
+    "teachers": 2
+  },
+  "generator_version": "0.2.0",
+  "limitations": [
+    "Illustrative response probabilities, attendance and scores, not population estimates.",
+    "Question wording and response options are unvalidated.",
+    "API method describes batch intake; paper completion is simulated.",
+    "Fictional names can coincide with real people."
+  ],
+  "question_bank_version": "lec-smoke-0.1",
+  "seed": 20261117,
+  "sha256": {
+    "allps_evidence.json": "61c0a5d3734e10662a0a3d1069f03e891370504116135691831d12add2246320",
+    "checkins.json": "5d51784c470c7431f172f1d30d95659f11be7175b1f24facdde725a999792cd5",
+    "learners.json": "f112dc5d88e0b45e0ba1518cb092de8c73c229c401cbcfa891abd98557b7a54f",
+    "reference.json": "55be9b5602a89a33aa5e6c0705d228e9a21478d3efcc4d7c4145fe05f12d125a"
+  },
+  "synthetic": true
+}

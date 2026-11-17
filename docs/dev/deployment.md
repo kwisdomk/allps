@@ -6,6 +6,20 @@ database is ephemeral. Saved reviews and releases are lost on restart, redeploy
 or idle spin-down, and the synthetic dataset is seeded again at startup.
 No Supabase or PostgreSQL integration is used. This is not a real-school pilot.
 
+Hosted synthetic startup also imports the frozen LEC pilot packaged under
+`src/allps/data/lec`: 10 Grade 7 learners, 90 check-ins with eight response
+opportunities each, and 180 evidence records (reflections, Mathematics,
+observations and attendance). Original source files and their checksums are
+preserved. Ochieng oversees Grade 7 A, Kamau Grade 7 B, and Banda teaches
+Mathematics in both streams, across all three fictional 2024 terms. Existing
+credentials are reused; no smoke-test teacher PINs are provisioned. The original
+three Grade 3 learners remain. Startup uses source-event deduplication and does
+not delete teacher decisions. A Free-service database reset still loses manual
+reviews; the bundled original and LEC source records are restored automatically.
+Choose all subjects for AI synthesis to include LEC reflections and attendance;
+a Mathematics-only synthesis uses only Mathematics evidence. LEC responses are
+unvalidated fictional self-reports, not scores or measured psychological traits.
+
 The checked-in `render.yaml` still describes a paid Starter service with a
 persistent disk. It does not represent the manually configured Free service;
 do not apply that blueprint when the deployment budget is free-only.

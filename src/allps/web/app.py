@@ -127,6 +127,16 @@ def create_app(
                 from data.synthetic.seed_data import seed_store
                 await seed_store(store, reset=False, actor="startup_autoseed", seed_pilot_accounts=not hosted)
 
+            # Add the frozen LEC cohort even when the original demo already exists.
+            # Intake deduplicates by source event; existing decisions are untouched.
+            if hosted:
+                from allps.synthetic_lec import seed_lec_demo
+                try:
+                    await seed_lec_demo(store)
+                except Exception:
+                    await store.close()
+                    raise
+
         # Initialize services
         if hosted:
             for teacher_id, _, default_pin in _PILOT_TEACHERS:

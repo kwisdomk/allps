@@ -1,0 +1,213 @@
+{
+  "assignments": [
+    {
+      "assignment_id": "SMOKE-ASN-SMOKE-G7-A-T1",
+      "class_id": "SMOKE-G7-A-T1",
+      "role": "class_teacher",
+      "subject": null,
+      "teacher_id": "SMOKE-TCH-01"
+    },
+    {
+      "assignment_id": "SMOKE-ASN-SMOKE-G7-B-T1",
+      "class_id": "SMOKE-G7-B-T1",
+      "role": "class_teacher",
+      "subject": null,
+      "teacher_id": "SMOKE-TCH-02"
+    },
+    {
+      "assignment_id": "SMOKE-ASN-SMOKE-G7-A-T2",
+      "class_id": "SMOKE-G7-A-T2",
+      "role": "class_teacher",
+      "subject": null,
+      "teacher_id": "SMOKE-TCH-01"
+    },
+    {
+      "assignment_id": "SMOKE-ASN-SMOKE-G7-B-T2",
+      "class_id": "SMOKE-G7-B-T2",
+      "role": "class_teacher",
+      "subject": null,
+      "teacher_id": "SMOKE-TCH-02"
+    },
+    {
+      "assignment_id": "SMOKE-ASN-SMOKE-G7-A-T3",
+      "class_id": "SMOKE-G7-A-T3",
+      "role": "class_teacher",
+      "subject": null,
+      "teacher_id": "SMOKE-TCH-01"
+    },
+    {
+      "assignment_id": "SMOKE-ASN-SMOKE-G7-B-T3",
+      "class_id": "SMOKE-G7-B-T3",
+      "role": "class_teacher",
+      "subject": null,
+      "teacher_id": "SMOKE-TCH-02"
+    }
+  ],
+  "classes": [
+    {
+      "academic_year": 2024,
+      "class_id": "SMOKE-G7-A-T1",
+      "display_name": "Grade 7 A - Term 1",
+      "grade": "Grade 7",
+      "stream": "A",
+      "term": 1
+    },
+    {
+      "academic_year": 2024,
+      "class_id": "SMOKE-G7-B-T1",
+      "display_name": "Grade 7 B - Term 1",
+      "grade": "Grade 7",
+      "stream": "B",
+      "term": 1
+    },
+    {
+      "academic_year": 2024,
+      "class_id": "SMOKE-G7-A-T2",
+      "display_name": "Grade 7 A - Term 2",
+      "grade": "Grade 7",
+      "stream": "A",
+      "term": 2
+    },
+    {
+      "academic_year": 2024,
+      "class_id": "SMOKE-G7-B-T2",
+      "display_name": "Grade 7 B - Term 2",
+      "grade": "Grade 7",
+      "stream": "B",
+      "term": 2
+    },
+    {
+      "academic_year": 2024,
+      "class_id": "SMOKE-G7-A-T3",
+      "display_name": "Grade 7 A - Term 3",
+      "grade": "Grade 7",
+      "stream": "A",
+      "term": 3
+    },
+    {
+      "academic_year": 2024,
+      "class_id": "SMOKE-G7-B-T3",
+      "display_name": "Grade 7 B - Term 3",
+      "grade": "Grade 7",
+      "stream": "B",
+      "term": 3
+    }
+  ],
+  "notice": "Fictional 2024 dates, school and people; not historical records. Names may coincide with real people.",
+  "options": [
+    "never",
+    "rarely",
+    "sometimes",
+    "often",
+    "almost_always",
+    "not_sure",
+    "prefer_not_to_answer",
+    "not_applicable"
+  ],
+  "question_bank_version": "lec-smoke-0.1",
+  "questions": [
+    {
+      "item_id": "LEC-CUR-01",
+      "text": "I asked questions in class because I wanted to understand something better."
+    },
+    {
+      "item_id": "LEC-PER-01",
+      "text": "When a school task was difficult, I tried another approach instead of giving up."
+    },
+    {
+      "item_id": "LEC-SE-01",
+      "text": "In Mathematics, I felt capable of understanding difficult topics when they were explained."
+    },
+    {
+      "item_id": "LEC-SR-01",
+      "text": "I was able to stay focused on my learning activities even when there were distractions in class."
+    },
+    {
+      "item_id": "LEC-MC-01",
+      "text": "Before starting a learning task, I thought about the steps I needed to take."
+    },
+    {
+      "item_id": "LEC-HS-01",
+      "text": "When I did not understand an explanation, I asked my teacher to clarify."
+    },
+    {
+      "item_id": "LEC-BEL-01",
+      "text": "I felt welcome and comfortable being myself in this classroom."
+    },
+    {
+      "item_id": "LEC-PTS-01",
+      "text": "My teachers listened carefully when I shared my ideas or asked for assistance."
+    }
+  ],
+  "schedule": [
+    {
+      "date": "2024-01-22",
+      "recall_start": "2024-01-08",
+      "stage": "beginning",
+      "term": 1
+    },
+    {
+      "date": "2024-02-26",
+      "recall_start": "2024-02-12",
+      "stage": "middle",
+      "term": 1
+    },
+    {
+      "date": "2024-04-02",
+      "recall_start": "2024-03-19",
+      "stage": "end",
+      "term": 1
+    },
+    {
+      "date": "2024-05-20",
+      "recall_start": "2024-05-06",
+      "stage": "beginning",
+      "term": 2
+    },
+    {
+      "date": "2024-06-24",
+      "recall_start": "2024-06-10",
+      "stage": "middle",
+      "term": 2
+    },
+    {
+      "date": "2024-07-29",
+      "recall_start": "2024-07-15",
+      "stage": "end",
+      "term": 2
+    },
+    {
+      "date": "2024-09-09",
+      "recall_start": "2024-08-26",
+      "stage": "beginning",
+      "term": 3
+    },
+    {
+      "date": "2024-10-07",
+      "recall_start": "2024-09-23",
+      "stage": "middle",
+      "term": 3
+    },
+    {
+      "date": "2024-10-28",
+      "recall_start": "2024-10-14",
+      "stage": "end",
+      "term": 3
+    }
+  ],
+  "school": {
+    "name": "Fictional School 01",
+    "school_id": "SMOKE-SCHOOL-01"
+  },
+  "synthetic": true,
+  "teachers": [
+    {
+      "display_name": "Ms Wanjiku",
+      "teacher_id": "SMOKE-TCH-01"
+    },
+    {
+      "display_name": "Mr Otieno",
+      "teacher_id": "SMOKE-TCH-02"
+    }
+  ]
+}

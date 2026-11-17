@@ -30,9 +30,12 @@ async def check():
             assert (await client.get("/api/learners")).status_code == 401
             response = await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": password})
             assert response.status_code == 200, response.text
-            assert len((await client.get("/api/learners")).json()) == 3
+            assert len((await client.get("/api/learners")).json()) == 8
+            evidence = (await client.get("/api/learners/SMOKE-LRN-001/evidence")).json()
+            assert len(evidence) == 18
+            assert sum(e["evidence_type"] == "learner_reflection" for e in evidence) == 9
             assert (await client.get("/api/config")).json()["hosted"]
-    print("Packaged hosted app: startup, synthetic seed, static assets, authentication and 3 learners passed.")
+    print("Packaged hosted app: startup, original seed plus LEC cohort, static assets and authenticated learner reflections passed.")
 
 
 with tempfile.TemporaryDirectory(prefix="allps-wheel-") as directory:

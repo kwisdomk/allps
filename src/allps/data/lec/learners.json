@@ -1,0 +1,62 @@
+[
+  {
+    "display_name": "Amina Mwinyi",
+    "learner_id": "SMOKE-LRN-001",
+    "stream": "A",
+    "synthetic": true
+  },
+  {
+    "display_name": "Mercy Wanjiru",
+    "learner_id": "SMOKE-LRN-002",
+    "stream": "A",
+    "synthetic": true
+  },
+  {
+    "display_name": "Brian Otieno",
+    "learner_id": "SMOKE-LRN-003",
+    "stream": "A",
+    "synthetic": true
+  },
+  {
+    "display_name": "Farhiya Abdullahi",
+    "learner_id": "SMOKE-LRN-004",
+    "stream": "A",
+    "synthetic": true
+  },
+  {
+    "display_name": "Kevin Kiptoo",
+    "learner_id": "SMOKE-LRN-005",
+    "stream": "A",
+    "synthetic": true
+  },
+  {
+    "display_name": "Zawadi Muthoni",
+    "learner_id": "SMOKE-LRN-006",
+    "stream": "B",
+    "synthetic": true
+  },
+  {
+    "display_name": "Daniel Musyoka",
+    "learner_id": "SMOKE-LRN-007",
+    "stream": "B",
+    "synthetic": true
+  },
+  {
+    "display_name": "Halima Hassan",
+    "learner_id": "SMOKE-LRN-008",
+    "stream": "B",
+    "synthetic": true
+  },
+  {
+    "display_name": "Faith Chebet",
+    "learner_id": "SMOKE-LRN-009",
+    "stream": "B",
+    "synthetic": true
+  },
+  {
+    "display_name": "Peter Mutua",
+    "learner_id": "SMOKE-LRN-010",
+    "stream": "B",
+    "synthetic": true
+  }
+]

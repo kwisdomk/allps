@@ -1,0 +1,4772 @@
+[
+  {
+    "check_in_id": "SMOKE-LRN-001-T1-beginning",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-001",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-001-T1-middle",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-001",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-001-T1-end",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-001",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-001-T2-beginning",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-001",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": null,
+        "status": "skipped"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-001-T2-middle",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-001",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-001-T2-end",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-001",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-001-T3-beginning",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-001",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-001-T3-middle",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-001",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "almost_always",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-001-T3-end",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-001",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-002-T1-beginning",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-002",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_sure",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-002-T1-middle",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-002",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-002-T1-end",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-002",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": null,
+        "status": "skipped"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-002-T2-beginning",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-002",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_sure",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-002-T2-middle",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-002",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-002-T2-end",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-002",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-002-T3-beginning",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-002",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-002-T3-middle",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-002",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": null,
+        "status": "skipped"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-002-T3-end",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-002",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-003-T1-beginning",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-003",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "never",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-003-T1-middle",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-003",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-003-T1-end",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-003",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "almost_always",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-003-T2-beginning",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-003",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-003-T2-middle",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-003",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "almost_always",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-003-T2-end",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-003",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-003-T3-beginning",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-003",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-003-T3-middle",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-003",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "never",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-003-T3-end",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-003",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-004-T1-beginning",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-004",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "never",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-004-T1-middle",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-004",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-004-T1-end",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-004",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-004-T2-beginning",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-004",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-004-T2-middle",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-004",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-004-T2-end",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-004",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-004-T3-beginning",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-004",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "almost_always",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-004-T3-middle",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-004",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "rarely",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-004-T3-end",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-004",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-005-T1-beginning",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-005",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-005-T1-middle",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-005",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "never",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-005-T1-end",
+    "class_id": "SMOKE-G7-A-T1",
+    "learner_id": "SMOKE-LRN-005",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_sure",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-005-T2-beginning",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-005",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-005-T2-middle",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-005",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "almost_always",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-005-T2-end",
+    "class_id": "SMOKE-G7-A-T2",
+    "learner_id": "SMOKE-LRN-005",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-005-T3-beginning",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-005",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-005-T3-middle",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-005",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_sure",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-005-T3-end",
+    "class_id": "SMOKE-G7-A-T3",
+    "learner_id": "SMOKE-LRN-005",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-006-T1-beginning",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-006",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-006-T1-middle",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-006",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-006-T1-end",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-006",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-006-T2-beginning",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-006",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-006-T2-middle",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-006",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "almost_always",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-006-T2-end",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-006",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "rarely",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-006-T3-beginning",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-006",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-006-T3-middle",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-006",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "rarely",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-006-T3-end",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-006",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-007-T1-beginning",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-007",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-007-T1-middle",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-007",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-007-T1-end",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-007",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-007-T2-beginning",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-007",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-007-T2-middle",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-007",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "almost_always",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-007-T2-end",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-007",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-007-T3-beginning",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-007",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_sure",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-007-T3-middle",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-007",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-007-T3-end",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-007",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-008-T1-beginning",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-008",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-008-T1-middle",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-008",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-008-T1-end",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-008",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-008-T2-beginning",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-008",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "rarely",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-008-T2-middle",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-008",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-008-T2-end",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-008",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "never",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-008-T3-beginning",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-008",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-008-T3-middle",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-008",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-008-T3-end",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-008",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-009-T1-beginning",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-009",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-009-T1-middle",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-009",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-009-T1-end",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-009",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": null,
+        "status": "skipped"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-009-T2-beginning",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-009",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-009-T2-middle",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-009",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-009-T2-end",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-009",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-009-T3-beginning",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-009",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_sure",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-009-T3-middle",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-009",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-009-T3-end",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-009",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "never",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-010-T1-beginning",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-010",
+    "recall_end": "2024-01-22",
+    "recall_start": "2024-01-08",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-010-T1-middle",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-010",
+    "recall_end": "2024-02-26",
+    "recall_start": "2024-02-12",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-010-T1-end",
+    "class_id": "SMOKE-G7-B-T1",
+    "learner_id": "SMOKE-LRN-010",
+    "recall_end": "2024-04-02",
+    "recall_start": "2024-03-19",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 1,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-010-T2-beginning",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-010",
+    "recall_end": "2024-05-20",
+    "recall_start": "2024-05-06",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "sometimes",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-010-T2-middle",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-010",
+    "recall_end": "2024-06-24",
+    "recall_start": "2024-06-10",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "never",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_sure",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-010-T2-end",
+    "class_id": "SMOKE-G7-B-T2",
+    "learner_id": "SMOKE-LRN-010",
+    "recall_end": "2024-07-29",
+    "recall_start": "2024-07-15",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_applicable",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "never",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 2,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-010-T3-beginning",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-010",
+    "recall_end": "2024-09-09",
+    "recall_start": "2024-08-26",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "almost_always",
+        "status": "answered"
+      }
+    ],
+    "stage": "beginning",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-010-T3-middle",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-010",
+    "recall_end": "2024-10-07",
+    "recall_start": "2024-09-23",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "almost_always",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": null,
+        "status": "skipped"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "often",
+        "status": "answered"
+      }
+    ],
+    "stage": "middle",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  },
+  {
+    "check_in_id": "SMOKE-LRN-010-T3-end",
+    "class_id": "SMOKE-G7-B-T3",
+    "learner_id": "SMOKE-LRN-010",
+    "recall_end": "2024-10-28",
+    "recall_start": "2024-10-14",
+    "responses": [
+      {
+        "item_id": "LEC-CUR-01",
+        "response": "rarely",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PER-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SE-01",
+        "response": "sometimes",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-SR-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-MC-01",
+        "response": "prefer_not_to_answer",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-HS-01",
+        "response": "often",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-BEL-01",
+        "response": "not_sure",
+        "status": "answered"
+      },
+      {
+        "item_id": "LEC-PTS-01",
+        "response": "not_sure",
+        "status": "answered"
+      }
+    ],
+    "stage": "end",
+    "synthetic": true,
+    "term": 3,
+    "year": 2024
+  }
+]

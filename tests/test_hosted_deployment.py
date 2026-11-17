@@ -60,7 +60,7 @@ async def test_hosted_auth_and_storage_boundaries(monkeypatch, tmp_path):
             login = await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "a-strong-demo-password"})
             assert login.status_code == 200
             assert "Secure" in login.headers["set-cookie"]
-            assert len((await client.get("/api/learners")).json()) == 3
+            assert len((await client.get("/api/learners")).json()) == 8
             config = await client.get("/api/config")
             assert not config.json()["show_demo_credentials"]
             assert config.json()["available_teachers"] == []
@@ -94,3 +94,57 @@ async def test_hosted_generation_cannot_select_offline_runtime(monkeypatch, tmp_
                 assert response.json()["status"] == "inference_failed"
                 assert response.json()["runtime_method"] == "unavailable"
     assert seen_modes == ["live", "live", "live"]
+
+
+@pytest.mark.asyncio
+async def test_lec_restart_preserves_decisions_and_synthesis_receives_responses(monkeypatch, tmp_path):
+    from allps.agent.orchestrator import AgentOrchestrator
+    from allps.agent.adapter import InferenceError
+
+    configure(monkeypatch, tmp_path)
+    app = create_hosted_app()
+    async with app.router.lifespan_context(app):
+        store = app.state.store
+        assert await store.count_learners() == 13
+        history = await app.state.evidence_service.get_learner_history("SMOKE-LRN-001")
+        assert len(history) == 18
+        reflection_ids = {e.evidence_id for e in history if e.evidence_type.value == "learner_reflection"}
+        assert len(reflection_ids) == 9
+        # An existing original-cohort teacher decision must survive reseeding/restart.
+        await app.state.analysis_service.analyse_longitudinal_pattern("LRN-001", subject="Mathematics")
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="https://testserver") as client:
+            await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "a-strong-demo-password"})
+            reviews = (await client.get("/api/learners/LRN-001/reviews")).json()
+            review_id = reviews[0]["review_id"]
+            decision = await client.post(f"/api/reviews/{review_id}/decision", json={
+                "status": "accepted", "teacher_notes": "Preserve this existing decision.",
+            })
+            assert decision.status_code == 200, decision.text
+            assert (await client.get("/api/learners/SMOKE-LRN-006/evidence")).status_code == 403
+
+        class CaptureInference:
+            async def generate(self, *, prompt, system_prompt):
+                assert all(eid in prompt for eid in reflection_ids)
+                assert "I asked questions in class" in prompt
+                assert 'type="assessment"' in prompt
+                assert 'type="attendance"' in prompt
+                assert "self-reports" in system_prompt
+                raise InferenceError("Stop after verifying inference input; no external model called")
+
+        orchestrator = AgentOrchestrator(app.state.evidence_service, app.state.analysis_service,
+                                          app.state.review_service, CaptureInference(), store=store)
+        result = await orchestrator.orchestrate_handover("SMOKE-LRN-001")
+        assert result.status == "inference_failed"
+    app = create_hosted_app()
+    async with app.router.lifespan_context(app):
+        assert await app.state.store.count_learners() == 13
+        history = await app.state.evidence_service.get_learner_history("SMOKE-LRN-001")
+        assert len(history) == 18
+        assert reflection_ids == {e.evidence_id for e in history if e.evidence_type.value == "learner_reflection"}
+        review = await app.state.store.get_review_item(review_id)
+        assert review.status.value == "accepted"
+        assert review.teacher_notes == "Preserve this existing decision."
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="https://testserver") as client:
+            await client.post("/api/auth/login", json={"teacher_id": "TCH-KAMAU", "pin": "a-strong-demo-password"})
+            assert len((await client.get("/api/learners")).json()) == 5
+            assert (await client.get("/api/learners/SMOKE-LRN-001/evidence")).status_code == 403
