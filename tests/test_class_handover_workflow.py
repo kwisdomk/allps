@@ -862,3 +862,35 @@ async def test_uncalibrated_new_assessment_is_not_claimed_to_confirm_finding_and
     changes = await app.state.handover_service.evaluate_post_release_changes_for_learner("LRN-001")
     math = [c for c in changes if c.scope == "Mathematics"]
     assert math and all(c.severity.value != "minor" for c in math), [c.model_dump(mode="json") for c in math]
+
+
+@pytest.mark.asyncio
+async def test_learners_endpoint_filters_by_authoritative_class_enrolment(handover_env):
+    client, app = handover_env
+    from allps.models.handover import TeacherAssignment, TeacherRole
+
+    store = app.state.store
+    # TCH-KAMAU on empty CLS-G4-RED gets [], and 403 on CLS-G3-BLUE
+    await _login(client, "TCH-KAMAU", "4567")
+    assert (await client.get("/api/learners?class_id=CLS-G4-RED")).json() == []
+    assert (await client.get("/api/learners?class_id=CLS-G3-BLUE")).status_code == 403
+    assert (await client.get("/api/learners?class_id=CLS-UNKNOWN")).status_code == 404
+
+    # Assign TCH-BANDA to CLS-G4-RED and enroll LRN-004 exclusively in CLS-G4-RED
+    await store.add_teacher_assignment(
+        TeacherAssignment(
+            assignment_id="ASN-G4R-BANDA-MATH",
+            teacher_id="TCH-BANDA",
+            class_id="CLS-G4-RED",
+            role=TeacherRole.SUBJECT_TEACHER,
+            subject="Mathematics",
+        )
+    )
+    await store.add_learner(Learner(learner_id="LRN-004", display_name="Learner 004"))
+    await store.enroll_learner("CLS-G4-RED", "LRN-004")
+
+    await _login(client, "TCH-BANDA", "1234")
+    g3_learners = (await client.get("/api/learners?class_id=CLS-G3-BLUE")).json()
+    g4_learners = (await client.get("/api/learners?class_id=CLS-G4-RED")).json()
+    assert [l["learner_id"] for l in g3_learners] == ["LRN-001", "LRN-002", "LRN-003"]
+    assert [l["learner_id"] for l in g4_learners] == ["LRN-004"]

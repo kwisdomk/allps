@@ -63,10 +63,12 @@ async def test_hosted_auth_and_storage_boundaries(monkeypatch, tmp_path):
             assert len((await client.get("/api/learners")).json()) == 3
             config = await client.get("/api/config")
             assert not config.json()["show_demo_credentials"]
+            assert config.json()["available_teachers"] == []
             assert config.json()["hosted"]
             assert not config.json()["allow_demo_reset"]
             assert config.headers["cache-control"] == "no-store"
             assert "test-secret" not in config.text
+            assert "a-strong-demo-password" not in config.text
             assert not app.state.allow_demo_reset
             for _ in range(8):
                 await client.post("/api/auth/login", json={"teacher_id": "none", "pin": "0000"})

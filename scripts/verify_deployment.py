@@ -5,14 +5,16 @@ Credentials come from ALLPS_DEMO_CLASS_PASSWORD / ALLPS_DEMO_SUBJECT_PASSWORD.
 """
 import argparse
 import asyncio
+from datetime import datetime, timezone
 import json
 import os
 
 import httpx
 
 
-async def verify(url: str, mode: str) -> dict:
-    report = {"url": url, "requested_mode": mode, "synthetic_review_simulation": True, "steps": []}
+async def verify(url: str, mode: str, expected_provider: str | None = None) -> dict:
+    report = {"url": url, "requested_mode": mode, "synthetic_review_simulation": True,
+              "started_at_utc": datetime.now(timezone.utc).isoformat(), "steps": []}
     async with httpx.AsyncClient(base_url=url, timeout=300) as client:
         async def call(method, path, **kwargs):
             response = await client.request(method, path, **kwargs)
@@ -22,6 +24,9 @@ async def verify(url: str, mode: str) -> dict:
         assert (await client.get("/api/learners")).status_code == 401
         config = (await call("GET", "/api/config")).json()
         assert config["is_synthetic_demonstration"], "Refusing to simulate reviews on non-synthetic data"
+        report["inference_provider"] = config.get("inference_provider")
+        if expected_provider is not None:
+            assert config.get("inference_provider") == expected_provider, "Hosted provider does not match the requested verification"
         await call("POST", "/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": os.environ["ALLPS_DEMO_CLASS_PASSWORD"]})
         report["steps"].append("Health, authentication and synthetic-data boundary passed")
         for learner in ("LRN-001", "LRN-002", "LRN-003"):
@@ -58,6 +63,7 @@ async def verify(url: str, mode: str) -> dict:
         acknowledgment = (await call("POST", f"/api/releases/{release_id}/learners/LRN-001/acknowledge")).json()
         assert acknowledgment["status"] == "acknowledged"
         report["steps"].append("Frozen release, second educator, scoped export and explicit acknowledgment passed")
+    report["completed_at_utc"] = datetime.now(timezone.utc).isoformat()
     return report
 
 
@@ -65,5 +71,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", required=True)
     parser.add_argument("--mode", choices=["live", "deterministic"], default="live")
+    parser.add_argument("--expected-provider", help="Refuse to run if the hosted provider differs")
     args = parser.parse_args()
-    print(json.dumps(asyncio.run(verify(args.url, args.mode)), indent=2))
+    print(json.dumps(asyncio.run(verify(args.url, args.mode, args.expected_provider)), indent=2))

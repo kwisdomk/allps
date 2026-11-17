@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import Any, Literal
 import uuid
 
-import aiosqlite
 from fastapi import APIRouter, Cookie, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from pydantic import BaseModel, Field, field_validator
 
@@ -337,12 +336,14 @@ async def get_system_config(request: Request) -> dict[str, Any]:
     store: SQLiteStore = app.state.store
     teacher_id = _current_teacher_id(request)
     teacher = await store.get_teacher(teacher_id) if teacher_id else None
+    is_hosted = bool(getattr(app.state, "hosted", False))
+    show_demo_credentials = not is_hosted
 
     available_teachers: list[dict[str, Any]] = []
-    async with store.db.execute(
-        "SELECT teacher_id, display_name FROM teachers ORDER BY teacher_id ASC"
-    ) as cursor:
-        async for row in cursor:
+    if show_demo_credentials:
+        from allps.web.app import _PILOT_TEACHERS
+        pilot_pin_map = {tid: pin for tid, _, pin in _PILOT_TEACHERS}
+        for row in await store.list_teachers():
             assignments = await store.get_teacher_assignments(row["teacher_id"])
             roles = [
                 f"Class teacher ({a.class_id})"
@@ -350,10 +351,17 @@ async def get_system_config(request: Request) -> dict[str, Any]:
                 else f"{a.subject} teacher ({a.class_id})"
                 for a in assignments
             ]
+            pilot_pin = pilot_pin_map.get(row["teacher_id"])
+            demo_pin = (
+                pilot_pin
+                if pilot_pin and verify_pin(pilot_pin, row["pin_hash"])
+                else None
+            )
             available_teachers.append({
                 "teacher_id": row["teacher_id"],
                 "display_name": row["display_name"],
                 "role_summary": ", ".join(roles) if roles else "Teacher",
+                "demo_pin": demo_pin,
             })
 
     handover_svc = _require_handover_service(request)
@@ -369,12 +377,12 @@ async def get_system_config(request: Request) -> dict[str, Any]:
         "workspace": workspace,
         "server_reviewer_id": teacher["teacher_id"] if teacher else None,
         "available_teachers": available_teachers,
-        "show_demo_credentials": not getattr(app.state, "hosted", False),
-        "hosted": getattr(app.state, "hosted", False),
+        "show_demo_credentials": show_demo_credentials,
+        "hosted": is_hosted,
         "allow_demo_reset": getattr(app.state, "allow_demo_reset", False),
         "inference_provider": (
             os.environ.get("ALLPS_AI_PROVIDER", "AMD Token Lab")
-            if getattr(app.state, "hosted", False) else None
+            if is_hosted else None
         ),
         "default_mode": getattr(app.state, "default_mode", "auto"),
         "is_synthetic_demonstration": getattr(app.state, "is_synthetic", True),
@@ -390,29 +398,83 @@ async def get_system_config(request: Request) -> dict[str, Any]:
     }
 
 
+def _serialize_learner(learner: Learner) -> dict[str, Any]:
+    """Serialize a Learner model for the web API."""
+    return {
+        "learner_id": learner.learner_id,
+        "display_name": learner.display_name,
+        "created_at": learner.created_at.isoformat(),
+    }
+
+
+def _serialize_evidence(ev: Evidence, *, include_scores: bool = False) -> dict[str, Any]:
+    """Serialize an Evidence model for API responses."""
+    content_dict = ev.content if isinstance(ev.content, dict) else dict(ev.content)
+    payload: dict[str, Any] = {
+        "evidence_id": ev.evidence_id,
+        "learner_id": ev.learner_id,
+        "evidence_type": ev.evidence_type.value,
+        "source_system": ev.source_system,
+        "ingestion_method": ev.ingestion_method.value,
+        "source_event_id": ev.source_event_id,
+        "source_type": ev.source_type,
+        "source_reference": ev.source_reference,
+        "academic_year": ev.academic_year,
+        "term": ev.term,
+        "subject": ev.subject,
+        "observed_at": ev.observed_at.isoformat(),
+        "recorded_at": ev.recorded_at.isoformat(),
+        "content": content_dict,
+        "assessment_stage": ev.assessment_stage,
+        "measured_skill": ev.measured_skill,
+        "grade": ev.grade,
+        "is_missing_outcome": ev.is_missing_outcome,
+        "missing_status": content_dict.get("status") if ev.is_missing_outcome else None,
+        "missing_reason": content_dict.get("reason") if ev.is_missing_outcome else None,
+        "comparison_authorized": ev.comparison_authorized,
+    }
+    if include_scores:
+        payload["score"] = content_dict.get("score")
+        payload["max_score"] = content_dict.get("max_score")
+    return payload
+
+
 @router.get("/learners")
-async def list_learners(request: Request) -> list[dict[str, Any]]:
+async def list_learners(
+    request: Request,
+    class_id: str | None = Query(
+        None,
+        description="Optional class ID to return only learners enrolled in that assigned class.",
+    ),
+) -> list[dict[str, Any]]:
     """List learners enrolled in classes assigned to the signed-in teacher."""
     teacher_id = _require_teacher(request)
     store: SQLiteStore = request.app.state.store
     handover_svc = _require_handover_service(request)
+
+    if class_id is not None:
+        if await store.get_class(class_id) is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Class '{class_id}' does not exist.",
+            )
+        try:
+            await handover_svc.assert_class_access(teacher_id, class_id)
+        except PermissionError as exc:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+        enrolled = await store.get_class_learners(class_id)
+        return [_serialize_learner(learner) for learner in enrolled]
+
     permitted_ids = await handover_svc.get_permitted_learner_ids(teacher_id)
     if not permitted_ids:
         return []
 
-    db = store.db
-    learners: list[dict[str, Any]] = []
-    async with db.execute("SELECT learner_id, display_name, created_at FROM learners ORDER BY learner_id ASC") as cursor:
-        async for row in cursor:
-            if row["learner_id"] not in permitted_ids:
-                continue
-            learners.append({
-                "learner_id": row["learner_id"],
-                "display_name": row["display_name"],
-                "created_at": row["created_at"],
-            })
-
-    return learners
+    all_learners = await store.list_learners()
+    return [
+        _serialize_learner(learner)
+        for learner in all_learners
+        if learner.learner_id in permitted_ids
+    ]
 
 
 @router.get("/learners/{learner_id}/evidence")
@@ -446,37 +508,7 @@ async def get_learner_evidence(
         allowed_set = set(access["allowed_subjects"])
         records = [r for r in records if r.subject is None or r.subject in allowed_set]
 
-    out: list[dict[str, Any]] = []
-    for r in records:
-        content_dict = r.content if isinstance(r.content, dict) else dict(r.content)
-        out.append({
-            "evidence_id": r.evidence_id,
-            "learner_id": r.learner_id,
-            "evidence_type": r.evidence_type.value,
-            "source_system": r.source_system,
-            "ingestion_method": r.ingestion_method.value,
-            "source_event_id": r.source_event_id,
-            "source_type": r.source_type,
-            "source_reference": r.source_reference,
-            "academic_year": r.academic_year,
-            "term": r.term,
-            "subject": r.subject,
-            "observed_at": r.observed_at.isoformat(),
-            "recorded_at": r.recorded_at.isoformat(),
-            "content": content_dict,
-            # Computed helpers for clean UI display
-            "assessment_stage": r.assessment_stage,
-            "measured_skill": r.measured_skill,
-            "grade": r.grade,
-            "is_missing_outcome": r.is_missing_outcome,
-            "missing_status": content_dict.get("status") if r.is_missing_outcome else None,
-            "missing_reason": content_dict.get("reason") if r.is_missing_outcome else None,
-            "score": content_dict.get("score"),
-            "max_score": content_dict.get("max_score"),
-            "comparison_authorized": r.comparison_authorized,
-        })
-
-    return out
+    return [_serialize_evidence(r, include_scores=True) for r in records]
 
 
 @router.get("/evidence/{evidence_id}")
@@ -485,61 +517,20 @@ async def get_evidence_detail(evidence_id: str, request: Request) -> dict[str, A
     teacher_id = _require_teacher(request)
     store: SQLiteStore = request.app.state.store
     handover_svc = _require_handover_service(request)
-    db = store.db
 
-    async with db.execute("SELECT * FROM evidence WHERE evidence_id = ?", (evidence_id,)) as cursor:
-        row = await cursor.fetchone()
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Evidence record '{evidence_id}' does not exist.",
-            )
-
-        content = json.loads(row["content"])
-        ev = Evidence(
-            evidence_id=row["evidence_id"],
-            learner_id=row["learner_id"],
-            evidence_type=EvidenceType(row["evidence_type"]),
-            source_system=row["source_system"],
-            ingestion_method=IngestionMethod(row["ingestion_method"]),
-            source_event_id=row["source_event_id"],
-            source_type=row["source_type"],
-            source_reference=row["source_reference"],
-            academic_year=row["academic_year"],
-            term=row["term"],
-            subject=row["subject"],
-            content=content,
-            observed_at=datetime.fromisoformat(row["observed_at"]),
-            recorded_at=datetime.fromisoformat(row["recorded_at"]),
+    ev = await store.get_evidence_by_id(evidence_id)
+    if ev is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Evidence record '{evidence_id}' does not exist.",
         )
-        try:
-            await handover_svc.assert_evidence_access(teacher_id, ev)
-        except PermissionError as exc:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
 
-        return {
-            "evidence_id": ev.evidence_id,
-            "learner_id": ev.learner_id,
-            "evidence_type": ev.evidence_type.value,
-            "source_system": ev.source_system,
-            "ingestion_method": ev.ingestion_method.value,
-            "source_event_id": ev.source_event_id,
-            "source_type": ev.source_type,
-            "source_reference": ev.source_reference,
-            "academic_year": ev.academic_year,
-            "term": ev.term,
-            "subject": ev.subject,
-            "observed_at": ev.observed_at.isoformat(),
-            "recorded_at": ev.recorded_at.isoformat(),
-            "content": content,
-            "assessment_stage": ev.assessment_stage,
-            "measured_skill": ev.measured_skill,
-            "grade": ev.grade,
-            "is_missing_outcome": ev.is_missing_outcome,
-            "missing_status": content.get("status") if ev.is_missing_outcome else None,
-            "missing_reason": content.get("reason") if ev.is_missing_outcome else None,
-            "comparison_authorized": ev.comparison_authorized,
-        }
+    try:
+        await handover_svc.assert_evidence_access(teacher_id, ev)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+
+    return _serialize_evidence(ev, include_scores=False)
 
 
 @router.post("/learners/{learner_id}/evidence", status_code=status.HTTP_201_CREATED)

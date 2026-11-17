@@ -14,7 +14,7 @@ from typing import Any, AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from allps.auth import get_ingest_api_key, hash_pin, verify_pin
@@ -123,11 +123,7 @@ def create_app(
 
         # Seed synthetic Kenyan demonstration dataset if empty or requested
         if seed_demo_data:
-            async with store.db.execute("SELECT COUNT(*) AS cnt FROM learners") as cursor:
-                row = await cursor.fetchone()
-                count = row["cnt"] if row else 0
-
-            if count == 0:
+            if await store.count_learners() == 0:
                 from data.synthetic.seed_data import seed_store
                 await seed_store(store, reset=False, actor="startup_autoseed", seed_pilot_accounts=not hosted)
 
@@ -199,8 +195,7 @@ def create_app(
 
     @app.get("/healthz", include_in_schema=False)
     async def healthz() -> dict[str, str]:
-        async with app.state.store.db.execute("SELECT 1") as cursor:
-            await cursor.fetchone()
+        await app.state.store.ping()
         return {"status": "ok"}
 
     # Static assets
@@ -213,6 +208,13 @@ def create_app(
     @app.get("/", include_in_schema=False)
     async def serve_index() -> FileResponse:
         return FileResponse(str(static_dir / "index.html"))
+
+    @app.get("/{unmatched_path:path}", include_in_schema=False, response_model=None)
+    async def serve_not_found(unmatched_path: str) -> FileResponse | JSONResponse:
+        """Show the branded 404 for browser paths while keeping API misses JSON."""
+        if unmatched_path == "api" or unmatched_path.startswith("api/"):
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+        return FileResponse(str(static_dir / "404.html"), status_code=404)
 
     return app
 

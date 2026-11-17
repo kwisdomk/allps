@@ -490,6 +490,13 @@ class SQLiteStore:
             )
         return self._db
 
+    async def ping(self, conn: aiosqlite.Connection | None = None) -> bool:
+        """Verify database connectivity with a lightweight read probe."""
+        db = conn or self.db
+        async with db.execute("SELECT 1") as cursor:
+            row = await cursor.fetchone()
+            return row is not None
+
     # ── Learners ──────────────────────────────────────────────────
 
     async def add_learner(
@@ -540,6 +547,34 @@ class SQLiteStore:
         ) as cursor:
             return await cursor.fetchone() is not None
 
+    async def count_learners(
+        self, conn: aiosqlite.Connection | None = None
+    ) -> int:
+        """Return the total number of stored learner records."""
+        db = conn or self.db
+        async with db.execute("SELECT COUNT(*) AS cnt FROM learners") as cursor:
+            row = await cursor.fetchone()
+            return int(row["cnt"]) if row else 0
+
+    async def list_learners(
+        self, conn: aiosqlite.Connection | None = None
+    ) -> list[Learner]:
+        """Return all learners ordered by learner_id."""
+        db = conn or self.db
+        learners: list[Learner] = []
+        async with db.execute(
+            "SELECT learner_id, display_name, created_at FROM learners ORDER BY learner_id ASC"
+        ) as cursor:
+            async for row in cursor:
+                learners.append(
+                    Learner(
+                        learner_id=row["learner_id"],
+                        display_name=row["display_name"],
+                        created_at=datetime.fromisoformat(row["created_at"]),
+                    )
+                )
+        return learners
+
     # ── Teachers ──────────────────────────────────────────────────
 
     async def add_teacher(
@@ -579,6 +614,24 @@ class SQLiteStore:
                 "display_name": row["display_name"],
                 "pin_hash": row["pin_hash"],
             }
+
+    async def list_teachers(
+        self,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[dict[str, str]]:
+        """Return all provisioned teacher accounts ordered by teacher_id."""
+        db = conn or self.db
+        teachers: list[dict[str, str]] = []
+        async with db.execute(
+            "SELECT teacher_id, display_name, pin_hash FROM teachers ORDER BY teacher_id ASC"
+        ) as cursor:
+            async for row in cursor:
+                teachers.append({
+                    "teacher_id": row["teacher_id"],
+                    "display_name": row["display_name"],
+                    "pin_hash": row["pin_hash"],
+                })
+        return teachers
 
     # ── Evidence (immutable — no update method) ───────────────────
 
