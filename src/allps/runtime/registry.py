@@ -129,6 +129,27 @@ class RuntimeRegistry:
     @staticmethod
     def _default_providers() -> list[ProviderConfig]:
         probe_timeout = float(os.environ.get("ALLPS_PROBE_TIMEOUT", "15.0"))
+        # Hosted deployments use one server-controlled provider. Never send a
+        # cloud credential to a browser-selected URL or silently select a local model.
+        endpoint = os.environ.get("ALLPS_AI_BASE_URL", "").strip()
+        if endpoint:
+            model = os.environ.get("ALLPS_AI_MODEL", "").strip()
+            key = os.environ.get("ALLPS_AI_API_KEY", "").strip()
+            if not model or not key:
+                raise ValueError("Hosted inference requires ALLPS_AI_MODEL and ALLPS_AI_API_KEY")
+            if not endpoint.startswith("https://"):
+                raise ValueError("Hosted inference requires an HTTPS ALLPS_AI_BASE_URL")
+            return [ProviderConfig(
+                name=os.environ.get("ALLPS_AI_PROVIDER", "AMD Token Lab"),
+                provider_type=ProviderType.CUSTOM,
+                base_url=endpoint.rstrip("/"),
+                preferred_models=[model],
+                api_key=key,
+                is_explicit_selection=True,
+                discovery_timeout_seconds=15.0,
+                probe_timeout_seconds=probe_timeout,
+                inference_timeout_seconds=float(os.environ.get("ALLPS_AI_TIMEOUT", "120")),
+            )]
         return [
             ProviderConfig(
                 name="LM Studio",

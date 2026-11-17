@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: allps-app
+    runtime: python
+    plan: starter
+    buildCommand: pip install .
+    startCommand: uvicorn allps.web.deployment:create_hosted_app --factory --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /healthz
+    disk:
+      name: allps-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.12
+      - key: ALLPS_DB_PATH
+        value: /var/data/allps.db
+      - key: ALLPS_SESSION_SECRET
+        generateValue: true
+      - key: ALLPS_AI_BASE_URL
+        value: https://api.tokenlab.amd.com/v1
+      - key: ALLPS_AI_PROVIDER
+        value: AMD Token Lab
+      - key: ALLPS_AI_MODEL
+        value: Gemma-4-31B-IT
+      - key: ALLPS_AI_API_KEY
+        sync: false
+      - key: ALLPS_TEACHERS_JSON
+        sync: false
+      - key: ALLPS_SYNTHETIC_DEMO
+        value: "true"

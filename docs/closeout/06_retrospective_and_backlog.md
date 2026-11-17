@@ -62,7 +62,7 @@ To incorporate the findings of this closure audit cleanly into version control w
 * **Branch**: `docs/post-submission-closeout`
 * **Message**: `docs(closeout): integrate complete post-submission audit, preservation manifests, and operator guides`
 * **Changes**:
-  - Adds `docs/closeout/` directory with all 6 workstream reports (`01_GIT_AUDIT_REPORT.md` through `06_RETROSPECTIVE_AND_BACKLOG.md` and `README.md`).
+  - Adds `docs/closeout/` directory with all 6 workstream reports (`01_git_audit_report.md` through `06_retrospective_and_backlog.md` and `README.md`).
   - Records cryptographic checksums and evidence logs.
 
 ### Commit 2: Correct Seed Invocation & Packaging Docs

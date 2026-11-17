@@ -1,0 +1,23 @@
+name: Judge demo release checks
+
+on:
+  push:
+    branches: ['release/judges-amd-demo-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install '.[dev]'
+      - run: python -m pytest -q
+      - run: python -m pip wheel . --no-deps --wheel-dir tmp/release-wheel
+      - run: python scripts/verify_release_package.py

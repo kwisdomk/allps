@@ -41,13 +41,13 @@ Every submission deliverable defined by the challenge rubric was inspected, veri
 
 ### 2.2 Primary Documentation & Governance Contracts
 * [`README.md`](../../README.md) (24,740 bytes) — Project overview, CBC educational context, 13 checklist items, architecture, and quickstart.
-* [`ARCHITECTURE.md`](../../ARCHITECTURE.md) (14,327 bytes) — System boundaries, protocol layers, dual MCP architecture, and governance flow.
-* [`EVALS.md`](../../EVALS.md) (21,103 bytes) — 9 verified evaluation tasks, real hardware benchmarks, and failure investigations.
-* [`docs/SUBMISSION.md`](../../docs/SUBMISSION.md) (5,956 bytes) — Official 300-word submission statement and 3-minute video storyboard.
+* [`ARCHITECTURE.md`](../architecture.md) (14,327 bytes; moved to `docs/architecture.md`) — System boundaries, protocol layers, dual MCP architecture, and governance flow.
+* [`EVALS.md`](../evals.md) (21,103 bytes; moved to `docs/evals.md`) — 9 verified evaluation tasks, real hardware benchmarks, and failure investigations.
+* [`docs/submission.md`](../submission.md) (5,956 bytes) — Official 300-word submission statement and 3-minute video storyboard.
 * [`LICENSE`](../../LICENSE) (1,075 bytes) — OSI-Approved MIT License.
-* [`docs/contracts.md`](../../docs/contracts.md) (12,673 bytes) — Technical data schemas and governance state transition contracts.
-* [`docs/AI_CONTRACT.md`](../../docs/AI_CONTRACT.md) (10,709 bytes) — Citation grounding and prohibited label safety contracts.
-* [`docs/DATA_QUALITY.md`](../../docs/DATA_QUALITY.md) (10,663 bytes) — 9-key longitudinal comparability rules and missing data handling.
+* [`docs/contracts.md`](../contracts.md) (12,673 bytes) — Technical data schemas and governance state transition contracts.
+* [`docs/ai_contract.md`](../ai_contract.md) (10,709 bytes) — Citation grounding and prohibited label safety contracts.
+* [`docs/data_quality.md`](../data_quality.md) (10,663 bytes) — 9-key longitudinal comparability rules and missing data handling.
 
 ### 2.3 MCP Server & Agentic Orchestration
 * **Custom MCP Server**: [`src/allps/mcp/server.py`](../../src/allps/mcp/server.py)

@@ -8,12 +8,15 @@ JSON fields (content, supporting_evidence, etc.) are stored as TEXT.
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import json
-from typing import Sequence
+from typing import Any, Sequence
 
 import aiosqlite
 
 from allps.models import (
     AuditEntry,
+    ClassEnrollment,
+    ClassRelease,
+    DiffSeverity,
     Evidence,
     EvidenceType,
     ImportManifest,
@@ -21,10 +24,190 @@ from allps.models import (
     Learner,
     Pattern,
     PatternType,
+    PostReleaseChange,
+    PublishedReportSection,
+    ReceiptStatus,
+    ReportReceipt,
+    ReportViewEvent,
     ReviewItem,
     ReviewStatus,
+    SchoolClass,
+    SectionReview,
+    SectionReviewState,
+    SubjectResponse,
+    SubjectResponseType,
+    TeacherAssignment,
+    TeacherRole,
 )
 from allps.models.evidence import _deep_unfreeze
+
+_HANDOVER_SCHEMA = """
+CREATE TABLE IF NOT EXISTS classes (
+    class_id      TEXT PRIMARY KEY,
+    display_name  TEXT NOT NULL,
+    grade         TEXT NOT NULL,
+    academic_year INTEGER NOT NULL,
+    term          INTEGER NOT NULL,
+    created_at    TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS class_enrollments (
+    class_id    TEXT NOT NULL,
+    learner_id  TEXT NOT NULL,
+    enrolled_at TEXT NOT NULL,
+    PRIMARY KEY (class_id, learner_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_enrollments_learner ON class_enrollments(learner_id);
+
+CREATE TABLE IF NOT EXISTS teacher_assignments (
+    assignment_id TEXT PRIMARY KEY,
+    teacher_id    TEXT NOT NULL,
+    class_id      TEXT NOT NULL,
+    role          TEXT NOT NULL,
+    subject       TEXT,
+    created_at    TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_assignments_teacher ON teacher_assignments(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_class ON teacher_assignments(class_id);
+
+CREATE TABLE IF NOT EXISTS section_reviews (
+    section_review_id           TEXT PRIMARY KEY,
+    class_id                    TEXT NOT NULL,
+    learner_id                  TEXT NOT NULL,
+    scope                       TEXT NOT NULL,
+    review_state                TEXT NOT NULL DEFAULT 'not_reviewed',
+    approved_summary            TEXT,
+    teacher_notes               TEXT,
+    missing_evidence_disclosure TEXT,
+    citations_json              TEXT NOT NULL DEFAULT '[]',
+    reviewed_by                 TEXT,
+    reviewed_at                 TEXT,
+    updated_at                  TEXT NOT NULL,
+    UNIQUE(class_id, learner_id, scope)
+);
+
+CREATE INDEX IF NOT EXISTS idx_section_reviews_class ON section_reviews(class_id, learner_id);
+
+CREATE TABLE IF NOT EXISTS class_releases (
+    release_id             TEXT PRIMARY KEY,
+    class_id               TEXT NOT NULL,
+    version_number         INTEGER NOT NULL,
+    released_by            TEXT NOT NULL,
+    released_by_name       TEXT NOT NULL,
+    released_at            TEXT NOT NULL,
+    frozen_enrollment_json TEXT NOT NULL,
+    frozen_subjects_json   TEXT NOT NULL,
+    notes                  TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_class_releases_class ON class_releases(class_id, version_number);
+
+CREATE TABLE IF NOT EXISTS published_report_sections (
+    published_section_id        TEXT PRIMARY KEY,
+    release_id                  TEXT NOT NULL,
+    class_id                    TEXT NOT NULL,
+    learner_id                  TEXT NOT NULL,
+    scope                       TEXT NOT NULL,
+    section_title               TEXT NOT NULL,
+    review_state                TEXT NOT NULL,
+    evidence_availability_json  TEXT NOT NULL,
+    approved_summary            TEXT NOT NULL,
+    teacher_notes               TEXT,
+    missing_evidence_disclosure TEXT,
+    citations_json              TEXT NOT NULL,
+    approved_content_hash       TEXT NOT NULL DEFAULT '',
+    evidence_fingerprints_json  TEXT NOT NULL,
+    analysis_signature_json     TEXT NOT NULL,
+    approved_by                 TEXT NOT NULL,
+    approved_by_name            TEXT NOT NULL,
+    approved_at                 TEXT NOT NULL,
+    released_by                 TEXT NOT NULL,
+    released_at                 TEXT NOT NULL,
+    UNIQUE(release_id, learner_id, scope)
+);
+
+CREATE INDEX IF NOT EXISTS idx_pub_sections_release ON published_report_sections(release_id, learner_id);
+
+CREATE TABLE IF NOT EXISTS report_view_events (
+    view_id      TEXT PRIMARY KEY,
+    release_id   TEXT NOT NULL,
+    class_id     TEXT NOT NULL,
+    learner_id   TEXT NOT NULL,
+    scope        TEXT NOT NULL,
+    teacher_id   TEXT NOT NULL,
+    teacher_name TEXT NOT NULL,
+    viewed_at    TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_view_events_release_learner ON report_view_events(release_id, learner_id, viewed_at);
+
+CREATE TABLE IF NOT EXISTS report_receipts (
+    receipt_id      TEXT PRIMARY KEY,
+    release_id      TEXT NOT NULL,
+    class_id        TEXT NOT NULL,
+    learner_id      TEXT NOT NULL,
+    teacher_id      TEXT NOT NULL,
+    teacher_name    TEXT NOT NULL,
+    subject         TEXT,
+    status          TEXT NOT NULL DEFAULT 'not_viewed',
+    first_viewed_at TEXT,
+    last_viewed_at  TEXT,
+    view_count      INTEGER NOT NULL DEFAULT 0,
+    acknowledged_at TEXT,
+    UNIQUE(release_id, learner_id, teacher_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_receipts_release_learner ON report_receipts(release_id, learner_id);
+
+CREATE TABLE IF NOT EXISTS subject_responses (
+    response_id          TEXT PRIMARY KEY,
+    release_id           TEXT NOT NULL,
+    published_section_id TEXT NOT NULL,
+    class_id             TEXT NOT NULL,
+    learner_id           TEXT NOT NULL,
+    subject              TEXT NOT NULL,
+    teacher_id           TEXT NOT NULL,
+    teacher_name         TEXT NOT NULL,
+    response_type        TEXT NOT NULL,
+    content              TEXT NOT NULL,
+    related_change_id    TEXT,
+    created_at           TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_subject_responses_section ON subject_responses(published_section_id, created_at);
+
+CREATE TABLE IF NOT EXISTS post_release_changes (
+    change_id                    TEXT PRIMARY KEY,
+    release_id                   TEXT NOT NULL,
+    class_id                     TEXT NOT NULL,
+    learner_id                   TEXT NOT NULL,
+    scope                        TEXT NOT NULL,
+    severity                     TEXT NOT NULL,
+    headline                     TEXT NOT NULL,
+    explanation                  TEXT NOT NULL,
+    why_it_matters               TEXT NOT NULL,
+    comparison_json              TEXT NOT NULL,
+    new_evidence_ids_json        TEXT NOT NULL,
+    opened_by_teacher_id         TEXT,
+    opened_by_name               TEXT,
+    opened_at                    TEXT,
+    response_id                  TEXT,
+    response_added_by_name       TEXT,
+    response_added_at            TEXT,
+    reviewed_by_class_teacher_id TEXT,
+    reviewed_by_name             TEXT,
+    reviewed_at                  TEXT,
+    review_resolution_notes      TEXT,
+    superseded_by_release_id     TEXT,
+    superseded_version_number    INTEGER,
+    created_at                   TEXT NOT NULL,
+    UNIQUE(release_id, learner_id, scope)
+);
+
+CREATE INDEX IF NOT EXISTS idx_changes_class ON post_release_changes(class_id, learner_id);
+"""
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS teachers (
@@ -276,6 +459,13 @@ class SQLiteStore:
         """)
         await self.db.execute("CREATE INDEX IF NOT EXISTS idx_manifests_sha256 ON import_manifests(file_sha256)")
         await self.db.execute("CREATE INDEX IF NOT EXISTS idx_manifests_source ON import_manifests(source_system)")
+        await self.db.executescript(_HANDOVER_SCHEMA)
+        async with self.db.execute("PRAGMA table_info(published_report_sections)") as cursor:
+            pub_cols = [row["name"] for row in await cursor.fetchall()]
+        if "approved_content_hash" not in pub_cols:
+            await self.db.execute(
+                "ALTER TABLE published_report_sections ADD COLUMN approved_content_hash TEXT NOT NULL DEFAULT ''"
+            )
 
     async def close(self) -> None:
         """Close the database connection."""
@@ -1256,3 +1446,1193 @@ class SQLiteStore:
                 "generated_at": row["generated_at"],
             }
 
+    # ── Workspace Diagnostics & Reset ──────────────────────────────
+
+    async def get_database_status(
+        self,
+        recent_limit: int = 5,
+        conn: aiosqlite.Connection | None = None,
+    ) -> dict[str, Any]:
+        """Return live counts, freshness timestamps, and most recent activity."""
+        db = conn or self.db
+
+        async def _count(sql: str, params: tuple[Any, ...] = ()) -> int:
+            async with db.execute(sql, params) as cursor:
+                row = await cursor.fetchone()
+                return int(row["cnt"]) if row else 0
+
+        async def _scalar(sql: str) -> str | None:
+            async with db.execute(sql) as cursor:
+                row = await cursor.fetchone()
+                return row[0] if row and row[0] is not None else None
+
+        learners_count = await _count("SELECT COUNT(*) AS cnt FROM learners")
+        evidence_count = await _count("SELECT COUNT(*) AS cnt FROM evidence")
+        patterns_count = await _count("SELECT COUNT(*) AS cnt FROM patterns")
+        review_items_count = await _count("SELECT COUNT(*) AS cnt FROM review_items")
+        pending_reviews_count = await _count(
+            "SELECT COUNT(*) AS cnt FROM review_items WHERE status = 'pending'"
+        )
+        accepted_reviews_count = await _count(
+            "SELECT COUNT(*) AS cnt FROM review_items WHERE status = 'accepted'"
+        )
+        rejected_reviews_count = await _count(
+            "SELECT COUNT(*) AS cnt FROM review_items WHERE status = 'rejected'"
+        )
+        needs_context_reviews_count = await _count(
+            "SELECT COUNT(*) AS cnt FROM review_items WHERE status = 'needs_context'"
+        )
+        candidate_briefs_count = await _count("SELECT COUNT(*) AS cnt FROM candidate_briefs")
+        import_manifests_count = await _count("SELECT COUNT(*) AS cnt FROM import_manifests")
+        audit_entries_count = await _count("SELECT COUNT(*) AS cnt FROM audit_log")
+
+        latest_evidence_recorded_at = await _scalar("SELECT MAX(recorded_at) FROM evidence")
+        latest_evidence_observed_at = await _scalar("SELECT MAX(observed_at) FROM evidence")
+        latest_pattern_generated_at = await _scalar("SELECT MAX(generated_at) FROM patterns")
+        latest_manifest_imported_at = await _scalar("SELECT MAX(imported_at) FROM import_manifests")
+        latest_audit_at = await _scalar("SELECT MAX(timestamp) FROM audit_log")
+
+        recent_evidence: list[dict[str, Any]] = []
+        async with db.execute(
+            """SELECT evidence_id, learner_id, evidence_type, subject,
+                      academic_year, term, source_system, ingestion_method,
+                      source_reference, recorded_at, observed_at
+               FROM evidence
+               ORDER BY recorded_at DESC, rowid DESC
+               LIMIT ?""",
+            (recent_limit,),
+        ) as cursor:
+            async for row in cursor:
+                recent_evidence.append({
+                    "evidence_id": row["evidence_id"],
+                    "learner_id": row["learner_id"],
+                    "evidence_type": row["evidence_type"],
+                    "subject": row["subject"],
+                    "academic_year": row["academic_year"],
+                    "term": row["term"],
+                    "source_system": row["source_system"],
+                    "ingestion_method": row["ingestion_method"],
+                    "source_reference": row["source_reference"],
+                    "recorded_at": row["recorded_at"],
+                    "observed_at": row["observed_at"],
+                })
+
+        recent_audit: list[dict[str, Any]] = []
+        async with db.execute(
+            """SELECT audit_id, timestamp, tool_name, output_reference, approval_state
+               FROM audit_log
+               ORDER BY timestamp DESC, rowid DESC
+               LIMIT ?""",
+            (recent_limit,),
+        ) as cursor:
+            async for row in cursor:
+                recent_audit.append({
+                    "audit_id": row["audit_id"],
+                    "timestamp": row["timestamp"],
+                    "tool_name": row["tool_name"],
+                    "output_reference": row["output_reference"],
+                    "approval_state": row["approval_state"],
+                })
+
+        return {
+            "db_path": self._db_path,
+            "learners_count": learners_count,
+            "evidence_count": evidence_count,
+            "patterns_count": patterns_count,
+            "review_items_count": review_items_count,
+            "pending_reviews_count": pending_reviews_count,
+            "accepted_reviews_count": accepted_reviews_count,
+            "rejected_reviews_count": rejected_reviews_count,
+            "needs_context_reviews_count": needs_context_reviews_count,
+            "candidate_briefs_count": candidate_briefs_count,
+            "import_manifests_count": import_manifests_count,
+            "audit_entries_count": audit_entries_count,
+            "latest_evidence_recorded_at": latest_evidence_recorded_at,
+            "latest_evidence_observed_at": latest_evidence_observed_at,
+            "latest_pattern_generated_at": latest_pattern_generated_at,
+            "latest_manifest_imported_at": latest_manifest_imported_at,
+            "latest_audit_at": latest_audit_at,
+            "recent_evidence": recent_evidence,
+            "recent_audit": recent_audit,
+        }
+
+    async def reset_workspace_data(self, *, actor: str = "system") -> dict[str, int]:
+        """Clear workspace learner/evidence/review/handover data while preserving teacher accounts, classes, assignments, and audit log."""
+        tables = (
+            "post_release_changes",
+            "subject_responses",
+            "report_view_events",
+            "report_receipts",
+            "published_report_sections",
+            "class_releases",
+            "section_reviews",
+            "class_enrollments",
+            "candidate_briefs",
+            "review_items",
+            "patterns",
+            "evidence",
+            "import_manifests",
+            "learners",
+        )
+        cleared: dict[str, int] = {}
+        async with self.transaction() as conn:
+            for table in tables:
+                async with conn.execute(f"SELECT COUNT(*) AS cnt FROM {table}") as cursor:
+                    row = await cursor.fetchone()
+                    cleared[table] = int(row["cnt"]) if row else 0
+                await conn.execute(f"DELETE FROM {table}")
+
+            await self.add_audit_entry(
+                AuditEntry(
+                    tool_name="workspace_reset",
+                    input_summary={"actor": actor, "cleared": cleared},
+                    output_reference=None,
+                    approval_state="reset",
+                ),
+                commit=False,
+                conn=conn,
+            )
+        return cleared
+
+    # ── Classes, Enrollments & Teacher Assignments ─────────────────
+
+    async def add_class(
+        self,
+        school_class: SchoolClass,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> SchoolClass:
+        """Create or preserve a school class cohort."""
+        db = conn or self.db
+        await db.execute(
+            """INSERT OR IGNORE INTO classes
+               (class_id, display_name, grade, academic_year, term, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                school_class.class_id,
+                school_class.display_name,
+                school_class.grade,
+                school_class.academic_year,
+                school_class.term,
+                school_class.created_at.isoformat(),
+            ),
+        )
+        if commit and conn is None:
+            await db.commit()
+        return school_class
+
+    async def get_class(
+        self,
+        class_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> SchoolClass | None:
+        db = conn or self.db
+        async with db.execute("SELECT * FROM classes WHERE class_id = ?", (class_id,)) as cursor:
+            row = await cursor.fetchone()
+            if not row:
+                return None
+            return SchoolClass(
+                class_id=row["class_id"],
+                display_name=row["display_name"],
+                grade=row["grade"],
+                academic_year=row["academic_year"],
+                term=row["term"],
+                created_at=datetime.fromisoformat(row["created_at"]),
+            )
+
+    async def list_classes(self, conn: aiosqlite.Connection | None = None) -> list[SchoolClass]:
+        db = conn or self.db
+        out: list[SchoolClass] = []
+        async with db.execute("SELECT * FROM classes ORDER BY class_id ASC") as cursor:
+            async for row in cursor:
+                out.append(SchoolClass(
+                    class_id=row["class_id"],
+                    display_name=row["display_name"],
+                    grade=row["grade"],
+                    academic_year=row["academic_year"],
+                    term=row["term"],
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                ))
+        return out
+
+    async def enroll_learner(
+        self,
+        class_id: str,
+        learner_id: str,
+        *,
+        enrolled_at: datetime | None = None,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> ClassEnrollment:
+        """Idempotently enroll a learner in a school class."""
+        db = conn or self.db
+        ts = (enrolled_at or datetime.now(timezone.utc)).isoformat()
+        await db.execute(
+            "INSERT OR IGNORE INTO class_enrollments (class_id, learner_id, enrolled_at) VALUES (?, ?, ?)",
+            (class_id, learner_id, ts),
+        )
+        if commit and conn is None:
+            await db.commit()
+        return ClassEnrollment(
+            class_id=class_id,
+            learner_id=learner_id,
+            enrolled_at=datetime.fromisoformat(ts),
+        )
+
+    async def get_class_learners(
+        self,
+        class_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[Learner]:
+        """List all learners enrolled in a class ordered by learner_id."""
+        db = conn or self.db
+        out: list[Learner] = []
+        async with db.execute(
+            """SELECT l.learner_id, l.display_name, l.created_at
+               FROM learners l
+               JOIN class_enrollments ce ON ce.learner_id = l.learner_id
+               WHERE ce.class_id = ?
+               ORDER BY l.learner_id ASC""",
+            (class_id,),
+        ) as cursor:
+            async for row in cursor:
+                out.append(Learner(
+                    learner_id=row["learner_id"],
+                    display_name=row["display_name"],
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                ))
+        return out
+
+    async def get_learner_classes(
+        self,
+        learner_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[SchoolClass]:
+        """List classes in which a learner is enrolled."""
+        db = conn or self.db
+        out: list[SchoolClass] = []
+        async with db.execute(
+            """SELECT c.*
+               FROM classes c
+               JOIN class_enrollments ce ON ce.class_id = c.class_id
+               WHERE ce.learner_id = ?
+               ORDER BY c.academic_year DESC, c.term DESC, c.class_id ASC""",
+            (learner_id,),
+        ) as cursor:
+            async for row in cursor:
+                out.append(SchoolClass(
+                    class_id=row["class_id"],
+                    display_name=row["display_name"],
+                    grade=row["grade"],
+                    academic_year=row["academic_year"],
+                    term=row["term"],
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                ))
+        return out
+
+    async def add_teacher_assignment(
+        self,
+        assignment: TeacherAssignment,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> TeacherAssignment:
+        """Idempotently record a teacher's class/subject responsibility."""
+        db = conn or self.db
+        if assignment.subject is None:
+            sql_check = (
+                "SELECT assignment_id FROM teacher_assignments "
+                "WHERE teacher_id = ? AND class_id = ? AND role = ? AND subject IS NULL"
+            )
+            params: tuple[Any, ...] = (assignment.teacher_id, assignment.class_id, assignment.role.value)
+        else:
+            sql_check = (
+                "SELECT assignment_id FROM teacher_assignments "
+                "WHERE teacher_id = ? AND class_id = ? AND role = ? AND subject = ?"
+            )
+            params = (assignment.teacher_id, assignment.class_id, assignment.role.value, assignment.subject)
+
+        async with db.execute(sql_check, params) as cursor:
+            existing = await cursor.fetchone()
+            if existing:
+                return assignment.model_copy(update={"assignment_id": existing["assignment_id"]})
+
+        await db.execute(
+            """INSERT INTO teacher_assignments
+               (assignment_id, teacher_id, class_id, role, subject, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                assignment.assignment_id,
+                assignment.teacher_id,
+                assignment.class_id,
+                assignment.role.value,
+                assignment.subject,
+                assignment.created_at.isoformat(),
+            ),
+        )
+        if commit and conn is None:
+            await db.commit()
+        return assignment
+
+    async def get_teacher_assignments(
+        self,
+        teacher_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[TeacherAssignment]:
+        db = conn or self.db
+        out: list[TeacherAssignment] = []
+        async with db.execute(
+            "SELECT * FROM teacher_assignments WHERE teacher_id = ? ORDER BY class_id ASC, role ASC, subject ASC",
+            (teacher_id,),
+        ) as cursor:
+            async for row in cursor:
+                out.append(TeacherAssignment(
+                    assignment_id=row["assignment_id"],
+                    teacher_id=row["teacher_id"],
+                    class_id=row["class_id"],
+                    role=TeacherRole(row["role"]),
+                    subject=row["subject"],
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                ))
+        return out
+
+    async def get_class_assignments(
+        self,
+        class_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[TeacherAssignment]:
+        db = conn or self.db
+        out: list[TeacherAssignment] = []
+        async with db.execute(
+            "SELECT * FROM teacher_assignments WHERE class_id = ? ORDER BY role ASC, subject ASC, teacher_id ASC",
+            (class_id,),
+        ) as cursor:
+            async for row in cursor:
+                out.append(TeacherAssignment(
+                    assignment_id=row["assignment_id"],
+                    teacher_id=row["teacher_id"],
+                    class_id=row["class_id"],
+                    role=TeacherRole(row["role"]),
+                    subject=row["subject"],
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                ))
+        return out
+
+    # ── Section Reviews (Pre-Release Readiness Slots) ───────────────
+
+    @staticmethod
+    def _row_to_section_review(row: aiosqlite.Row) -> SectionReview:
+        return SectionReview(
+            section_review_id=row["section_review_id"],
+            class_id=row["class_id"],
+            learner_id=row["learner_id"],
+            scope=row["scope"],
+            review_state=SectionReviewState(row["review_state"]),
+            approved_summary=row["approved_summary"],
+            teacher_notes=row["teacher_notes"],
+            missing_evidence_disclosure=row["missing_evidence_disclosure"],
+            citations=tuple(json.loads(row["citations_json"])),
+            reviewed_by=row["reviewed_by"],
+            reviewed_at=datetime.fromisoformat(row["reviewed_at"]) if row["reviewed_at"] else None,
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    async def upsert_section_review(
+        self,
+        section: SectionReview,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> SectionReview:
+        """Create or update a pre-release Student/Subject Review slot."""
+        db = conn or self.db
+        await db.execute(
+            """INSERT INTO section_reviews
+               (section_review_id, class_id, learner_id, scope, review_state,
+                approved_summary, teacher_notes, missing_evidence_disclosure,
+                citations_json, reviewed_by, reviewed_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(class_id, learner_id, scope) DO UPDATE SET
+                   review_state = excluded.review_state,
+                   approved_summary = excluded.approved_summary,
+                   teacher_notes = excluded.teacher_notes,
+                   missing_evidence_disclosure = excluded.missing_evidence_disclosure,
+                   citations_json = excluded.citations_json,
+                   reviewed_by = excluded.reviewed_by,
+                   reviewed_at = excluded.reviewed_at,
+                   updated_at = excluded.updated_at""",
+            (
+                section.section_review_id,
+                section.class_id,
+                section.learner_id,
+                section.scope,
+                section.review_state.value,
+                section.approved_summary,
+                section.teacher_notes,
+                section.missing_evidence_disclosure,
+                json.dumps(list(section.citations)),
+                section.reviewed_by,
+                section.reviewed_at.isoformat() if section.reviewed_at else None,
+                section.updated_at.isoformat(),
+            ),
+        )
+        if commit and conn is None:
+            await db.commit()
+        fetched = await self.get_section_review(section.class_id, section.learner_id, section.scope, conn=conn)
+        return fetched or section
+
+    async def get_section_review(
+        self,
+        class_id: str,
+        learner_id: str,
+        scope: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> SectionReview | None:
+        db = conn or self.db
+        async with db.execute(
+            "SELECT * FROM section_reviews WHERE class_id = ? AND learner_id = ? AND scope = ?",
+            (class_id, learner_id, scope),
+        ) as cursor:
+            row = await cursor.fetchone()
+            return self._row_to_section_review(row) if row else None
+
+    async def get_section_reviews_for_class(
+        self,
+        class_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[SectionReview]:
+        db = conn or self.db
+        out: list[SectionReview] = []
+        async with db.execute(
+            "SELECT * FROM section_reviews WHERE class_id = ? ORDER BY learner_id ASC, scope ASC",
+            (class_id,),
+        ) as cursor:
+            async for row in cursor:
+                out.append(self._row_to_section_review(row))
+        return out
+
+    async def get_section_reviews_for_learner(
+        self,
+        class_id: str,
+        learner_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[SectionReview]:
+        db = conn or self.db
+        out: list[SectionReview] = []
+        async with db.execute(
+            "SELECT * FROM section_reviews WHERE class_id = ? AND learner_id = ? ORDER BY scope ASC",
+            (class_id, learner_id),
+        ) as cursor:
+            async for row in cursor:
+                out.append(self._row_to_section_review(row))
+        return out
+
+    # ── Class Releases & Frozen Published Report Sections ──────────
+
+    @staticmethod
+    def _row_to_class_release(row: aiosqlite.Row) -> ClassRelease:
+        return ClassRelease(
+            release_id=row["release_id"],
+            class_id=row["class_id"],
+            version_number=row["version_number"],
+            released_by=row["released_by"],
+            released_by_name=row["released_by_name"],
+            released_at=datetime.fromisoformat(row["released_at"]),
+            frozen_enrollment=tuple(json.loads(row["frozen_enrollment_json"])),
+            frozen_subjects=tuple(json.loads(row["frozen_subjects_json"])),
+            notes=row["notes"],
+        )
+
+    @staticmethod
+    def _row_to_published_section(row: aiosqlite.Row) -> PublishedReportSection:
+        return PublishedReportSection(
+            published_section_id=row["published_section_id"],
+            release_id=row["release_id"],
+            class_id=row["class_id"],
+            learner_id=row["learner_id"],
+            scope=row["scope"],
+            section_title=row["section_title"],
+            review_state=SectionReviewState(row["review_state"]),
+            evidence_availability=json.loads(row["evidence_availability_json"]),
+            approved_summary=row["approved_summary"],
+            teacher_notes=row["teacher_notes"],
+            missing_evidence_disclosure=row["missing_evidence_disclosure"],
+            citations=tuple(json.loads(row["citations_json"])),
+            approved_content_hash=row["approved_content_hash"] if "approved_content_hash" in row.keys() else "",
+            evidence_fingerprints=json.loads(row["evidence_fingerprints_json"]),
+            analysis_signature=json.loads(row["analysis_signature_json"]),
+            approved_by=row["approved_by"],
+            approved_by_name=row["approved_by_name"],
+            approved_at=datetime.fromisoformat(row["approved_at"]),
+            released_by=row["released_by"],
+            released_at=datetime.fromisoformat(row["released_at"]),
+        )
+
+    async def create_class_release(
+        self,
+        release: ClassRelease,
+        sections: Sequence[PublishedReportSection],
+        initial_receipts: Sequence[ReportReceipt],
+        *,
+        conn: aiosqlite.Connection | None = None,
+    ) -> ClassRelease:
+        """Atomically persist a frozen ClassRelease, its PublishedReportSections, and initial ReportReceipts."""
+        async def _write(c: aiosqlite.Connection) -> None:
+            await c.execute(
+                """INSERT INTO class_releases
+                   (release_id, class_id, version_number, released_by, released_by_name,
+                    released_at, frozen_enrollment_json, frozen_subjects_json, notes)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    release.release_id,
+                    release.class_id,
+                    release.version_number,
+                    release.released_by,
+                    release.released_by_name,
+                    release.released_at.isoformat(),
+                    json.dumps(list(release.frozen_enrollment)),
+                    json.dumps(list(release.frozen_subjects)),
+                    release.notes,
+                ),
+            )
+            for sec in sections:
+                await c.execute(
+                    """INSERT INTO published_report_sections
+                       (published_section_id, release_id, class_id, learner_id, scope,
+                        section_title, review_state, evidence_availability_json,
+                        approved_summary, teacher_notes, missing_evidence_disclosure,
+                        citations_json, approved_content_hash, evidence_fingerprints_json,
+                        analysis_signature_json, approved_by, approved_by_name,
+                        approved_at, released_by, released_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        sec.published_section_id,
+                        sec.release_id,
+                        sec.class_id,
+                        sec.learner_id,
+                        sec.scope,
+                        sec.section_title,
+                        sec.review_state.value,
+                        json.dumps(sec.evidence_availability),
+                        sec.approved_summary,
+                        sec.teacher_notes,
+                        sec.missing_evidence_disclosure,
+                        json.dumps(list(sec.citations)),
+                        sec.approved_content_hash,
+                        json.dumps(sec.evidence_fingerprints),
+                        json.dumps(sec.analysis_signature),
+                        sec.approved_by,
+                        sec.approved_by_name,
+                        sec.approved_at.isoformat(),
+                        sec.released_by,
+                        sec.released_at.isoformat(),
+                    ),
+                )
+            for rc in initial_receipts:
+                await c.execute(
+                    """INSERT OR IGNORE INTO report_receipts
+                       (receipt_id, release_id, class_id, learner_id, teacher_id,
+                        teacher_name, subject, status, first_viewed_at, last_viewed_at,
+                        view_count, acknowledged_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        rc.receipt_id,
+                        rc.release_id,
+                        rc.class_id,
+                        rc.learner_id,
+                        rc.teacher_id,
+                        rc.teacher_name,
+                        rc.subject,
+                        rc.status.value,
+                        rc.first_viewed_at.isoformat() if rc.first_viewed_at else None,
+                        rc.last_viewed_at.isoformat() if rc.last_viewed_at else None,
+                        rc.view_count,
+                        rc.acknowledged_at.isoformat() if rc.acknowledged_at else None,
+                    ),
+                )
+
+        if conn is not None:
+            await _write(conn)
+        else:
+            async with self.transaction() as c:
+                await _write(c)
+        return release
+
+    async def get_latest_class_release(
+        self,
+        class_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> ClassRelease | None:
+        db = conn or self.db
+        async with db.execute(
+            "SELECT * FROM class_releases WHERE class_id = ? ORDER BY version_number DESC LIMIT 1",
+            (class_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+            return self._row_to_class_release(row) if row else None
+
+    async def get_class_release(
+        self,
+        release_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> ClassRelease | None:
+        db = conn or self.db
+        async with db.execute(
+            "SELECT * FROM class_releases WHERE release_id = ?",
+            (release_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+            return self._row_to_class_release(row) if row else None
+
+    async def list_class_releases(
+        self,
+        class_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[ClassRelease]:
+        db = conn or self.db
+        out: list[ClassRelease] = []
+        async with db.execute(
+            "SELECT * FROM class_releases WHERE class_id = ? ORDER BY version_number DESC",
+            (class_id,),
+        ) as cursor:
+            async for row in cursor:
+                out.append(self._row_to_class_release(row))
+        return out
+
+    async def get_published_sections_for_release(
+        self,
+        release_id: str,
+        learner_id: str | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[PublishedReportSection]:
+        db = conn or self.db
+        if learner_id is not None:
+            sql = "SELECT * FROM published_report_sections WHERE release_id = ? AND learner_id = ? ORDER BY scope ASC"
+            params: tuple[Any, ...] = (release_id, learner_id)
+        else:
+            sql = "SELECT * FROM published_report_sections WHERE release_id = ? ORDER BY learner_id ASC, scope ASC"
+            params = (release_id,)
+        out: list[PublishedReportSection] = []
+        async with db.execute(sql, params) as cursor:
+            async for row in cursor:
+                out.append(self._row_to_published_section(row))
+        return out
+
+    async def get_published_sections_for_learner(
+        self,
+        learner_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> tuple[ClassRelease | None, list[PublishedReportSection]]:
+        """Return latest release covering learner_id along with its frozen sections."""
+        db = conn or self.db
+        async with db.execute(
+            """SELECT r.*
+               FROM class_releases r
+               JOIN published_report_sections ps ON ps.release_id = r.release_id
+               WHERE ps.learner_id = ?
+               ORDER BY r.version_number DESC, r.released_at DESC
+               LIMIT 1""",
+            (learner_id,),
+        ) as cursor:
+            rel_row = await cursor.fetchone()
+            if not rel_row:
+                return None, []
+            release = self._row_to_class_release(rel_row)
+        sections = await self.get_published_sections_for_release(release.release_id, learner_id=learner_id, conn=conn)
+        return release, sections
+
+    # ── Viewing History & Separate Acknowledgments ──────────────────
+
+    @staticmethod
+    def _row_to_view_event(row: aiosqlite.Row) -> ReportViewEvent:
+        return ReportViewEvent(
+            view_id=row["view_id"],
+            release_id=row["release_id"],
+            class_id=row["class_id"],
+            learner_id=row["learner_id"],
+            scope=row["scope"],
+            teacher_id=row["teacher_id"],
+            teacher_name=row["teacher_name"],
+            viewed_at=datetime.fromisoformat(row["viewed_at"]),
+        )
+
+    @staticmethod
+    def _row_to_receipt(row: aiosqlite.Row) -> ReportReceipt:
+        return ReportReceipt(
+            receipt_id=row["receipt_id"],
+            release_id=row["release_id"],
+            class_id=row["class_id"],
+            learner_id=row["learner_id"],
+            teacher_id=row["teacher_id"],
+            teacher_name=row["teacher_name"],
+            subject=row["subject"],
+            status=ReceiptStatus(row["status"]),
+            first_viewed_at=datetime.fromisoformat(row["first_viewed_at"]) if row["first_viewed_at"] else None,
+            last_viewed_at=datetime.fromisoformat(row["last_viewed_at"]) if row["last_viewed_at"] else None,
+            view_count=int(row["view_count"]),
+            acknowledged_at=datetime.fromisoformat(row["acknowledged_at"]) if row["acknowledged_at"] else None,
+        )
+
+    async def record_report_view_event(
+        self,
+        event: ReportViewEvent,
+        *,
+        subject: str | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> tuple[ReportViewEvent, ReportReceipt]:
+        """Append viewing event and update receipt without downgrading acknowledgment."""
+        ts = event.viewed_at.isoformat()
+        import uuid as _uuid
+
+        async def _write(c: aiosqlite.Connection) -> None:
+            await c.execute(
+                """INSERT INTO report_view_events
+                   (view_id, release_id, class_id, learner_id, scope, teacher_id, teacher_name, viewed_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    event.view_id,
+                    event.release_id,
+                    event.class_id,
+                    event.learner_id,
+                    event.scope,
+                    event.teacher_id,
+                    event.teacher_name,
+                    ts,
+                ),
+            )
+            await c.execute(
+                """INSERT INTO report_receipts
+                   (receipt_id, release_id, class_id, learner_id, teacher_id,
+                    teacher_name, subject, status, first_viewed_at, last_viewed_at,
+                    view_count, acknowledged_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 'viewed', ?, ?, 1, NULL)
+                   ON CONFLICT(release_id, learner_id, teacher_id) DO UPDATE SET
+                       teacher_name = excluded.teacher_name,
+                       first_viewed_at = COALESCE(report_receipts.first_viewed_at, excluded.first_viewed_at),
+                       last_viewed_at = excluded.last_viewed_at,
+                       view_count = report_receipts.view_count + 1,
+                       status = CASE
+                           WHEN report_receipts.status = 'acknowledged' THEN 'acknowledged'
+                           ELSE 'viewed'
+                       END""",
+                (
+                    str(_uuid.uuid4()),
+                    event.release_id,
+                    event.class_id,
+                    event.learner_id,
+                    event.teacher_id,
+                    event.teacher_name,
+                    subject,
+                    ts,
+                    ts,
+                ),
+            )
+
+        if conn is not None:
+            await _write(conn)
+        else:
+            async with self.transaction() as c:
+                await _write(c)
+
+        receipt = await self.get_report_receipt(event.release_id, event.learner_id, event.teacher_id, conn=conn)
+        assert receipt is not None
+        return event, receipt
+
+    async def acknowledge_report_receipt(
+        self,
+        *,
+        release_id: str,
+        class_id: str,
+        learner_id: str,
+        teacher_id: str,
+        teacher_name: str,
+        subject: str | None = None,
+        acknowledged_at: datetime | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> ReportReceipt:
+        """Record explicit receipt acknowledgment separately from viewing."""
+        ts = (acknowledged_at or datetime.now(timezone.utc)).isoformat()
+        import uuid as _uuid
+
+        async def _write(c: aiosqlite.Connection) -> None:
+            await c.execute(
+                """INSERT INTO report_receipts
+                   (receipt_id, release_id, class_id, learner_id, teacher_id,
+                    teacher_name, subject, status, first_viewed_at, last_viewed_at,
+                    view_count, acknowledged_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 'acknowledged', ?, ?, 1, ?)
+                   ON CONFLICT(release_id, learner_id, teacher_id) DO UPDATE SET
+                       teacher_name = excluded.teacher_name,
+                       status = 'acknowledged',
+                       first_viewed_at = COALESCE(report_receipts.first_viewed_at, excluded.first_viewed_at),
+                       last_viewed_at = COALESCE(report_receipts.last_viewed_at, excluded.last_viewed_at),
+                       view_count = CASE
+                           WHEN report_receipts.view_count = 0 THEN 1
+                           ELSE report_receipts.view_count
+                       END,
+                       acknowledged_at = COALESCE(report_receipts.acknowledged_at, excluded.acknowledged_at)""",
+                (
+                    str(_uuid.uuid4()),
+                    release_id,
+                    class_id,
+                    learner_id,
+                    teacher_id,
+                    teacher_name,
+                    subject,
+                    ts,
+                    ts,
+                    ts,
+                ),
+            )
+
+        if conn is not None:
+            await _write(conn)
+        else:
+            async with self.transaction() as c:
+                await _write(c)
+
+        receipt = await self.get_report_receipt(release_id, learner_id, teacher_id, conn=conn)
+        assert receipt is not None
+        return receipt
+
+    async def get_report_view_events(
+        self,
+        release_id: str,
+        learner_id: str | None = None,
+        scope: str | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[ReportViewEvent]:
+        db = conn or self.db
+        clauses = ["release_id = ?"]
+        params: list[Any] = [release_id]
+        if learner_id is not None:
+            clauses.append("learner_id = ?")
+            params.append(learner_id)
+        if scope is not None:
+            clauses.append("scope = ?")
+            params.append(scope)
+        sql = f"SELECT * FROM report_view_events WHERE {' AND '.join(clauses)} ORDER BY viewed_at ASC, rowid ASC"
+        out: list[ReportViewEvent] = []
+        async with db.execute(sql, tuple(params)) as cursor:
+            async for row in cursor:
+                out.append(self._row_to_view_event(row))
+        return out
+
+    async def get_report_receipt(
+        self,
+        release_id: str,
+        learner_id: str,
+        teacher_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> ReportReceipt | None:
+        db = conn or self.db
+        async with db.execute(
+            "SELECT * FROM report_receipts WHERE release_id = ? AND learner_id = ? AND teacher_id = ?",
+            (release_id, learner_id, teacher_id),
+        ) as cursor:
+            row = await cursor.fetchone()
+            return self._row_to_receipt(row) if row else None
+
+    async def get_report_receipts_for_release(
+        self,
+        release_id: str,
+        learner_id: str | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[ReportReceipt]:
+        db = conn or self.db
+        if learner_id is not None:
+            sql = "SELECT * FROM report_receipts WHERE release_id = ? AND learner_id = ? ORDER BY subject ASC, teacher_name ASC"
+            params: tuple[Any, ...] = (release_id, learner_id)
+        else:
+            sql = "SELECT * FROM report_receipts WHERE release_id = ? ORDER BY learner_id ASC, subject ASC, teacher_name ASC"
+            params = (release_id,)
+        out: list[ReportReceipt] = []
+        async with db.execute(sql, params) as cursor:
+            async for row in cursor:
+                out.append(self._row_to_receipt(row))
+        return out
+
+    # ── Attached Subject Responses ────────────────────────────────
+
+    @staticmethod
+    def _row_to_subject_response(row: aiosqlite.Row) -> SubjectResponse:
+        return SubjectResponse(
+            response_id=row["response_id"],
+            release_id=row["release_id"],
+            published_section_id=row["published_section_id"],
+            class_id=row["class_id"],
+            learner_id=row["learner_id"],
+            subject=row["subject"],
+            teacher_id=row["teacher_id"],
+            teacher_name=row["teacher_name"],
+            response_type=SubjectResponseType(row["response_type"]),
+            content=row["content"],
+            related_change_id=row["related_change_id"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+        )
+
+    async def add_subject_response(
+        self,
+        response: SubjectResponse,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> SubjectResponse:
+        db = conn or self.db
+        await db.execute(
+            """INSERT INTO subject_responses
+               (response_id, release_id, published_section_id, class_id, learner_id,
+                subject, teacher_id, teacher_name, response_type, content,
+                related_change_id, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                response.response_id,
+                response.release_id,
+                response.published_section_id,
+                response.class_id,
+                response.learner_id,
+                response.subject,
+                response.teacher_id,
+                response.teacher_name,
+                response.response_type.value,
+                response.content,
+                response.related_change_id,
+                response.created_at.isoformat(),
+            ),
+        )
+        if commit and conn is None:
+            await db.commit()
+        return response
+
+    async def get_subject_responses_for_release(
+        self,
+        release_id: str,
+        learner_id: str | None = None,
+        subject: str | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[SubjectResponse]:
+        db = conn or self.db
+        clauses = ["release_id = ?"]
+        params: list[Any] = [release_id]
+        if learner_id is not None:
+            clauses.append("learner_id = ?")
+            params.append(learner_id)
+        if subject is not None:
+            clauses.append("subject = ?")
+            params.append(subject)
+        sql = f"SELECT * FROM subject_responses WHERE {' AND '.join(clauses)} ORDER BY created_at ASC, rowid ASC"
+        out: list[SubjectResponse] = []
+        async with db.execute(sql, tuple(params)) as cursor:
+            async for row in cursor:
+                out.append(self._row_to_subject_response(row))
+        return out
+
+    # ── Post-Release Changes & 5-Step Progress Lifecycle ──────────
+
+    @staticmethod
+    def _row_to_post_release_change(row: aiosqlite.Row) -> PostReleaseChange:
+        return PostReleaseChange(
+            change_id=row["change_id"],
+            release_id=row["release_id"],
+            class_id=row["class_id"],
+            learner_id=row["learner_id"],
+            scope=row["scope"],
+            severity=DiffSeverity(row["severity"]),
+            headline=row["headline"],
+            explanation=row["explanation"],
+            why_it_matters=row["why_it_matters"],
+            comparison=json.loads(row["comparison_json"]),
+            new_evidence_ids=tuple(json.loads(row["new_evidence_ids_json"])),
+            opened_by_teacher_id=row["opened_by_teacher_id"],
+            opened_by_name=row["opened_by_name"],
+            opened_at=datetime.fromisoformat(row["opened_at"]) if row["opened_at"] else None,
+            response_id=row["response_id"],
+            response_added_by_name=row["response_added_by_name"],
+            response_added_at=datetime.fromisoformat(row["response_added_at"]) if row["response_added_at"] else None,
+            reviewed_by_class_teacher_id=row["reviewed_by_class_teacher_id"],
+            reviewed_by_name=row["reviewed_by_name"],
+            reviewed_at=datetime.fromisoformat(row["reviewed_at"]) if row["reviewed_at"] else None,
+            review_resolution_notes=row["review_resolution_notes"],
+            superseded_by_release_id=row["superseded_by_release_id"],
+            superseded_version_number=row["superseded_version_number"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+        )
+
+    async def upsert_post_release_change(
+        self,
+        change: PostReleaseChange,
+        commit: bool = True,
+        conn: aiosqlite.Connection | None = None,
+    ) -> PostReleaseChange:
+        db = conn or self.db
+        await db.execute(
+            """INSERT INTO post_release_changes
+               (change_id, release_id, class_id, learner_id, scope, severity,
+                headline, explanation, why_it_matters, comparison_json,
+                new_evidence_ids_json, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(release_id, learner_id, scope) DO UPDATE SET
+                   severity = excluded.severity,
+                   headline = excluded.headline,
+                   explanation = excluded.explanation,
+                   why_it_matters = excluded.why_it_matters,
+                   comparison_json = excluded.comparison_json,
+                   new_evidence_ids_json = excluded.new_evidence_ids_json""",
+            (
+                change.change_id,
+                change.release_id,
+                change.class_id,
+                change.learner_id,
+                change.scope,
+                change.severity.value,
+                change.headline,
+                change.explanation,
+                change.why_it_matters,
+                json.dumps(change.comparison),
+                json.dumps(list(change.new_evidence_ids)),
+                change.created_at.isoformat(),
+            ),
+        )
+        if commit and conn is None:
+            await db.commit()
+        async with db.execute(
+            "SELECT * FROM post_release_changes WHERE release_id = ? AND learner_id = ? AND scope = ?",
+            (change.release_id, change.learner_id, change.scope),
+        ) as cursor:
+            row = await cursor.fetchone()
+            assert row is not None
+            return self._row_to_post_release_change(row)
+
+    async def get_post_release_changes(
+        self,
+        *,
+        class_id: str | None = None,
+        release_id: str | None = None,
+        learner_id: str | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> list[PostReleaseChange]:
+        db = conn or self.db
+        clauses: list[str] = []
+        params: list[Any] = []
+        if class_id is not None:
+            clauses.append("class_id = ?")
+            params.append(class_id)
+        if release_id is not None:
+            clauses.append("release_id = ?")
+            params.append(release_id)
+        if learner_id is not None:
+            clauses.append("learner_id = ?")
+            params.append(learner_id)
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        sql = f"SELECT * FROM post_release_changes {where} ORDER BY created_at DESC, rowid DESC"
+        out: list[PostReleaseChange] = []
+        async with db.execute(sql, tuple(params)) as cursor:
+            async for row in cursor:
+                out.append(self._row_to_post_release_change(row))
+        return out
+
+    async def get_post_release_change_by_id(
+        self,
+        change_id: str,
+        conn: aiosqlite.Connection | None = None,
+    ) -> PostReleaseChange | None:
+        db = conn or self.db
+        async with db.execute("SELECT * FROM post_release_changes WHERE change_id = ?", (change_id,)) as cursor:
+            row = await cursor.fetchone()
+            return self._row_to_post_release_change(row) if row else None
+
+    async def mark_change_opened(
+        self,
+        *,
+        release_id: str,
+        learner_id: str,
+        scope: str,
+        teacher_id: str,
+        teacher_name: str,
+        opened_at: datetime | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> None:
+        db = conn or self.db
+        ts = (opened_at or datetime.now(timezone.utc)).isoformat()
+        await db.execute(
+            """UPDATE post_release_changes
+               SET opened_by_teacher_id = COALESCE(opened_by_teacher_id, ?),
+                   opened_by_name = COALESCE(opened_by_name, ?),
+                   opened_at = COALESCE(opened_at, ?)
+               WHERE release_id = ? AND learner_id = ? AND scope = ?""",
+            (teacher_id, teacher_name, ts, release_id, learner_id, scope),
+        )
+        if conn is None:
+            await db.commit()
+
+    async def mark_change_response_added(
+        self,
+        *,
+        release_id: str,
+        learner_id: str,
+        scope: str,
+        response_id: str,
+        teacher_name: str,
+        added_at: datetime | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> None:
+        db = conn or self.db
+        ts = (added_at or datetime.now(timezone.utc)).isoformat()
+        await db.execute(
+            """UPDATE post_release_changes
+               SET response_id = COALESCE(response_id, ?),
+                   response_added_by_name = COALESCE(response_added_by_name, ?),
+                   response_added_at = COALESCE(response_added_at, ?)
+               WHERE release_id = ? AND learner_id = ? AND scope = ?""",
+            (response_id, teacher_name, ts, release_id, learner_id, scope),
+        )
+        if conn is None:
+            await db.commit()
+
+    async def mark_change_reviewed(
+        self,
+        *,
+        change_id: str,
+        teacher_id: str,
+        teacher_name: str,
+        notes: str | None = None,
+        reviewed_at: datetime | None = None,
+        conn: aiosqlite.Connection | None = None,
+    ) -> PostReleaseChange | None:
+        db = conn or self.db
+        ts = (reviewed_at or datetime.now(timezone.utc)).isoformat()
+        await db.execute(
+            """UPDATE post_release_changes
+               SET reviewed_by_class_teacher_id = ?,
+                   reviewed_by_name = ?,
+                   reviewed_at = ?,
+                   review_resolution_notes = ?
+               WHERE change_id = ?""",
+            (teacher_id, teacher_name, ts, notes, change_id),
+        )
+        if conn is None:
+            await db.commit()
+        return await self.get_post_release_change_by_id(change_id, conn=conn)
+
+    async def mark_changes_superseded(
+        self,
+        *,
+        class_id: str,
+        superseded_by_release_id: str,
+        superseded_version_number: int,
+        conn: aiosqlite.Connection | None = None,
+    ) -> None:
+        db = conn or self.db
+        await db.execute(
+            """UPDATE post_release_changes
+               SET superseded_by_release_id = ?,
+                   superseded_version_number = ?
+               WHERE class_id = ?
+                 AND release_id != ?
+                 AND superseded_by_release_id IS NULL""",
+            (
+                superseded_by_release_id,
+                superseded_version_number,
+                class_id,
+                superseded_by_release_id,
+            ),
+        )
+        if conn is None:
+            await db.commit()

@@ -55,13 +55,13 @@ async def _logged_in_client(app, teacher_id: str, pin: str) -> httpx.AsyncClient
 
 @pytest_asyncio.fixture
 async def auth_client(tmp_path: Path) -> AsyncGenerator[httpx.AsyncClient, None]:
-    """Authenticated client (TCH-BANDA) with a seeded pending review."""
+    """Authenticated client (TCH-OCHIENG, class teacher) with a seeded pending review."""
     db_file = str(tmp_path / "auth.db")
     app = _make_app(db_file)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
-            r = await client.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
+            r = await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             assert r.status_code == 200, r.text
             # Seed a pending review
             await client.post("/api/learners/LRN-001/generate", json={"mode": "mock"})
@@ -84,7 +84,7 @@ async def test_valid_accept_decision(auth_client: httpx.AsyncClient):
     assert resp.status_code == 200, resp.text
     data = resp.json()
     assert data["status"] == "accepted"
-    assert data["reviewer_id"] == "TCH-BANDA"
+    assert data["reviewer_id"] == "TCH-OCHIENG"
     assert len(data["approved_content_hash"]) == 64
 
 
@@ -133,8 +133,11 @@ async def test_unauthenticated_decision_rejected(tmp_path: Path):
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
+            assert (await client.post("/api/learners/LRN-001/generate", json={"mode": "mock"})).status_code == 401
+            await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             await client.post("/api/learners/LRN-001/generate", json={"mode": "mock"})
             rev_id = await _first_pending(client, "LRN-001")
+            await client.post("/api/auth/logout")
             resp = await client.post(
                 f"/api/reviews/{rev_id}/decision",
                 json={"status": "accepted"},
@@ -388,7 +391,7 @@ async def test_approved_handover_survives_restart(tmp_path: Path):
     # First boot: generate + accept
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
-            await client.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
+            await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             await client.post("/api/learners/LRN-001/generate", json={"mode": "mock"})
             rev_id = await _first_pending(client, "LRN-001")
             dec = await client.post(
@@ -402,11 +405,12 @@ async def test_approved_handover_survives_restart(tmp_path: Path):
     transport2 = httpx.ASGITransport(app=app2)
     async with httpx.AsyncClient(transport=transport2, base_url="http://testserver") as client2:
         async with app2.router.lifespan_context(app2):
+            await client2.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             handover = await client2.get("/api/learners/LRN-001/handover")
             assert handover.status_code == 200
             data = handover.json()
             assert data["accepted_pattern_count"] == 1
-            assert data["patterns"][0]["review"]["reviewer_id"] == "TCH-BANDA"
+            assert data["patterns"][0]["review"]["reviewer_id"] == "TCH-OCHIENG"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -466,7 +470,7 @@ async def test_teacher_correction_after_initial_decision(tmp_path: Path):
 
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
-            await client.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
+            await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             await client.post("/api/learners/LRN-001/generate", json={"mode": "mock"})
 
             # Step 1: initial decision — needs_context at revision 0
@@ -505,7 +509,7 @@ async def test_teacher_correction_after_initial_decision(tmp_path: Path):
             assert corr_resp.status_code == 200, corr_resp.text
             corr_data = corr_resp.json()
             assert corr_data["status"] == "accepted"
-            assert corr_data["reviewer_id"] == "TCH-BANDA"
+            assert corr_data["reviewer_id"] == "TCH-OCHIENG"
             assert corr_data["revision"] == 2  # incremented from 1 → 2
             assert len(corr_data["approved_content_hash"]) == 64
 
@@ -514,7 +518,7 @@ async def test_teacher_correction_after_initial_decision(tmp_path: Path):
             assert handover.status_code == 200
             hdata = handover.json()
             assert hdata["accepted_pattern_count"] == 1
-            assert hdata["patterns"][0]["review"]["reviewer_id"] == "TCH-BANDA"
+            assert hdata["patterns"][0]["review"]["reviewer_id"] == "TCH-OCHIENG"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -535,7 +539,7 @@ async def test_stale_correction_returns_conflict(tmp_path: Path):
 
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
-            await client.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
+            await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             await client.post("/api/learners/LRN-001/generate", json={"mode": "mock"})
 
             # Initial decision at revision 0
@@ -579,7 +583,7 @@ async def test_stale_initial_decision_returns_conflict(tmp_path: Path):
 
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         async with app.router.lifespan_context(app):
-            await client.post("/api/auth/login", json={"teacher_id": "TCH-BANDA", "pin": "1234"})
+            await client.post("/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"})
             await client.post("/api/learners/LRN-001/generate", json={"mode": "mock"})
 
             rev_id = await _first_pending(client, "LRN-001")
@@ -721,7 +725,24 @@ async def test_two_teacher_handover_and_competing_revision_workflow(tmp_path: Pa
             )
             assert obs_resp.status_code == 201, obs_resp.text
 
-            # Generate candidate handover brief
+            # Subject teacher (TCH-BANDA) cannot generate or adjudicate pre-release candidates (403)
+            forbidden_gen = await client.post(
+                "/api/learners/LRN-001/generate",
+                json={"subject": "Mathematics", "mode": "mock"},
+            )
+            assert forbidden_gen.status_code == 403
+
+            # Subject teacher logs out; Class teacher (TCH-OCHIENG) logs in
+            await client.post("/api/auth/logout")
+            login2 = await client.post(
+                "/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"}
+            )
+            assert login2.status_code == 200, login2.text
+            cfg2 = (await client.get("/api/config")).json()
+            assert cfg2["review_authority_available"] is True
+            assert cfg2["authenticated_teacher"]["teacher_id"] == "TCH-OCHIENG"
+
+            # Class teacher generates candidate handover brief
             gen_resp = await client.post(
                 "/api/learners/LRN-001/generate",
                 json={"subject": "Mathematics", "mode": "mock"},
@@ -729,7 +750,7 @@ async def test_two_teacher_handover_and_competing_revision_workflow(tmp_path: Pa
             assert gen_resp.status_code == 200, gen_resp.text
             assert gen_resp.json()["status"] == "success"
 
-            # Teacher 1 marks pending review as needs_context at expected_revision=0
+            # Class teacher marks pending review as needs_context at expected_revision=0
             reviews1 = (await client.get("/api/learners/LRN-001/reviews")).json()
             pending1 = [r for r in reviews1 if r["status"] == "pending"]
             assert pending1
@@ -747,30 +768,20 @@ async def test_two_teacher_handover_and_competing_revision_workflow(tmp_path: Pa
             )
             assert dec1.status_code == 200, dec1.text
             assert dec1.json()["status"] == "needs_context"
-            assert dec1.json()["reviewer_id"] == "TCH-BANDA"
+            assert dec1.json()["reviewer_id"] == "TCH-OCHIENG"
             assert dec1.json()["revision"] == 1
 
             # Handover remains empty prior to acceptance
             handover_mid = (await client.get("/api/learners/LRN-001/handover")).json()
             assert handover_mid["accepted_pattern_count"] == 0
 
-            # Teacher 1 logs out; Teacher 2 (TCH-OCHIENG) logs in
-            await client.post("/api/auth/logout")
-            login2 = await client.post(
-                "/api/auth/login", json={"teacher_id": "TCH-OCHIENG", "pin": "5678"}
-            )
-            assert login2.status_code == 200, login2.text
-            cfg2 = (await client.get("/api/config")).json()
-            assert cfg2["review_authority_available"] is True
-            assert cfg2["authenticated_teacher"]["teacher_id"] == "TCH-OCHIENG"
-
-            # Teacher 2 inspects review at revision 1
+            # Class teacher inspects review at revision 1
             reviews2 = (await client.get("/api/learners/LRN-001/reviews")).json()
             target_rev = next(r for r in reviews2 if r["review_id"] == review_id)
             assert target_rev["status"] == "needs_context"
             assert target_rev["revision"] == 1
 
-            # Teacher 2 submits explicit correction to accepted at revision 1 -> revision 2
+            # Class teacher submits explicit correction to accepted at revision 1 -> revision 2
             dec2 = await client.post(
                 f"/api/reviews/{review_id}/decision",
                 json={

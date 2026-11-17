@@ -36,6 +36,13 @@
     <!-- Left Compartment: Learner Context & Scope Filters -->
     <aside class="compartment-sidebar" aria-label="Learner controls">
       <div class="sidebar-section">
+        <label for="class-select" class="label-mono">My Classes</label>
+        <select id="class-select" class="kwaix-select">
+          <option value="">Sign in to view classes</option>
+        </select>
+      </div>
+
+      <div class="sidebar-section">
         <label for="learner-select" class="label-mono">Selected Learner</label>
         <select id="learner-select" class="kwaix-select">
           <option value="">Loading learners...</option>
@@ -92,10 +99,65 @@
           </select>
         </div>
       </div>
+
+      <div class="sidebar-section db-controls-section">
+        <div class="db-section-header">
+          <span class="label-mono">Database &amp; Sync</span>
+          <span id="db-name-label" class="db-name-chip">allps.db</span>
+        </div>
+        <div id="db-last-sync" class="db-sync-meta">Checking database...</div>
+        <div class="db-actions-stack">
+          <button type="button" id="btn-refresh-data" class="btn btn-secondary btn-sm btn-block">
+            ↻ Refresh Data
+          </button>
+          <button type="button" id="btn-seed-merge" class="btn btn-secondary btn-sm btn-block">
+            + Seed Missing Demo Data
+          </button>
+          <button
+            type="button"
+            id="btn-open-reset-dialog"
+            class="btn btn-danger-outline btn-sm btn-block"
+            command="show-modal"
+            commandfor="reset-db-dialog"
+          >
+            ↺ Reset &amp; Re-seed DB
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <span class="label-mono">Recent / New Data</span>
+        <div id="recent-data-list" class="recent-data-list" aria-live="polite">
+          <div class="recent-data-empty">Loading recent records...</div>
+        </div>
+      </div>
     </aside>
 
     <!-- Right Compartment: Main Active Workspace -->
     <section class="compartment-main" aria-label="Workspace views">
+
+      <div id="workspace-status-banner" class="feedback-banner" role="status" aria-live="polite" hidden>
+        <span id="workspace-status-text"></span>
+        <button type="button" id="btn-dismiss-workspace-status" class="btn btn-secondary btn-sm" aria-label="Dismiss status message">✕</button>
+      </div>
+
+      <!-- Teacher Responsibilities, Classes & Attention Strip -->
+      <div id="teacher-workspace-strip" class="workspace-strip" hidden>
+        <div class="workspace-strip-top">
+          <div>
+            <div class="workspace-welcome" id="workspace-welcome-heading">Welcome</div>
+            <div class="workspace-roles-sub" id="workspace-roles-sub"></div>
+          </div>
+          <div class="workspace-classes-block">
+            <span class="label-mono">YOUR CLASSES</span>
+            <div id="workspace-classes-list" class="workspace-classes-list"></div>
+          </div>
+        </div>
+        <div class="workspace-attention-block">
+          <span class="label-mono">NEEDS YOUR ATTENTION</span>
+          <div id="workspace-attention-list" class="workspace-attention-list"></div>
+        </div>
+      </div>
 
       <!-- Tabs Header -->
       <div class="tabs-header">
@@ -108,6 +170,9 @@
           </button>
           <button type="button" class="tab-pill tab-btn" data-tab="handover">
             3. Approved Handover <span id="handover-count-badge" class="pill-count">0</span>
+          </button>
+          <button type="button" class="tab-pill tab-btn" data-tab="class-handover">
+            4. Class Handover &amp; Release <span id="class-handover-badge" class="pill-count">0</span>
           </button>
         </nav>
       </div>
@@ -188,6 +253,13 @@
         </div>
       </div>
 
+      <!-- VIEW 4: Class Handover, Readiness, Releases & Responses -->
+      <div id="view-class-handover" class="view-panel" aria-label="Class handover and release workspace">
+        <div id="class-readiness-container" class="cards-stream" aria-live="polite"></div>
+        <div id="section-editor-container" class="cards-stream" aria-live="polite"></div>
+        <div id="published-handover-container" class="cards-stream" aria-live="polite"></div>
+      </div>
+
     </section>
 
   </main>
@@ -239,7 +311,7 @@
         </div>
 
         <div class="form-group">
-          <label for="current-password">PIN *</label>
+          <label for="current-password">PIN or password *</label>
           <div class="pin-input-row">
             <input
               type="password"
@@ -247,10 +319,9 @@
               name="password"
               class="form-input"
               autocomplete="current-password"
-              inputmode="numeric"
               minlength="4"
               maxlength="64"
-              placeholder="Enter 4+ digit PIN"
+              placeholder="Enter your PIN or password"
               enterkeyhint="done"
               required
             >
@@ -350,6 +421,29 @@
         Confirm & Save Observation
       </button>
     </div>
+  </dialog>
+
+  <!-- Reset & Re-seed Confirmation Dialog -->
+  <dialog id="reset-db-dialog" closedby="any" aria-labelledby="dialog-reset-heading">
+    <div class="modal-header">
+      <h3 id="dialog-reset-heading">Reset &amp; Re-seed Workspace Database?</h3>
+    </div>
+    <form method="dialog">
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-secondary);">
+          This will clear all learners, evidence records, candidate briefs, review decisions, and import manifests in <strong id="reset-dialog-db-name">the active database</strong>, then restore the baseline synthetic Kenyan CBC demonstration dataset.
+        </p>
+        <p style="font-size: 12px; color: var(--apple-orange-text); background: var(--apple-orange-dim); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,149,0,0.25);">
+          Pilot teacher accounts and the audit log entry for this reset are preserved. Use <strong>Seed Missing Demo Data</strong> instead if you want to keep newly ingested records.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" value="cancel" class="btn btn-secondary" autofocus>Cancel</button>
+        <button type="submit" id="btn-confirm-reset-db" value="confirm" class="btn btn-danger">
+          Reset &amp; Re-seed
+        </button>
+      </div>
+    </form>
   </dialog>
 
   <!-- Application Script -->

@@ -34,7 +34,16 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const errorMsg = data && data.detail ? data.detail : `HTTP ${response.status}: ${response.statusText}`;
+      let errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+      if (data && data.detail !== undefined) {
+        if (typeof data.detail === "string") {
+          errorMsg = data.detail;
+        } else if (data.detail && typeof data.detail.message === "string") {
+          errorMsg = data.detail.message;
+        } else {
+          errorMsg = JSON.stringify(data.detail);
+        }
+      }
       const error = new Error(errorMsg);
       error.status = response.status;
       error.data = data;
@@ -127,6 +136,83 @@ class ApiClient {
   async getLatestBrief(learnerId) {
     return this._request(`/learners/${encodeURIComponent(learnerId)}/brief`);
   }
+
+  async getDbStatus(recentLimit = 5) {
+    return this._request(`/db/status?recent_limit=${encodeURIComponent(recentLimit)}`);
+  }
+
+  async reseedDatabase(mode = "merge") {
+    return this._request("/db/reseed", {
+      method: "POST",
+      body: JSON.stringify({ mode }),
+    });
+  }
+
+  async getWorkspace() {
+    return this._request("/workspace");
+  }
+
+  async getClassReadiness(classId) {
+    return this._request(`/classes/${encodeURIComponent(classId)}/readiness`);
+  }
+
+  async updateSectionReview(classId, learnerId, scope, payload) {
+    return this._request(
+      `/classes/${encodeURIComponent(classId)}/learners/${encodeURIComponent(learnerId)}/sections/${encodeURIComponent(scope)}`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  }
+
+  async releaseClass(classId, notes = null) {
+    return this._request(`/classes/${encodeURIComponent(classId)}/release`, {
+      method: "POST",
+      body: JSON.stringify({ notes }),
+    });
+  }
+
+  async getPublishedHandover(learnerId) {
+    return this._request(`/learners/${encodeURIComponent(learnerId)}/published`);
+  }
+
+  async recordReportView(releaseId, learnerId, scope = null) {
+    return this._request(
+      `/releases/${encodeURIComponent(releaseId)}/learners/${encodeURIComponent(learnerId)}/view`,
+      {
+        method: "POST",
+        body: JSON.stringify({ scope }),
+      }
+    );
+  }
+
+  async acknowledgeReport(releaseId, learnerId) {
+    return this._request(
+      `/releases/${encodeURIComponent(releaseId)}/learners/${encodeURIComponent(learnerId)}/acknowledge`,
+      { method: "POST" }
+    );
+  }
+
+  async addSubjectResponse(releaseId, learnerId, payload) {
+    return this._request(
+      `/releases/${encodeURIComponent(releaseId)}/learners/${encodeURIComponent(learnerId)}/responses`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  }
+
+  async markChangeReviewed(classId, changeId, notes = null) {
+    return this._request(
+      `/classes/${encodeURIComponent(classId)}/changes/${encodeURIComponent(changeId)}/review`,
+      {
+        method: "POST",
+        body: JSON.stringify({ notes }),
+      }
+    );
+  }
 }
 
 // ── Application State & Controller ──────────────────────────────────────────
@@ -151,7 +237,16 @@ const state = {
     default_mode: "auto",
   },
   currentTeacher: null,
+  workspace: null,
+  activeClassId: null,
+  classReadiness: null,
+  editingSlot: null,
+  publishedReport: null,
+  recordedViews: new Set(),
   isGenerating: false,
+  dbStatus: null,
+  knownEvidenceIds: new Set(),
+  isDbBusy: false,
   // Stable observation draft state
   observationDraft: {
     source_event_id: crypto.randomUUID ? crypto.randomUUID() : `draft-${Date.now()}`,
@@ -168,6 +263,7 @@ const state = {
 // ── DOM Elements ────────────────────────────────────────────────────────────
 
 const elements = {
+  classSelect: document.getElementById("class-select"),
   learnerSelect: document.getElementById("learner-select"),
   filterSubject: document.getElementById("filter-subject"),
   filterYear: document.getElementById("filter-year"),
@@ -194,9 +290,33 @@ const elements = {
   btnExportHtml: document.getElementById("btn-export-html"),
   btnExportPdf: document.getElementById("btn-export-pdf"),
 
+  // Class Handover Workspace & Release Views
+  teacherWorkspaceStrip: document.getElementById("teacher-workspace-strip"),
+  workspaceWelcomeHeading: document.getElementById("workspace-welcome-heading"),
+  workspaceRolesSub: document.getElementById("workspace-roles-sub"),
+  workspaceClassesList: document.getElementById("workspace-classes-list"),
+  workspaceAttentionList: document.getElementById("workspace-attention-list"),
+  classHandoverBadge: document.getElementById("class-handover-badge"),
+  classReadinessContainer: document.getElementById("class-readiness-container"),
+  sectionEditorContainer: document.getElementById("section-editor-container"),
+  publishedHandoverContainer: document.getElementById("published-handover-container"),
+
   authBanner: document.getElementById("auth-status-banner"),
   btnAuthAction: document.getElementById("btn-auth-action"),
   reviewFeedbackBanner: document.getElementById("review-feedback-banner"),
+
+  // Workspace Status & DB Sync Controls
+  workspaceStatusBanner: document.getElementById("workspace-status-banner"),
+  workspaceStatusText: document.getElementById("workspace-status-text"),
+  btnDismissWorkspaceStatus: document.getElementById("btn-dismiss-workspace-status"),
+  dbNameLabel: document.getElementById("db-name-label"),
+  dbLastSync: document.getElementById("db-last-sync"),
+  recentDataList: document.getElementById("recent-data-list"),
+  btnRefreshData: document.getElementById("btn-refresh-data"),
+  btnSeedMerge: document.getElementById("btn-seed-merge"),
+  btnOpenResetDialog: document.getElementById("btn-open-reset-dialog"),
+  resetDbDialog: document.getElementById("reset-db-dialog"),
+  resetDialogDbName: document.getElementById("reset-dialog-db-name"),
 
   // Login Dialog
   loginDialog: document.getElementById("login-dialog"),
@@ -245,30 +365,47 @@ const elements = {
 async function init() {
   bindEvents();
   await loadConfig();
+  if (!state.currentTeacher) {
+    renderSignedOutWorkspaceState();
+    return;
+  }
   await loadLearners();
+  await loadDbStatus({ detectChanges: false });
+
   if (state.learners.length > 0) {
     state.activeLearnerId = state.learners[0].learner_id;
     elements.learnerSelect.value = state.activeLearnerId;
     await refreshAllViews();
+  } else {
+    renderEmptyWorkspaceState();
   }
 }
 
 function setupDialogLightDismiss(dialog) {
   if (!dialog || "closedBy" in HTMLDialogElement.prototype) return;
-  dialog.addEventListener("click", (event) => {
-    if (event.target !== dialog) return;
-    const rect = dialog.getBoundingClientRect();
-    const isDialogContent =
-      rect.top <= event.clientY &&
-      event.clientY <= rect.top + rect.height &&
-      rect.left <= event.clientX &&
-      event.clientX <= rect.left + rect.width;
-    if (isDialogContent) return;
-    dialog.close();
+  const outside = (e) => {
+    const r = dialog.getBoundingClientRect();
+    return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+  };
+  let pressedOutside = false;
+  dialog.addEventListener("pointerdown", (e) => {
+    pressedOutside = outside(e);
+  });
+  dialog.addEventListener("pointerup", (e) => {
+    if (pressedOutside && outside(e)) dialog.close();
   });
 }
 
 function bindEvents() {
+  // Class change
+  if (elements.classSelect) {
+    elements.classSelect.addEventListener("change", (e) => {
+      state.activeClassId = e.target.value;
+      renderWorkspaceStrip();
+      loadClassHandoverView();
+    });
+  }
+
   // Learner change
   elements.learnerSelect.addEventListener("change", (e) => {
     state.activeLearnerId = e.target.value;
@@ -300,7 +437,39 @@ function bindEvents() {
   }
 
   // Light-dismiss fallback for browsers without <dialog closedby="any">
-  [elements.loginDialog, elements.observationDialog, elements.previewDialog].forEach(setupDialogLightDismiss);
+  [
+    elements.loginDialog,
+    elements.observationDialog,
+    elements.previewDialog,
+    elements.resetDbDialog,
+  ].forEach(setupDialogLightDismiss);
+
+  // Workspace Status & DB Sync Controls
+  if (elements.btnDismissWorkspaceStatus) {
+    elements.btnDismissWorkspaceStatus.addEventListener("click", clearWorkspaceStatus);
+  }
+  if (elements.btnRefreshData) {
+    elements.btnRefreshData.addEventListener("click", handleRefreshWorkspace);
+  }
+  if (elements.btnSeedMerge) {
+    elements.btnSeedMerge.addEventListener("click", () => handleReseedDatabase("merge"));
+  }
+  if (
+    !("commandForElement" in HTMLButtonElement.prototype) &&
+    elements.btnOpenResetDialog &&
+    elements.resetDbDialog
+  ) {
+    elements.btnOpenResetDialog.addEventListener("click", () => elements.resetDbDialog.showModal());
+  }
+  if (elements.resetDbDialog) {
+    elements.resetDbDialog.addEventListener("close", () => {
+      const result = elements.resetDbDialog.returnValue;
+      elements.resetDbDialog.returnValue = "";
+      if (result === "confirm") {
+        handleReseedDatabase("reset");
+      }
+    });
+  }
 
   // Filters change
   const filterElements = [elements.filterSubject, elements.filterYear, elements.filterTerm, elements.filterType];
@@ -379,6 +548,7 @@ function switchTab(tabName) {
   if (tabName === "evidence") loadEvidenceView();
   else if (tabName === "reviews") loadReviewsView();
   else if (tabName === "handover") loadApprovedHandoverView();
+  else if (tabName === "class-handover") loadClassHandoverView();
 }
 
 // ── Config & Learners ───────────────────────────────────────────────────────
@@ -387,15 +557,31 @@ async function loadConfig() {
   try {
     state.config = await api.getConfig();
     state.currentTeacher = state.config.authenticated_teacher || null;
+    state.workspace = state.config.workspace || null;
+    if (state.workspace && state.workspace.classes && state.workspace.classes.length > 0) {
+      const stillValid = state.workspace.classes.some((c) => c.class_id === state.activeClassId);
+      if (!stillValid) state.activeClassId = state.workspace.classes[0].class_id;
+    } else {
+      state.activeClassId = null;
+    }
     if (state.currentTeacher && state.currentTeacher.display_name) {
       state.observationDraft.source_reference = state.currentTeacher.display_name;
     }
     renderAuthStatus();
+    renderWorkspaceStrip();
     if (state.config.default_mode && elements.generateMode) {
       elements.generateMode.value = state.config.default_mode;
+      elements.generateMode.disabled = Boolean(state.config.hosted);
+      elements.generateMode.title = state.config.hosted
+        ? `Inference runs on ${state.config.inference_provider || "the hosted provider"}.`
+        : "Choose an inference mode";
     }
+    [elements.btnSeedMerge, elements.btnOpenResetDialog].forEach((button) => {
+      if (button) button.hidden = !state.config.allow_demo_reset;
+    });
   } catch (err) {
     console.error("Failed to load config:", err);
+    showWorkspaceStatus("error", `Failed to load system configuration: ${err.message}`);
   }
 }
 
@@ -474,12 +660,22 @@ function renderPilotTeacherPills() {
     return;
   }
 
+  const PILOT_PINS = {
+    "TCH-OCHIENG": "5678",
+    "TCH-BANDA": "1234",
+    "TCH-WANJIKU": "2345",
+    "TCH-OTIENO": "3456",
+    "TCH-KAMAU": "4567",
+  };
+
   teachers.forEach((t) => {
     const pill = document.createElement("button");
     pill.type = "button";
     pill.className = `pilot-teacher-pill${selectedId === t.teacher_id ? " active" : ""}`;
     pill.dataset.teacherId = t.teacher_id;
-    pill.textContent = `${t.display_name} (${t.teacher_id})`;
+    const roleHint = t.role_summary ? ` — ${t.role_summary}` : "";
+    const pinHint = state.config.show_demo_credentials && PILOT_PINS[t.teacher_id] ? ` (PIN ${PILOT_PINS[t.teacher_id]})` : "";
+    pill.textContent = `${t.display_name} (${t.teacher_id})${roleHint}${pinHint}`;
     pill.addEventListener("click", () => {
       if (elements.loginTeacherId) {
         elements.loginTeacherId.value = t.teacher_id;
@@ -539,13 +735,25 @@ async function handleLoginSubmit(event) {
 
   try {
     await api.login(teacherId, pin);
+    state.recordedViews.clear();
     if (elements.loginPin) {
       elements.loginPin.value = "";
     }
     elements.loginDialog.close();
     clearReviewFeedback();
+    clearWorkspaceStatus();
     await loadConfig();
-    await Promise.all([loadReviewsView(), loadApprovedHandoverView()]);
+    await loadLearners();
+    await loadDbStatus({ detectChanges: false });
+    if (state.learners.length > 0) {
+      const stillExists = state.learners.some((l) => l.learner_id === state.activeLearnerId);
+      state.activeLearnerId = stillExists ? state.activeLearnerId : state.learners[0].learner_id;
+      elements.learnerSelect.value = state.activeLearnerId;
+      await refreshAllViews();
+    } else {
+      state.activeLearnerId = null;
+      renderEmptyWorkspaceState();
+    }
   } catch (err) {
     showLoginError(err.message || "Sign-in failed.");
   } finally {
@@ -562,14 +770,24 @@ async function handleLogout() {
   } catch (err) {
     console.warn("Logout failed:", err);
   }
+  state.dbStatus = null;
+  state.knownEvidenceIds.clear();
+  state.recordedViews.clear();
   await loadConfig();
-  await Promise.all([loadReviewsView(), loadApprovedHandoverView()]);
+  renderSignedOutWorkspaceState();
 }
 
 async function loadLearners() {
   try {
     state.learners = await api.getLearners();
     elements.learnerSelect.innerHTML = "";
+    if (state.learners.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No learners in database";
+      elements.learnerSelect.appendChild(opt);
+      return;
+    }
     state.learners.forEach((l) => {
       const opt = document.createElement("option");
       opt.value = l.learner_id;
@@ -578,6 +796,330 @@ async function loadLearners() {
     });
   } catch (err) {
     console.error("Failed to load learners:", err);
+    showWorkspaceStatus("error", `Failed to load learners from database: ${err.message}`);
+  }
+}
+
+function showWorkspaceStatus(type, message) {
+  if (!elements.workspaceStatusBanner || !elements.workspaceStatusText) return;
+  elements.workspaceStatusBanner.className = `feedback-banner ${type}`;
+  elements.workspaceStatusText.textContent = message;
+  elements.workspaceStatusBanner.hidden = false;
+}
+
+function clearWorkspaceStatus() {
+  if (!elements.workspaceStatusBanner || !elements.workspaceStatusText) return;
+  elements.workspaceStatusBanner.hidden = true;
+  elements.workspaceStatusText.textContent = "";
+}
+
+function renderSignedOutWorkspaceState() {
+  state.learners = [];
+  state.activeLearnerId = null;
+  state.workspace = null;
+  state.classReadiness = null;
+  state.editingSlot = null;
+  state.publishedReport = null;
+  if (elements.teacherWorkspaceStrip) {
+    elements.teacherWorkspaceStrip.hidden = true;
+  }
+  if (elements.classReadinessContainer) elements.classReadinessContainer.innerHTML = "";
+  if (elements.sectionEditorContainer) elements.sectionEditorContainer.innerHTML = "";
+  if (elements.publishedHandoverContainer) {
+    elements.publishedHandoverContainer.innerHTML = `
+      <div class="empty-state">
+        <h3>Teacher sign-in required</h3>
+        <p>Sign in with your educator ID and PIN to access Class Handover &amp; Release.</p>
+      </div>
+    `;
+  }
+  if (elements.classHandoverBadge) elements.classHandoverBadge.textContent = "0";
+  if (elements.classSelect) {
+    elements.classSelect.innerHTML = `<option value="">Sign in to view classes</option>`;
+  }
+  if (elements.learnerSelect) {
+    elements.learnerSelect.innerHTML = `<option value="">Sign in to view learners</option>`;
+  }
+  elements.evidenceCountBadge.textContent = "0";
+  elements.reviewsCountBadge.textContent = "0";
+  elements.handoverCountBadge.textContent = "0";
+  const sideEv = document.getElementById("side-evidence-count");
+  const sidePending = document.getElementById("side-pending-count");
+  const sideApproved = document.getElementById("side-approved-count");
+  if (sideEv) sideEv.textContent = "0";
+  if (sidePending) sidePending.textContent = "0";
+  if (sideApproved) sideApproved.textContent = "0";
+
+  if (elements.dbLastSync) {
+    elements.dbLastSync.textContent = "Sign in to view database status";
+  }
+  if (elements.recentDataList) {
+    elements.recentDataList.innerHTML = `<div class="recent-data-empty">Sign in to view recent database activity.</div>`;
+  }
+  [elements.btnRefreshData, elements.btnSeedMerge, elements.btnOpenResetDialog].forEach((btn) => {
+    if (btn) btn.disabled = true;
+  });
+
+  elements.evidenceList.innerHTML = `
+    <div class="empty-state">
+      <h3>Teacher sign-in required</h3>
+      <p>Click <strong>Sign In</strong> in the header to view learner evidence, candidate reviews, and reports.</p>
+    </div>
+  `;
+  elements.reviewsList.innerHTML = `
+    <div class="empty-state">
+      <h3>Teacher sign-in required</h3>
+      <p>Sign in with your educator ID and PIN to access candidate reviews.</p>
+    </div>
+  `;
+  elements.handoverList.innerHTML = `
+    <div class="empty-state">
+      <h3>Teacher sign-in required</h3>
+      <p>Sign in with your educator ID and PIN to inspect approved handovers.</p>
+    </div>
+  `;
+  elements.generationResultContainer.innerHTML = "";
+  updateHandoverExportControls(null, 0);
+}
+
+function renderEmptyWorkspaceState() {
+  elements.evidenceCountBadge.textContent = "0";
+  elements.reviewsCountBadge.textContent = "0";
+  elements.handoverCountBadge.textContent = "0";
+  const sideEv = document.getElementById("side-evidence-count");
+  const sidePending = document.getElementById("side-pending-count");
+  const sideApproved = document.getElementById("side-approved-count");
+  if (sideEv) sideEv.textContent = "0";
+  if (sidePending) sidePending.textContent = "0";
+  if (sideApproved) sideApproved.textContent = "0";
+
+  elements.evidenceList.innerHTML = `
+    <div class="empty-state">
+      <h3>Database has no learners yet</h3>
+      <p>Click <strong>+ Seed Missing Demo Data</strong> in the sidebar or ingest records via API/MCP, then click <strong>↻ Refresh Data</strong>.</p>
+    </div>
+  `;
+  elements.reviewsList.innerHTML = `
+    <div class="empty-state">
+      <h3>No learners available</h3>
+      <p>Seed demo data or ingest learner evidence to start reviewing findings.</p>
+    </div>
+  `;
+  elements.handoverList.innerHTML = `
+    <div class="empty-state">
+      <h3>No approved handovers</h3>
+      <p>Seed or ingest learner records first.</p>
+    </div>
+  `;
+  updateHandoverExportControls(null, 0);
+  showWorkspaceStatus(
+    "conflict",
+    "Database currently has 0 learners. Click '+ Seed Missing Demo Data' to populate the demo cohort or ingest records via API/MCP."
+  );
+}
+
+function setDbActionButtonsDisabled(disabled) {
+  state.isDbBusy = disabled;
+  [elements.btnRefreshData, elements.btnSeedMerge, elements.btnOpenResetDialog].forEach((btn) => {
+    if (btn) btn.disabled = disabled;
+  });
+}
+
+async function loadDbStatus({ detectChanges = true } = {}) {
+  try {
+    const prev = state.dbStatus;
+    const status = await api.getDbStatus(5);
+    state.dbStatus = status;
+
+    if (elements.dbNameLabel) {
+      elements.dbNameLabel.textContent = status.db_name || "allps.db";
+      elements.dbNameLabel.title = `Active SQLite database: ${status.db_name || "allps.db"}`;
+    }
+    if (elements.resetDialogDbName) {
+      elements.resetDialogDbName.textContent = status.db_name || "the active database";
+    }
+    if (elements.dbLastSync) {
+      const checkedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      elements.dbLastSync.textContent =
+        `Total: ${status.learners_count} learners · ${status.evidence_count} evidence · Checked ${checkedAt}`;
+    }
+
+    if (elements.btnRefreshData) {
+      elements.btnRefreshData.disabled = state.isDbBusy;
+    }
+    if (elements.btnSeedMerge) {
+      elements.btnSeedMerge.disabled = state.isDbBusy || !status.allow_demo_reset;
+    }
+    if (elements.btnOpenResetDialog) {
+      elements.btnOpenResetDialog.disabled = state.isDbBusy || !status.allow_demo_reset;
+    }
+
+    const newIds = new Set();
+    const recent = status.recent_evidence || [];
+    if (state.knownEvidenceIds.size > 0) {
+      recent.forEach((item) => {
+        if (!state.knownEvidenceIds.has(item.evidence_id)) {
+          newIds.add(item.evidence_id);
+        }
+      });
+    }
+    recent.forEach((item) => state.knownEvidenceIds.add(item.evidence_id));
+
+    renderRecentDataList(recent, newIds);
+
+    if (detectChanges && prev) {
+      const deltaLearners = status.learners_count - prev.learners_count;
+      const deltaEvidence = status.evidence_count - prev.evidence_count;
+      const deltaPending = status.pending_reviews_count - prev.pending_reviews_count;
+      const deltaAccepted = status.accepted_reviews_count - prev.accepted_reviews_count;
+      const latestChanged = status.latest_evidence_recorded_at !== prev.latest_evidence_recorded_at;
+
+      if (
+        deltaLearners !== 0 ||
+        deltaEvidence !== 0 ||
+        deltaPending !== 0 ||
+        deltaAccepted !== 0 ||
+        latestChanged
+      ) {
+        const parts = [];
+        if (deltaLearners !== 0) parts.push(`${deltaLearners > 0 ? "+" : ""}${deltaLearners} learner(s)`);
+        if (deltaEvidence !== 0) parts.push(`${deltaEvidence > 0 ? "+" : ""}${deltaEvidence} evidence`);
+        if (deltaPending !== 0) parts.push(`${deltaPending > 0 ? "+" : ""}${deltaPending} pending review(s)`);
+        if (deltaAccepted !== 0) parts.push(`${deltaAccepted > 0 ? "+" : ""}${deltaAccepted} approved`);
+        const summaryText = parts.length > 0 ? parts.join(", ") : "updated timestamps";
+        showWorkspaceStatus("success", `Refreshed from database: detected ${summaryText}.`);
+      } else if (status.learners_count === 0) {
+        showWorkspaceStatus(
+          "conflict",
+          "Database is currently empty (0 learners). Seed demo data or ingest new records to begin."
+        );
+      } else {
+        showWorkspaceStatus(
+          "info",
+          `Refreshed: database is up to date (${status.learners_count} learners, ${status.evidence_count} evidence records).`
+        );
+      }
+    }
+
+    return status;
+  } catch (err) {
+    console.error("Failed to load DB status:", err);
+    if (elements.dbLastSync) {
+      elements.dbLastSync.textContent = "Status check failed";
+    }
+    if (elements.recentDataList) {
+      elements.recentDataList.innerHTML = `<div class="recent-data-empty" style="color: var(--apple-red-text);">Error reading recent data: ${escapeHtml(err.message)}</div>`;
+    }
+    showWorkspaceStatus("error", `Database status check failed: ${err.message}`);
+    return null;
+  }
+}
+
+function renderRecentDataList(recent, newIds = new Set()) {
+  if (!elements.recentDataList) return;
+  if (!recent || recent.length === 0) {
+    elements.recentDataList.innerHTML = `<div class="recent-data-empty">No evidence records in database yet.</div>`;
+    return;
+  }
+
+  elements.recentDataList.innerHTML = "";
+  recent.forEach((item) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    const isNew = newIds.has(item.evidence_id);
+    btn.className = `recent-data-item${isNew ? " is-new" : ""}`;
+    const subjectText = item.subject || "General";
+    const recordedTime = item.recorded_at
+      ? new Date(item.recorded_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+      : "";
+    btn.title = `${item.learner_id} · ${item.evidence_type} · ${item.source_system} (${item.evidence_id})`;
+    btn.innerHTML = `
+      <span class="recent-data-top">
+        <span>${escapeHtml(item.learner_id)} · ${escapeHtml(item.evidence_type.replace(/_/g, " "))}</span>
+        <span>${isNew ? "NEW" : escapeHtml(recordedTime)}</span>
+      </span>
+      <span class="recent-data-sub">${escapeHtml(subjectText)} · ${escapeHtml(item.source_system)}</span>
+    `;
+    btn.addEventListener("click", async () => {
+      if (item.learner_id && item.learner_id !== state.activeLearnerId) {
+        const exists = state.learners.some((l) => l.learner_id === item.learner_id);
+        if (exists) {
+          state.activeLearnerId = item.learner_id;
+          elements.learnerSelect.value = item.learner_id;
+          await refreshAllViews();
+        }
+      }
+      openSidePanel(item.evidence_id);
+    });
+    elements.recentDataList.appendChild(btn);
+  });
+}
+
+async function handleRefreshWorkspace() {
+  if (state.isDbBusy) return;
+  setDbActionButtonsDisabled(true);
+  const prevText = elements.btnRefreshData ? elements.btnRefreshData.textContent : "↻ Refresh Data";
+  if (elements.btnRefreshData) elements.btnRefreshData.textContent = "Refreshing...";
+
+  try {
+    await loadConfig();
+    const prevLearner = state.activeLearnerId;
+    await loadLearners();
+
+    if (state.learners.length === 0) {
+      state.activeLearnerId = null;
+      renderEmptyWorkspaceState();
+    } else {
+      const stillExists = state.learners.some((l) => l.learner_id === prevLearner);
+      state.activeLearnerId = stillExists ? prevLearner : state.learners[0].learner_id;
+      elements.learnerSelect.value = state.activeLearnerId;
+      await refreshAllViews();
+    }
+
+    await loadDbStatus({ detectChanges: true });
+  } catch (err) {
+    showWorkspaceStatus("error", `Workspace refresh failed: ${err.message}`);
+  } finally {
+    setDbActionButtonsDisabled(false);
+    if (elements.btnRefreshData) elements.btnRefreshData.textContent = prevText;
+  }
+}
+
+async function handleReseedDatabase(mode = "merge") {
+  if (state.isDbBusy) return;
+  setDbActionButtonsDisabled(true);
+  const targetBtn = mode === "reset" ? elements.btnOpenResetDialog : elements.btnSeedMerge;
+  const prevText = targetBtn ? targetBtn.textContent : "";
+  if (targetBtn) {
+    targetBtn.textContent = mode === "reset" ? "Resetting..." : "Seeding...";
+  }
+
+  try {
+    const res = await api.reseedDatabase(mode);
+    if (mode === "reset") {
+      state.knownEvidenceIds.clear();
+    }
+    clearReviewFeedback();
+    await loadLearners();
+    if (state.learners.length > 0) {
+      const stillExists = state.learners.some((l) => l.learner_id === state.activeLearnerId);
+      state.activeLearnerId = stillExists ? state.activeLearnerId : state.learners[0].learner_id;
+      elements.learnerSelect.value = state.activeLearnerId;
+      await refreshAllViews();
+    } else {
+      state.activeLearnerId = null;
+      renderEmptyWorkspaceState();
+    }
+    await loadDbStatus({ detectChanges: false });
+
+    const bannerKind =
+      mode === "merge" && res.learners_added === 0 && res.evidence_added === 0 ? "info" : "success";
+    showWorkspaceStatus(bannerKind, res.message || "Database seed completed.");
+  } catch (err) {
+    showWorkspaceStatus("error", `Database ${mode} failed: ${err.message}`);
+  } finally {
+    setDbActionButtonsDisabled(false);
+    if (targetBtn && prevText) targetBtn.textContent = prevText;
   }
 }
 
@@ -586,6 +1128,7 @@ async function refreshAllViews() {
     loadEvidenceView(),
     loadReviewsView(),
     loadApprovedHandoverView(),
+    loadClassHandoverView(),
   ]);
 }
 
@@ -725,8 +1268,31 @@ function renderEvidenceCard(r) {
 
 // ── View 2: Candidate Review View ───────────────────────────────────────────
 
+function _isCurrentTeacherClassTeacher() {
+  const classes = (state.workspace && state.workspace.classes) || [];
+  if (state.activeClassId) {
+    const match = classes.find((c) => c.class_id === state.activeClassId);
+    if (match) return match.role === "class_teacher";
+  }
+  return classes.some((c) => c.role === "class_teacher");
+}
+
 async function loadReviewsView() {
   if (!state.activeLearnerId) return;
+
+  if (!_isCurrentTeacherClassTeacher()) {
+    elements.reviewsCountBadge.textContent = "0";
+    const sidePending = document.getElementById("side-pending-count");
+    if (sidePending) sidePending.textContent = "0";
+    elements.generationResultContainer.innerHTML = "";
+    elements.reviewsList.innerHTML = `
+      <div class="empty-state">
+        <h3>Class-teacher review stage</h3>
+        <p>Candidate synthesis and pre-release review decisions are performed by the class teacher. Open <strong>4. Class Handover &amp; Release</strong> to read released reports, acknowledge receipt, and attach subject responses.</p>
+      </div>
+    `;
+    return;
+  }
 
   // 1. Restore persisted candidate brief on load / refresh (INT-01)
   try {
@@ -1019,6 +1585,7 @@ async function handleGenerateHandover() {
 
     // Reload reviews to show newly persisted patterns
     await loadReviewsView();
+    await loadDbStatus({ detectChanges: false });
   } catch (err) {
     elements.generationResultContainer.innerHTML = `
       <div class="generation-status-card inference_failed">
@@ -1031,7 +1598,7 @@ async function handleGenerateHandover() {
   } finally {
     state.isGenerating = false;
     elements.btnGenerate.disabled = false;
-    elements.btnGenerate.textContent = "⚡ Generate AI Candidate Handover";
+    elements.btnGenerate.textContent = "⚡ Generate Candidate Handover";
   }
 }
 
@@ -1195,6 +1762,7 @@ async function handleReviewDecision(
     );
     await loadReviewsView();
     await loadApprovedHandoverView();
+    await loadDbStatus({ detectChanges: false });
   } catch (err) {
     if (err.status === 409) {
       showReviewFeedback(
@@ -1261,12 +1829,13 @@ async function loadApprovedHandoverView() {
   try {
     const profile = await api.getApprovedHandover(state.activeLearnerId);
     const count = profile.accepted_pattern_count || 0;
+    const pubSections = profile.published_sections || [];
     elements.handoverCountBadge.textContent = count;
     const sideApproved = document.getElementById("side-approved-count");
     if (sideApproved) sideApproved.textContent = count;
-    updateHandoverExportControls(state.activeLearnerId, count);
+    updateHandoverExportControls(state.activeLearnerId, count + pubSections.length);
 
-    if (count === 0) {
+    if (count === 0 && pubSections.length === 0) {
       elements.handoverList.innerHTML = `
         <div class="empty-state">
           <h3>No approved transition findings</h3>
@@ -1281,6 +1850,15 @@ async function loadApprovedHandoverView() {
       const card = renderApprovedCard(p);
       elements.handoverList.appendChild(card);
     });
+    if (pubSections.length > 0 && profile.published_release) {
+      const pubNote = document.createElement("div");
+      pubNote.className = "handover-section-card";
+      pubNote.innerHTML = `
+        <div><strong>Published Class Handover v${escapeHtml(profile.published_release.version_number)}</strong> — Released by ${escapeHtml(profile.published_release.released_by_name)}</div>
+        <div style="font-size: 12.5px; color: var(--text-secondary);">Showing ${pubSections.length} role-scoped published section(s). Switch to tab <strong>4. Class Handover &amp; Release</strong> to acknowledge receipt, view child responses, or review updates.</div>
+      `;
+      elements.handoverList.appendChild(pubNote);
+    }
   } catch (err) {
     updateHandoverExportControls(state.activeLearnerId, 0);
     elements.handoverList.innerHTML = `
@@ -1552,6 +2130,8 @@ async function handleSaveObservation() {
     state.observationDraft.context = "";
 
     await loadEvidenceView();
+    await loadDbStatus({ detectChanges: false });
+    showWorkspaceStatus("success", `Observation saved for ${state.activeLearnerId}.`);
   } catch (err) {
     // Preserve values! Reopen form with error message
     elements.previewDialog.close();
@@ -1566,6 +2146,478 @@ async function handleSaveObservation() {
 function showObsError(msg) {
   elements.obsErrorAlert.style.display = "block";
   elements.obsErrorAlert.textContent = msg;
+}
+
+// ── Class Handover, Readiness, Accountability, Responses & Diffs ───────────
+
+function renderWorkspaceStrip() {
+  if (!elements.teacherWorkspaceStrip) return;
+  const ws = state.workspace;
+  if (!ws || !state.currentTeacher) {
+    elements.teacherWorkspaceStrip.hidden = true;
+    return;
+  }
+
+  elements.teacherWorkspaceStrip.hidden = false;
+  if (elements.workspaceWelcomeHeading) {
+    elements.workspaceWelcomeHeading.textContent = `Welcome, ${ws.display_name}`;
+  }
+  const roleSummaries = (ws.classes || []).map((c) => `${c.role_label} — ${c.display_name}`);
+  if (elements.workspaceRolesSub) {
+    elements.workspaceRolesSub.textContent = roleSummaries.join(" · ") || "Signed-in Educator";
+  }
+
+  if (elements.classSelect) {
+    elements.classSelect.innerHTML = "";
+    (ws.classes || []).forEach((cls) => {
+      const opt = document.createElement("option");
+      opt.value = cls.class_id;
+      opt.textContent = `${cls.display_name} (${cls.role_label})`;
+      if (state.activeClassId === cls.class_id) opt.selected = true;
+      elements.classSelect.appendChild(opt);
+    });
+  }
+
+  if (elements.workspaceClassesList) {
+    elements.workspaceClassesList.innerHTML = "";
+    (ws.classes || []).forEach((cls) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `class-pill${state.activeClassId === cls.class_id ? " active" : ""}`;
+      btn.textContent = `${cls.display_name} (${cls.role_label})`;
+      btn.addEventListener("click", async () => {
+        state.activeClassId = cls.class_id;
+        renderWorkspaceStrip();
+        await loadClassHandoverView();
+      });
+      elements.workspaceClassesList.appendChild(btn);
+    });
+  }
+
+  if (elements.workspaceAttentionList) {
+    elements.workspaceAttentionList.innerHTML = "";
+    const items = ws.needs_attention || [];
+    if (items.length === 0) {
+      elements.workspaceAttentionList.innerHTML = `<span style="font-size: 12px; color: var(--text-muted);">All assigned class handover actions are up to date.</span>`;
+    } else {
+      items.forEach((item) => {
+        const chip = document.createElement("div");
+        chip.className = `attention-chip${item.kind === "major_change" ? " major" : ""}`;
+        chip.textContent = item.headline || "Action needed";
+        chip.style.cursor = "pointer";
+        chip.addEventListener("click", () => {
+          if (item.learner_id && elements.learnerSelect) {
+            state.activeLearnerId = item.learner_id;
+            elements.learnerSelect.value = item.learner_id;
+          }
+          switchTab("class-handover");
+        });
+        elements.workspaceAttentionList.appendChild(chip);
+      });
+    }
+  }
+}
+
+async function loadClassHandoverView() {
+  if (!state.currentTeacher) return;
+
+  try {
+    state.workspace = await api.getWorkspace();
+    if (!state.activeClassId && state.workspace.classes && state.workspace.classes.length > 0) {
+      state.activeClassId = state.workspace.classes[0].class_id;
+    }
+    renderWorkspaceStrip();
+
+    if (state.activeClassId && _isCurrentTeacherClassTeacher()) {
+      state.classReadiness = await api.getClassReadiness(state.activeClassId);
+    } else {
+      state.classReadiness = null;
+    }
+
+    if (state.activeLearnerId) {
+      state.publishedReport = await api.getPublishedHandover(state.activeLearnerId);
+      const rel = state.publishedReport && state.publishedReport.release;
+      if (rel && state.activeTab === "class-handover") {
+        const viewKey = `${rel.release_id}:${state.activeLearnerId}:${state.currentTeacher.teacher_id}`;
+        if (!state.recordedViews.has(viewKey)) {
+          state.recordedViews.add(viewKey);
+          try {
+            await api.recordReportView(rel.release_id, state.activeLearnerId);
+            state.publishedReport = await api.getPublishedHandover(state.activeLearnerId);
+            state.workspace = await api.getWorkspace();
+            renderWorkspaceStrip();
+          } catch (viewErr) {
+            console.warn("Failed recording report view:", viewErr);
+          }
+        }
+      }
+    } else {
+      state.publishedReport = null;
+    }
+
+    const attentionCount = (state.workspace && state.workspace.needs_attention) ? state.workspace.needs_attention.length : 0;
+    if (elements.classHandoverBadge) {
+      elements.classHandoverBadge.textContent = String(attentionCount);
+    }
+
+    renderClassReadinessPanel();
+    renderSectionEditor();
+    renderPublishedHandoverPanel();
+  } catch (err) {
+    if (elements.publishedHandoverContainer) {
+      elements.publishedHandoverContainer.innerHTML = `<div class="empty-state" style="color: var(--danger);">Error loading class handover view: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+function _stateChipClass(val) {
+  if (val === "ready_for_release" || val === "sufficient") return "ready";
+  if (val === "reviewed_incomplete" || val === "insufficient_assessment_history") return "incomplete";
+  if (val === "not_reviewed" || val === "needs_clarification" || val === "missing_result" || val === "source_trace_not_found") return "blocked";
+  return "";
+}
+
+function renderClassReadinessPanel() {
+  if (!elements.classReadinessContainer) return;
+  const r = state.classReadiness;
+  if (!r) {
+    elements.classReadinessContainer.innerHTML = "";
+    return;
+  }
+
+  const activeCls = (state.workspace && state.workspace.classes || []).find((c) => c.class_id === r.school_class.class_id);
+  const isClassTeacher = Boolean(activeCls && activeCls.role === "class_teacher");
+  const scopes = r.required_scopes || [];
+
+  const headerCols = scopes
+    .map((sc) => `<th>${escapeHtml(sc === "student" ? "Student Review" : sc)}</th>`)
+    .join("");
+
+  const bodyRows = (r.learners || []).map((lr) => {
+    const cells = scopes.map((sc) => {
+      const slot = lr.slots[sc];
+      if (!slot) return "<td>—</td>";
+      const avail = slot.evidence_availability || {};
+      const stateCls = _stateChipClass(slot.review_state);
+      const availCls = _stateChipClass(avail.status);
+      return `
+        <td>
+          <button type="button" class="slot-cell-btn" data-learner-id="${escapeHtml(lr.learner_id)}" data-scope="${escapeHtml(sc)}">
+            <span class="state-chip ${stateCls}">${escapeHtml(slot.review_state)}</span>
+            <span class="state-chip ${availCls}">${escapeHtml(avail.label || avail.status || "")}</span>
+          </button>
+        </td>
+      `;
+    }).join("");
+    return `<tr><td><strong>${escapeHtml(lr.display_name)}</strong><br><code>${escapeHtml(lr.learner_id)}</code></td>${cells}</tr>`;
+  }).join("");
+
+  const releaseMeta = r.latest_release
+    ? `Published v${escapeHtml(r.latest_release.version_number)} by ${escapeHtml(r.latest_release.released_by_name)}`
+    : "Not yet released";
+
+  elements.classReadinessContainer.innerHTML = `
+    <div class="handover-section-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <span class="label-mono">${escapeHtml(r.school_class.display_name)} Readiness &amp; Release</span>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${releaseMeta} · Evidence availability and teacher review completion are tracked separately.</div>
+        </div>
+        ${isClassTeacher ? `
+          <button type="button" id="btn-release-class" class="btn btn-primary btn-sm" ${r.can_release ? "" : "disabled"}>
+            ${r.latest_release ? `Release Updated Version (v${r.latest_release.version_number + 1})` : "Release Class Handover (v1)"}
+          </button>
+        ` : ""}
+      </div>
+      ${isClassTeacher && !r.can_release && r.blocking_reasons.length > 0 ? `
+        <div class="feedback-banner conflict">${escapeHtml(r.blocking_reasons.slice(0, 3).join(" | "))}${r.blocking_reasons.length > 3 ? ` (+${r.blocking_reasons.length - 3} more)` : ""}</div>
+      ` : ""}
+      <div class="readiness-table-wrap">
+        <table class="readiness-table">
+          <thead><tr><th>Learner</th>${headerCols}</tr></thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  elements.classReadinessContainer.querySelectorAll(".slot-cell-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.editingSlot = { learnerId: btn.dataset.learnerId, scope: btn.dataset.scope };
+      state.activeLearnerId = btn.dataset.learnerId;
+      if (elements.learnerSelect) elements.learnerSelect.value = btn.dataset.learnerId;
+      renderSectionEditor();
+      loadPublishedHandoverOnly();
+    });
+  });
+
+  const btnRelease = document.getElementById("btn-release-class");
+  if (btnRelease) {
+    btnRelease.addEventListener("click", async () => {
+      btnRelease.disabled = true;
+      try {
+        const res = await api.releaseClass(r.school_class.class_id);
+        showWorkspaceStatus("success", `Published ${r.school_class.display_name} Class Handover v${res.release.version_number}.`);
+        state.recordedViews.clear();
+        await loadClassHandoverView();
+      } catch (err) {
+        showWorkspaceStatus("error", err.message);
+      } finally {
+        btnRelease.disabled = false;
+      }
+    });
+  }
+}
+
+async function loadPublishedHandoverOnly() {
+  if (!state.activeLearnerId) return;
+  try {
+    state.publishedReport = await api.getPublishedHandover(state.activeLearnerId);
+    renderPublishedHandoverPanel();
+  } catch (err) {
+    console.warn("Could not refresh published report:", err);
+  }
+}
+
+function renderSectionEditor() {
+  if (!elements.sectionEditorContainer) return;
+  const r = state.classReadiness;
+  if (!r || !state.editingSlot) {
+    elements.sectionEditorContainer.innerHTML = "";
+    return;
+  }
+
+  const activeCls = (state.workspace && state.workspace.classes || []).find((c) => c.class_id === r.school_class.class_id);
+  const isClassTeacher = Boolean(activeCls && activeCls.role === "class_teacher");
+  const learnerRow = (r.learners || []).find((l) => l.learner_id === state.editingSlot.learnerId);
+  const slot = learnerRow ? learnerRow.slots[state.editingSlot.scope] : null;
+  if (!slot) {
+    elements.sectionEditorContainer.innerHTML = "";
+    return;
+  }
+
+  const avail = slot.evidence_availability || {};
+  const resultsList = (avail.available_results || []).map((ev) => {
+    const scorePart = ev.score !== undefined && ev.score !== null ? `${ev.score}/${ev.max_score}` : (ev.level || ev.text || ev.missing_status || "Recorded");
+    return `<li>Y${ev.academic_year} T${ev.term} (${escapeHtml(ev.subject || "General")}): ${escapeHtml(scorePart)}</li>`;
+  }).join("");
+
+  elements.sectionEditorContainer.innerHTML = `
+    <div class="handover-section-card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>${escapeHtml(learnerRow.display_name)} — ${escapeHtml(slot.title)}</strong>
+        <button type="button" id="btn-close-slot-editor" class="btn btn-secondary btn-sm">Close</button>
+      </div>
+      <div class="accountability-bar">
+        <div><strong>Evidence Availability:</strong> ${escapeHtml(avail.human_message || avail.label || "")}</div>
+        ${avail.unmet_conclusion ? `<div><strong>Cannot conclude yet:</strong> ${escapeHtml(avail.unmet_conclusion)}</div>` : ""}
+      </div>
+      ${resultsList ? `<ul style="margin: 0; padding-left: 18px; font-size: 12px;">${resultsList}</ul>` : ""}
+      ${isClassTeacher ? `
+        <form id="slot-review-form" style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="font-size: 12px; font-weight: 600;">Teacher Review State</label>
+          <select id="slot-review-state" class="kwaix-select">
+            <option value="not_reviewed" ${slot.review_state === "not_reviewed" ? "selected" : ""}>Not reviewed</option>
+            <option value="needs_clarification" ${slot.review_state === "needs_clarification" ? "selected" : ""}>Needs clarification</option>
+            <option value="reviewed_incomplete" ${slot.review_state === "reviewed_incomplete" ? "selected" : ""}>Reviewed — evidence incomplete</option>
+            <option value="ready_for_release" ${slot.review_state === "ready_for_release" ? "selected" : ""}>Ready for release</option>
+          </select>
+          <label style="font-size: 12px; font-weight: 600;">Approved Summary *</label>
+          <textarea id="slot-approved-summary" class="form-textarea" rows="3">${escapeHtml(slot.approved_summary || "")}</textarea>
+          <label style="font-size: 12px; font-weight: 600;">Missing-Evidence Disclosure (if incomplete)</label>
+          <input type="text" id="slot-missing-disclosure" class="form-input" value="${escapeHtml(slot.missing_evidence_disclosure || "")}" placeholder="Describe verified data gap if applicable...">
+          <label style="font-size: 12px; font-weight: 600;">Teacher Notes</label>
+          <input type="text" id="slot-teacher-notes" class="form-input" value="${escapeHtml(slot.teacher_notes || "")}">
+          <div><button type="submit" class="btn btn-primary btn-sm">Save Section Review</button></div>
+        </form>
+      ` : `<div style="font-size: 12.5px; color: var(--text-secondary);">Class teacher controls section approvals prior to release.</div>`}
+    </div>
+  `;
+
+  const closeBtn = document.getElementById("btn-close-slot-editor");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      state.editingSlot = null;
+      renderSectionEditor();
+    });
+  }
+
+  const form = document.getElementById("slot-review-form");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await api.updateSectionReview(r.school_class.class_id, learnerRow.learner_id, slot.scope, {
+          review_state: document.getElementById("slot-review-state").value,
+          approved_summary: document.getElementById("slot-approved-summary").value,
+          missing_evidence_disclosure: document.getElementById("slot-missing-disclosure").value || null,
+          teacher_notes: document.getElementById("slot-teacher-notes").value || null,
+          citations: [],
+        });
+        showWorkspaceStatus("success", `Saved ${slot.title} for ${learnerRow.display_name}.`);
+        await loadClassHandoverView();
+      } catch (err) {
+        showWorkspaceStatus("error", err.message);
+      }
+    });
+  }
+}
+
+function renderPublishedHandoverPanel() {
+  if (!elements.publishedHandoverContainer) return;
+  const pub = state.publishedReport;
+  if (!pub || !pub.release || (pub.sections || []).length === 0) {
+    elements.publishedHandoverContainer.innerHTML = `
+      <div class="empty-state">
+        <h3>No published class handover version yet</h3>
+        <p>Once Ms. Ochieng completes section readiness checks and releases the class, frozen Student Review and Subject Reviews will appear here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const rel = pub.release;
+  const activeCls = (state.workspace && state.workspace.classes || []).find((c) => c.class_id === rel.class_id);
+  const isSubjectTeacher = Boolean(activeCls && activeCls.role === "subject_teacher");
+  const isClassTeacher = Boolean(activeCls && activeCls.role === "class_teacher");
+
+  const sectionHtml = (pub.sections || []).map((sec) => {
+    const lo = sec.last_opened ? escapeHtml(sec.last_opened.display) : "Not yet opened by subject teacher";
+    const ack = sec.acknowledgment ? escapeHtml(sec.acknowledgment.display) : "Not acknowledged";
+    const historyItems = (sec.viewing_history || [])
+      .map((v) => `<li>${escapeHtml(v.teacher_name)} — ${escapeHtml(new Date(v.viewed_at).toLocaleString())}</li>`)
+      .join("");
+    const responsesHtml = (sec.responses || []).map((resp) => `
+      <div class="response-child-card">
+        <div><strong>↳ ${escapeHtml(resp.teacher_name)}’s response</strong> (${escapeHtml(resp.response_type)} · ${escapeHtml(new Date(resp.created_at).toLocaleString())})</div>
+        <div style="margin-top: 4px;">“${escapeHtml(resp.content)}”</div>
+      </div>
+    `).join("");
+
+    const canAddResponse = isSubjectTeacher && activeCls && activeCls.subject === sec.scope;
+    const changesHtml = (sec.changes || []).map((ch) => {
+      const comp = ch.comparison || {};
+      const stepsHtml = (ch.progress_steps || [])
+        .map((st) => `<span class="progress-step-pill${st.done ? " done" : ""}${st.current ? " current" : ""}">${escapeHtml(st.label)}</span>`)
+        .join("");
+      const reviewBtn = isClassTeacher && ch.severity === "major" && !ch.reviewed_at
+        ? `<button type="button" class="btn btn-primary btn-sm btn-review-change" data-change-id="${escapeHtml(ch.change_id)}" data-class-id="${escapeHtml(ch.class_id)}">Mark Reviewed by Class Teacher</button>`
+        : "";
+      return `
+        <div class="change-card ${escapeHtml(ch.severity)}">
+          <div><strong>${escapeHtml(ch.headline)}</strong></div>
+          <div>${escapeHtml(ch.explanation)}</div>
+          <div style="font-size: 12px;"><strong>Why it matters:</strong> ${escapeHtml(ch.why_it_matters)}</div>
+          <details>
+            <summary style="cursor: pointer; font-size: 12px; font-weight: 600;">Inspect evidence &amp; comparison</summary>
+            <div style="font-size: 12px; margin-top: 6px;">
+              <div><strong>Published:</strong> ${escapeHtml(comp.published_conclusion || "")}</div>
+              <div><strong>Current evaluation:</strong> ${escapeHtml(comp.current_conclusion || "")}</div>
+              <div><strong>New records:</strong> ${escapeHtml(JSON.stringify(comp.new_results || []))}</div>
+            </div>
+          </details>
+          <div class="progress-steps-row">${stepsHtml}</div>
+          ${reviewBtn}
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="handover-section-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <strong>${escapeHtml(sec.section_title)} — approved by ${escapeHtml(sec.approved_by_name)}</strong>
+          <span class="badge badge-status-accepted">Published v${escapeHtml(rel.version_number)}</span>
+        </div>
+        <div>${escapeHtml(sec.approved_summary)}</div>
+        ${sec.missing_evidence_disclosure ? `<div class="feedback-banner conflict"><strong>Gap disclosure:</strong> ${escapeHtml(sec.missing_evidence_disclosure)}</div>` : ""}
+        <div class="accountability-bar">
+          <div>${lo}</div>
+          <div>${ack}</div>
+        </div>
+        ${historyItems ? `<details><summary style="cursor: pointer; font-size: 12px;">Viewing history (${sec.viewing_history.length})</summary><ul style="font-size: 12px; margin: 4px 0 0 18px;">${historyItems}</ul></details>` : ""}
+        ${changesHtml}
+        <details open>
+          <summary style="cursor: pointer; font-size: 12px; font-weight: 600;">Subject Responses (${(sec.responses || []).length})</summary>
+          <div class="response-thread" style="margin-top: 8px;">
+            ${responsesHtml || `<div style="font-size: 12px; color: var(--text-muted);">No attached responses yet.</div>`}
+            ${canAddResponse ? `
+              <form class="subject-response-form" data-subject="${escapeHtml(sec.scope)}" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                <select name="response_type" class="kwaix-select">
+                  <option value="confirmation">Confirmation</option>
+                  <option value="additional_observation">Additional observation</option>
+                  <option value="question">Question for class teacher</option>
+                </select>
+                <textarea name="content" class="form-textarea" rows="2" placeholder="Add your attributed response (does not alter the approved review)..."></textarea>
+                <div><button type="submit" class="btn btn-primary btn-sm">Attach Response</button></div>
+              </form>
+            ` : ""}
+          </div>
+        </details>
+      </div>
+    `;
+  }).join("");
+
+  elements.publishedHandoverContainer.innerHTML = `
+    <div class="handover-section-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <span class="label-mono">Published Handover Version ${escapeHtml(rel.version_number)}</span>
+          <div style="font-size: 12px; color: var(--text-secondary);">Released by ${escapeHtml(rel.released_by_name)} · Parent reviews are frozen and immutable.</div>
+        </div>
+        ${isSubjectTeacher ? `<button type="button" id="btn-acknowledge-report" class="btn btn-primary btn-sm">Acknowledge Receipt</button>` : ""}
+      </div>
+    </div>
+    ${sectionHtml}
+  `;
+
+  const ackBtn = document.getElementById("btn-acknowledge-report");
+  if (ackBtn) {
+    ackBtn.addEventListener("click", async () => {
+      ackBtn.disabled = true;
+      try {
+        await api.acknowledgeReport(rel.release_id, state.activeLearnerId);
+        showWorkspaceStatus("success", "Receipt acknowledged separately from viewing.");
+        await loadClassHandoverView();
+      } catch (err) {
+        showWorkspaceStatus("error", err.message);
+      } finally {
+        ackBtn.disabled = false;
+      }
+    });
+  }
+
+  elements.publishedHandoverContainer.querySelectorAll(".subject-response-form").forEach((form) => {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const subject = form.dataset.subject;
+      const responseType = form.querySelector("select[name='response_type']").value;
+      const content = form.querySelector("textarea[name='content']").value.trim();
+      if (!content) return;
+      try {
+        await api.addSubjectResponse(rel.release_id, state.activeLearnerId, {
+          subject,
+          response_type: responseType,
+          content,
+        });
+        showWorkspaceStatus("success", "Attributed response attached beneath approved review.");
+        await loadClassHandoverView();
+      } catch (err) {
+        showWorkspaceStatus("error", err.message);
+      }
+    });
+  });
+
+  elements.publishedHandoverContainer.querySelectorAll(".btn-review-change").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        await api.markChangeReviewed(btn.dataset.classId, btn.dataset.changeId);
+        showWorkspaceStatus("success", "Important change marked as reviewed by class teacher.");
+        await loadClassHandoverView();
+      } catch (err) {
+        showWorkspaceStatus("error", err.message);
+      }
+    });
+  });
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────

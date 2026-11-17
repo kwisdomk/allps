@@ -11,7 +11,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 import logging
-from typing import Any
+import os
+from pathlib import Path
+from typing import Any, Literal
 import uuid
 
 import aiosqlite
@@ -29,6 +31,7 @@ from allps.auth import (
     verify_pin,
 )
 from allps.models.evidence import Evidence, EvidenceType, IngestionMethod
+from allps.models.handover import SectionReviewState, SubjectResponseType
 from allps.models.learner import Learner
 from allps.models.review import ReviewItem, ReviewStatus
 from allps.policies.label_policy import check_for_prohibited_labels
@@ -36,6 +39,7 @@ from allps.runtime import ExecutionMode, RuntimeRegistry
 from allps.services.analysis_service import AnalysisService
 from allps.services.evidence_service import EvidenceService
 from allps.services.export_service import ExportService
+from allps.services.handover_service import HandoverService
 from allps.services.intake_service import DuplicateFileError, IntakeService
 from allps.services.review_service import ConflictError, ReviewService
 from allps.storage.sqlite_store import SQLiteStore
@@ -159,7 +163,48 @@ class IngestRecordsRequest(BaseModel):
     ingestion_method: str = Field(default="api", max_length=60)
     source_type: str = Field(default="system", max_length=60)
     source_reference: str | None = Field(default=None, max_length=200)
+    class_id: str | None = Field(default=None, max_length=100)
     records: list[dict[str, Any]] = Field(..., min_length=1, max_length=5000)
+
+
+class EnrollLearnerRequest(BaseModel):
+    learner_id: str = Field(..., min_length=1, max_length=100)
+
+
+class SectionReviewUpdateRequest(BaseModel):
+    review_state: SectionReviewState
+    approved_summary: str | None = Field(default=None, max_length=5000)
+    teacher_notes: str | None = Field(default=None, max_length=5000)
+    missing_evidence_disclosure: str | None = Field(default=None, max_length=2000)
+    citations: list[str] = Field(default_factory=list)
+
+
+class ClassReleaseRequest(BaseModel):
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class ReportViewRequest(BaseModel):
+    scope: str | None = Field(default=None, max_length=120)
+
+
+class SubjectResponseRequest(BaseModel):
+    subject: str = Field(..., min_length=1, max_length=120)
+    response_type: SubjectResponseType = Field(default=SubjectResponseType.CONFIRMATION)
+    content: str = Field(..., min_length=1, max_length=3000)
+    related_change_id: str | None = Field(default=None, max_length=100)
+
+
+class ChangeReviewRequest(BaseModel):
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class ReseedRequest(BaseModel):
+    """Payload for workspace database seeding or reset."""
+
+    mode: Literal["merge", "reset"] = Field(
+        default="merge",
+        description="'merge' idempotently adds missing demo records; 'reset' clears workspace data first.",
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -184,6 +229,36 @@ def _require_teacher(request: Request) -> str:
             detail="Sign in required.",
         )
     return teacher_id
+
+
+def _require_handover_service(request: Request) -> HandoverService:
+    svc = getattr(request.app.state, "handover_service", None)
+    if svc is None:
+        store: SQLiteStore = request.app.state.store
+        svc = HandoverService(
+            store,
+            request.app.state.evidence_service,
+            request.app.state.analysis_service,
+        )
+        request.app.state.handover_service = svc
+    return svc
+
+
+async def _authorize_learner(request: Request, learner_id: str) -> tuple[str, dict[str, Any]]:
+    """Require authenticated teacher assigned to learner_id's class (401/404/403)."""
+    teacher_id = _require_teacher(request)
+    store: SQLiteStore = request.app.state.store
+    if not await store.learner_exists(learner_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Learner '{learner_id}' not found in system records (does not exist).",
+        )
+    handover_svc = _require_handover_service(request)
+    try:
+        access = await handover_svc.get_teacher_learner_access(teacher_id, learner_id)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    return teacher_id, access
 
 
 def _require_ingest_api_key(request: Request) -> None:
@@ -225,6 +300,7 @@ async def login(payload: LoginRequest, request: Request, response: Response) -> 
         key=COOKIE_NAME,
         value=token,
         httponly=True,
+        secure=getattr(request.app.state, "secure_cookies", False),
         samesite="strict",
         max_age=60 * 60 * 12,
     )
@@ -262,15 +338,26 @@ async def get_system_config(request: Request) -> dict[str, Any]:
     teacher_id = _current_teacher_id(request)
     teacher = await store.get_teacher(teacher_id) if teacher_id else None
 
-    available_teachers: list[dict[str, str]] = []
+    available_teachers: list[dict[str, Any]] = []
     async with store.db.execute(
         "SELECT teacher_id, display_name FROM teachers ORDER BY teacher_id ASC"
     ) as cursor:
         async for row in cursor:
+            assignments = await store.get_teacher_assignments(row["teacher_id"])
+            roles = [
+                f"Class teacher ({a.class_id})"
+                if a.role.value == "class_teacher"
+                else f"{a.subject} teacher ({a.class_id})"
+                for a in assignments
+            ]
             available_teachers.append({
                 "teacher_id": row["teacher_id"],
                 "display_name": row["display_name"],
+                "role_summary": ", ".join(roles) if roles else "Teacher",
             })
+
+    handover_svc = _require_handover_service(request)
+    workspace = await handover_svc.get_teacher_workspace(teacher_id) if teacher else None
 
     return {
         "review_authority_available": teacher is not None,
@@ -279,10 +366,18 @@ async def get_system_config(request: Request) -> dict[str, Any]:
             if teacher
             else None
         ),
+        "workspace": workspace,
         "server_reviewer_id": teacher["teacher_id"] if teacher else None,
         "available_teachers": available_teachers,
+        "show_demo_credentials": not getattr(app.state, "hosted", False),
+        "hosted": getattr(app.state, "hosted", False),
+        "allow_demo_reset": getattr(app.state, "allow_demo_reset", False),
+        "inference_provider": (
+            os.environ.get("ALLPS_AI_PROVIDER", "AMD Token Lab")
+            if getattr(app.state, "hosted", False) else None
+        ),
         "default_mode": getattr(app.state, "default_mode", "auto"),
-        "is_synthetic_demonstration": True,
+        "is_synthetic_demonstration": getattr(app.state, "is_synthetic", True),
         "authentication_type": "pin_session_cookie",
         "trust_notice": (
             "Prototype PIN Session: Teacher identity is verified via signed HttpOnly "
@@ -297,13 +392,20 @@ async def get_system_config(request: Request) -> dict[str, Any]:
 
 @router.get("/learners")
 async def list_learners(request: Request) -> list[dict[str, Any]]:
-    """List all learners available in the store."""
+    """List learners enrolled in classes assigned to the signed-in teacher."""
+    teacher_id = _require_teacher(request)
     store: SQLiteStore = request.app.state.store
-    db = store.db
+    handover_svc = _require_handover_service(request)
+    permitted_ids = await handover_svc.get_permitted_learner_ids(teacher_id)
+    if not permitted_ids:
+        return []
 
+    db = store.db
     learners: list[dict[str, Any]] = []
     async with db.execute("SELECT learner_id, display_name, created_at FROM learners ORDER BY learner_id ASC") as cursor:
         async for row in cursor:
+            if row["learner_id"] not in permitted_ids:
+                continue
             learners.append({
                 "learner_id": row["learner_id"],
                 "display_name": row["display_name"],
@@ -322,14 +424,16 @@ async def get_learner_evidence(
     term: int | None = Query(None),
     evidence_type: str | None = Query(None),
 ) -> list[dict[str, Any]]:
-    """Retrieve chronological evidence records for a learner with optional filters."""
+    """Retrieve chronological evidence records for a permitted learner scoped to the teacher's role."""
+    teacher_id, access = await _authorize_learner(request, learner_id)
     store: SQLiteStore = request.app.state.store
 
-    if not await store.learner_exists(learner_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Learner '{learner_id}' not found in system records.",
-        )
+    if not access["is_class_teacher"] and subject is not None:
+        if subject not in access["allowed_subjects"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Teacher '{teacher_id}' is not assigned to subject '{subject}'.",
+            )
 
     records: list[Evidence] = await store.get_evidence_for_learner(
         learner_id,
@@ -338,6 +442,9 @@ async def get_learner_evidence(
         term=term,
         subject=subject,
     )
+    if not access["is_class_teacher"]:
+        allowed_set = set(access["allowed_subjects"])
+        records = [r for r in records if r.subject is None or r.subject in allowed_set]
 
     out: list[dict[str, Any]] = []
     for r in records:
@@ -374,8 +481,10 @@ async def get_learner_evidence(
 
 @router.get("/evidence/{evidence_id}")
 async def get_evidence_detail(evidence_id: str, request: Request) -> dict[str, Any]:
-    """Retrieve an individual evidence record by ID for side panel citation inspection."""
+    """Retrieve an individual evidence record by ID after verifying class and subject access."""
+    teacher_id = _require_teacher(request)
     store: SQLiteStore = request.app.state.store
+    handover_svc = _require_handover_service(request)
     db = store.db
 
     async with db.execute("SELECT * FROM evidence WHERE evidence_id = ?", (evidence_id,)) as cursor:
@@ -403,6 +512,10 @@ async def get_evidence_detail(evidence_id: str, request: Request) -> dict[str, A
             observed_at=datetime.fromisoformat(row["observed_at"]),
             recorded_at=datetime.fromisoformat(row["recorded_at"]),
         )
+        try:
+            await handover_svc.assert_evidence_access(teacher_id, ev)
+        except PermissionError as exc:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
 
         return {
             "evidence_id": ev.evidence_id,
@@ -435,23 +548,18 @@ async def create_teacher_observation(
     payload: ObservationCreateRequest,
     request: Request,
 ) -> dict[str, Any]:
-    """Ingest a direct teacher observation using EvidenceService.
-    
-    Guarantees:
-    - Learner existence check (prevents silent creation from mistyped IDs).
-    - Stable source_event_id preserves idempotency across retries.
-    - Deficit and diagnostic labels are strictly rejected.
-    - Preserves timezone-aware event time separately from recorded time.
-    """
-    store: SQLiteStore = request.app.state.store
+    """Ingest a direct teacher observation using EvidenceService and update post-release diffs."""
+    teacher_id, access = await _authorize_learner(request, learner_id)
     evidence_service: EvidenceService = request.app.state.evidence_service
+    handover_svc = _require_handover_service(request)
 
-    # Strict check: Do not silently create learner on mistyped ID
-    if not await store.learner_exists(learner_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Cannot record observation: Learner '{learner_id}' does not exist.",
-        )
+    clean_subject = payload.subject.strip() if payload.subject else None
+    if not access["is_class_teacher"] and clean_subject is not None:
+        if clean_subject not in access["allowed_subjects"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Teacher '{teacher_id}' cannot record observations for '{clean_subject}'.",
+            )
 
     content: dict[str, Any] = {
         "observation": payload.observation.strip(),
@@ -470,7 +578,7 @@ async def create_teacher_observation(
             source_reference=payload.source_reference.strip(),
             academic_year=payload.academic_year,
             term=payload.term,
-            subject=payload.subject.strip() if payload.subject else None,
+            subject=clean_subject,
             content=content,
             observed_at=payload.event_datetime,
             source_event_id=payload.source_event_id,
@@ -480,6 +588,8 @@ async def create_teacher_observation(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(val_err),
         )
+
+    await handover_svc.evaluate_post_release_changes_for_learner(learner_id)
 
     return {
         "evidence_id": ev.evidence_id,
@@ -502,28 +612,26 @@ async def generate_candidate_handover(
     payload: GenerateBriefRequest,
     request: Request,
 ) -> dict[str, Any]:
-    """Execute bounded AI transition handover synthesis for a learner.
-
-    The browser never calls LM Studio directly. Runtime selection, provider discovery,
-    input context bounding, and output validation are orchestrated server-side.
-    Raw rejected LLM output is strictly hidden.
-    """
+    """Execute bounded AI transition handover synthesis for a permitted learner (class teacher only)."""
+    teacher_id, access = await _authorize_learner(request, learner_id)
+    if not access["is_class_teacher"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the assigned class teacher can generate pre-release candidate handover briefs.",
+        )
     store: SQLiteStore = request.app.state.store
     evidence_service: EvidenceService = request.app.state.evidence_service
     analysis_service: AnalysisService = request.app.state.analysis_service
     review_service: ReviewService = request.app.state.review_service
     runtime_registry: RuntimeRegistry = request.app.state.runtime_registry
 
-    if not await store.learner_exists(learner_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Learner '{learner_id}' not found.",
-        )
+    target_subject = payload.subject
 
     # 1. Select runtime client
     try:
         selection, inference_client = await runtime_registry.select_runtime(
-            mode=payload.mode,
+            mode=(getattr(request.app.state, "default_mode", "live")
+                  if getattr(request.app.state, "hosted", False) else payload.mode),
             mock_responses=getattr(request.app.state, "mock_responses", None),
         )
     except Exception as exc:
@@ -550,7 +658,7 @@ async def generate_candidate_handover(
     # 3. Execute bounded cycle
     res: OrchestrationResult = await orchestrator.orchestrate_handover(
         learner_id=learner_id,
-        subject=payload.subject,
+        subject=target_subject,
     )
 
     # 4. Format contract response (Hide raw model output)
@@ -572,20 +680,14 @@ async def generate_candidate_handover(
 
 @router.get("/learners/{learner_id}/brief")
 async def get_learner_latest_brief(learner_id: str, request: Request) -> dict[str, Any]:
-    """Retrieve the latest persisted candidate brief for a learner (INT-01).
-
-    Ensures refreshing the browser restores the actual candidate brief,
-    including findings, citations, co-occurring context, teacher inquiries,
-    generation revision, and runtime provenance.
-    """
-    store: SQLiteStore = request.app.state.store
-
-    if not await store.learner_exists(learner_id):
+    """Retrieve the latest persisted candidate brief for a permitted learner (class teacher only)."""
+    _, access = await _authorize_learner(request, learner_id)
+    if not access["is_class_teacher"]:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Learner '{learner_id}' not found.",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the assigned class teacher can access pre-release candidate briefs.",
         )
-
+    store: SQLiteStore = request.app.state.store
     brief = await store.get_latest_candidate_brief(learner_id)
     return {
         "learner_id": learner_id,
@@ -595,23 +697,22 @@ async def get_learner_latest_brief(learner_id: str, request: Request) -> dict[st
 
 @router.get("/learners/{learner_id}/reviews")
 async def get_learner_reviews(learner_id: str, request: Request) -> list[dict[str, Any]]:
-    """Retrieve saved candidate findings, their human review status, and associated candidate briefs."""
+    """Retrieve saved candidate findings for pre-release review (class teacher only)."""
+    _, access = await _authorize_learner(request, learner_id)
+    if not access["is_class_teacher"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the assigned class teacher can inspect pre-release candidate reviews.",
+        )
     store: SQLiteStore = request.app.state.store
 
-    if not await store.learner_exists(learner_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Learner '{learner_id}' not found.",
-        )
-
     patterns = await store.get_patterns_for_learner(learner_id)
-    reviews_out: list[dict[str, Any]] = []
 
+    reviews_out: list[dict[str, Any]] = []
     for p in patterns:
         brief = await store.get_candidate_brief_by_pattern(p.pattern_id)
         review_items: list[ReviewItem] = await store.get_review_items_for_pattern(p.pattern_id)
         if not review_items:
-            # Pattern exists without active review item yet
             reviews_out.append({
                 "review_id": None,
                 "pattern_id": p.pattern_id,
@@ -662,31 +763,27 @@ async def submit_review_decision(
     payload: ReviewDecisionRequest,
     request: Request,
 ) -> dict[str, Any]:
-    """Submit human teacher adjudication for a candidate finding.
-
-    Reviewer identity comes from the signed session cookie — never from the request body.
-    Unauthenticated requests are rejected with 401.
-
-    Concurrency contract:
-    - Supply the revision you last observed as expected_revision.
-    - Two concurrent requests carrying the same expected_revision produce exactly
-      one 200 OK and one 409 Conflict.
-    - Set is_correction=True to override a previously-resolved decision.  Corrections
-      require an authenticated session and the current (post-initial-decision) revision.
-    """
-    # 1. Require an authenticated session — reviewer identity comes from the cookie, not the body
+    """Submit human teacher adjudication for a permitted candidate finding."""
     authenticated_teacher_id = _require_teacher(request)
 
     review_service: ReviewService = request.app.state.review_service
     store: SQLiteStore = request.app.state.store
 
-    # 2. Check review item exists
     item = await store.get_review_item(review_id)
     if not item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Review item '{review_id}' does not exist.",
         )
+
+    pattern = await store.get_pattern(item.pattern_id)
+    if pattern is not None:
+        _, access = await _authorize_learner(request, pattern.learner_id)
+        if not access["is_class_teacher"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the assigned class teacher can approve or resolve candidate findings; subject teachers contribute attributed responses.",
+            )
 
     # 3. Resolve through ReviewService.
     #    authenticated_teacher_id (from the session) drives authority for corrections;
@@ -731,24 +828,45 @@ async def submit_review_decision(
 
 @router.get("/learners/{learner_id}/handover")
 async def get_approved_handover(learner_id: str, request: Request) -> dict[str, Any]:
-    """Retrieve the published transition handover profile for a learner.
-
-    Dual-View Gate Enforcement:
-    - Exposes strictly ACCEPTED patterns verified with cryptographic SHA-256 hash snapshot.
-    - Pending, rejected, and needs-context items remain completely absent.
-    - Survives page refreshes.
-    """
+    """Retrieve role-scoped approved handover findings and published class handover sections."""
+    teacher_id, access = await _authorize_learner(request, learner_id)
     store: SQLiteStore = request.app.state.store
     review_service: ReviewService = request.app.state.review_service
-
-    if not await store.learner_exists(learner_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Learner '{learner_id}' not found.",
-        )
+    handover_svc = _require_handover_service(request)
 
     profile = await review_service.get_surfaced_profile(learner_id)
-    return profile
+    published_view = await handover_svc.get_learner_published_handover_view(learner_id, teacher_id)
+    published_release = published_view.get("release")
+    patterns = list(profile.get("patterns", []))
+    if not access["is_class_teacher"]:
+        if published_release is None:
+            patterns = []
+        else:
+            rel_ts = str(published_release.get("released_at") or "")
+            all_eids = [
+                eid
+                for p in patterns
+                for eid in (p.get("supporting_evidence", []) + p.get("conflicting_evidence", []))
+            ]
+            ev_map = await store.get_evidence_by_ids(all_eids)
+            allowed_set = set(access["allowed_subjects"])
+            patterns = [
+                p
+                for p in patterns
+                if ExportService._pattern_permitted_for_subjects(p, ev_map, allowed_set)
+                and str((p.get("review") or {}).get("resolved_at") or "") <= rel_ts
+            ]
+
+    return {
+        **profile,
+        "accepted_pattern_count": len(patterns),
+        "patterns": patterns,
+        "published_release": published_release,
+        "published_sections": published_view.get("sections", []),
+        "receipts": published_view.get("receipts", []),
+        "viewing_history": published_view.get("viewing_history", []),
+        "changes": published_view.get("changes", []),
+    }
 
 
 @router.get("/learners/{learner_id}/handover/export")
@@ -758,22 +876,18 @@ async def export_approved_handover(
     format: str = Query("pdf", description="pdf | html | md | json"),
     download: bool = Query(True, description="Set true for attachment download, false for inline view"),
 ) -> Response:
-    """Export the strictly human-approved learner handover document.
-
-    Enforces the Dual-View Gate: only ACCEPTED findings with verified SHA-256
-    content hashes and their cited evidence provenance are included.
-    """
-    store: SQLiteStore = request.app.state.store
+    """Export the role-scoped, strictly human-approved learner handover document."""
+    teacher_id, access = await _authorize_learner(request, learner_id)
     export_service: ExportService = request.app.state.export_service
 
-    if not await store.learner_exists(learner_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Learner '{learner_id}' not found.",
-        )
-
     try:
-        content, media_type, ext = await export_service.export_handover(learner_id, fmt=format)
+        content, media_type, ext = await export_service.export_handover(
+            learner_id,
+            fmt=format,
+            teacher_id=teacher_id,
+            allowed_subjects=access["allowed_subjects"],
+            is_class_teacher=access["is_class_teacher"],
+        )
     except ValueError as val_err:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -804,14 +918,10 @@ async def ingest_external_records(
     payload: IngestRecordsRequest,
     request: Request,
 ) -> dict[str, Any]:
-    """Ingest structured evidence records from a native school results or SIS system.
-
-    Protected by API-key auth (X-API-Key or Authorization: Bearer).
-    Supports assessments, attendance, observations, reflections, and projects,
-    with Level 1 (source_event_id) and Level 2 (canonical_fingerprint) dedup.
-    """
+    """Ingest structured evidence records from a native school results or SIS system."""
     _require_ingest_api_key(request)
     intake_service: IntakeService = request.app.state.intake_service
+    handover_svc = _require_handover_service(request)
 
     summary = await intake_service.ingest_records(
         payload.records,
@@ -819,7 +929,11 @@ async def ingest_external_records(
         default_ingestion_method=payload.ingestion_method,
         default_source_type=payload.source_type,
         default_source_reference=payload.source_reference,
+        default_class_id=payload.class_id,
     )
+    touched_learners = {r["learner_id"] for r in summary.results if r.get("status") == "created"}
+    for lid in sorted(touched_learners):
+        await handover_svc.evaluate_post_release_changes_for_learner(lid)
     return summary.model_dump(mode="json")
 
 
@@ -831,14 +945,12 @@ async def ingest_external_file(
     import_method: str = Form("csv_import", max_length=60),
     imported_by: str | None = Form(None, max_length=120),
     notes: str | None = Form(None, max_length=2000),
+    class_id: str | None = Form(None, max_length=100),
 ) -> dict[str, Any]:
-    """Ingest a CSV or JSON school export file with SHA-256 ImportManifest tracking.
-
-    Protected by API-key auth (X-API-Key or Authorization: Bearer).
-    Re-uploading the same file bytes from the same source_system returns 409 Conflict.
-    """
+    """Ingest a CSV or JSON school export file with SHA-256 ImportManifest tracking."""
     _require_ingest_api_key(request)
     intake_service: IntakeService = request.app.state.intake_service
+    handover_svc = _require_handover_service(request)
 
     file_bytes = await file.read()
     try:
@@ -849,6 +961,7 @@ async def ingest_external_file(
             import_method=import_method,
             imported_by=imported_by,
             notes=notes,
+            default_class_id=class_id,
         )
     except DuplicateFileError as dup_err:
         raise HTTPException(
@@ -864,6 +977,9 @@ async def ingest_external_file(
             detail=str(val_err),
         )
 
+    touched_learners = {r["learner_id"] for r in summary.results if r.get("status") == "created"}
+    for lid in sorted(touched_learners):
+        await handover_svc.evaluate_post_release_changes_for_learner(lid)
     return summary.model_dump(mode="json")
 
 
@@ -878,3 +994,384 @@ async def list_ingest_manifests(
         _require_ingest_api_key(request)
     store: SQLiteStore = request.app.state.store
     return await store.list_import_manifests(source_system=source_system)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Workspace Database Status & Demo Reseed Endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+async def _build_db_status_payload(request: Request, recent_limit: int = 5) -> dict[str, Any]:
+    store: SQLiteStore = request.app.state.store
+    raw_status = await store.get_database_status(recent_limit=recent_limit)
+    raw_db_path = getattr(request.app.state, "db_path", None) or raw_status.pop("db_path", "allps.db")
+    raw_status.pop("db_path", None)
+    db_name = ":memory:" if raw_db_path == ":memory:" else Path(str(raw_db_path)).name
+    has_demo_learners = all(
+        [
+            await store.learner_exists("LRN-001"),
+            await store.learner_exists("LRN-002"),
+            await store.learner_exists("LRN-003"),
+        ]
+    )
+    return {
+        **raw_status,
+        "db_name": db_name,
+        "allow_demo_reset": bool(getattr(request.app.state, "allow_demo_reset", True)),
+        "has_demo_learners": has_demo_learners,
+    }
+
+
+@router.get("/db/status")
+async def get_db_status(
+    request: Request,
+    recent_limit: int = Query(5, ge=1, le=25),
+) -> dict[str, Any]:
+    """Return live database counts, freshness timestamps, and recent evidence/audit records."""
+    _require_teacher(request)
+    return await _build_db_status_payload(request, recent_limit=recent_limit)
+
+
+@router.post("/db/reseed")
+async def reseed_workspace_database(
+    payload: ReseedRequest,
+    request: Request,
+) -> dict[str, Any]:
+    """Idempotently seed missing demo data ('merge') or wipe and re-seed ('reset')."""
+    actor = _require_teacher(request)
+    if not getattr(request.app.state, "allow_demo_reset", True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Workspace demo seeding/reset is disabled on this server.",
+        )
+
+    store: SQLiteStore = request.app.state.store
+    ev_service: EvidenceService = request.app.state.evidence_service
+
+    try:
+        from data.synthetic.seed_data import seed_store
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Synthetic seed dataset is unavailable in this installation: {exc}",
+        ) from exc
+
+    reset = payload.mode == "reset"
+    summary = await seed_store(store, reset=reset, actor=actor)
+
+    # Keep offline mock synthesis aligned with the refreshed dataset
+    from allps.web.app import build_mock_responses_from_store
+    request.app.state.mock_responses = await build_mock_responses_from_store(store, ev_service)
+
+    db_status = await _build_db_status_payload(request)
+    if reset:
+        message = (
+            f"Reset workspace and re-seeded {summary['learners_added']} learners and "
+            f"{summary['evidence_added']} evidence records."
+        )
+    elif summary["learners_added"] == 0 and summary["evidence_added"] == 0:
+        message = (
+            f"No new demo records added ({summary['learners_skipped']} learners and "
+            f"{summary['evidence_skipped']} evidence records already present)."
+        )
+    else:
+        message = (
+            f"Added +{summary['learners_added']} learners and +{summary['evidence_added']} "
+            f"evidence records ({summary['evidence_skipped']} existing skipped)."
+        )
+
+    return {
+        "mode": payload.mode,
+        "message": message,
+        "learners_added": summary["learners_added"],
+        "learners_skipped": summary["learners_skipped"],
+        "evidence_added": summary["evidence_added"],
+        "evidence_skipped": summary["evidence_skipped"],
+        "total_learners": summary["total_learners"],
+        "total_evidence": summary["total_evidence"],
+        "cleared": summary["cleared"],
+        "db_status": db_status,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Class Handover, Readiness, Releases, Receipts, Responses & Diffs
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@router.get("/workspace")
+async def get_teacher_workspace_endpoint(request: Request) -> dict[str, Any]:
+    """Return signed-in teacher's roles, assigned classes, and attention queue."""
+    teacher_id = _require_teacher(request)
+    handover_svc = _require_handover_service(request)
+    try:
+        return await handover_svc.get_teacher_workspace(teacher_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("/classes/{class_id}/enroll", status_code=status.HTTP_200_OK)
+async def enroll_learner_in_class(
+    class_id: str,
+    payload: EnrollLearnerRequest,
+    request: Request,
+) -> dict[str, Any]:
+    """Enroll an existing learner in class_id (class_teacher only)."""
+    teacher_id = _require_teacher(request)
+    store: SQLiteStore = request.app.state.store
+    handover_svc = _require_handover_service(request)
+    if await store.get_class(class_id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Class '{class_id}' not found.")
+    try:
+        await handover_svc.assert_class_access(teacher_id, class_id, require_class_teacher=True)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    if not await store.learner_exists(payload.learner_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Learner '{payload.learner_id}' not found.",
+        )
+    enrollment = await store.enroll_learner(class_id, payload.learner_id)
+    return enrollment.model_dump(mode="json")
+
+
+@router.get("/classes/{class_id}/readiness")
+async def get_class_readiness_endpoint(class_id: str, request: Request) -> dict[str, Any]:
+    """Return class readiness view with separated evidence availability and review states (class teacher only)."""
+    teacher_id = _require_teacher(request)
+    handover_svc = _require_handover_service(request)
+    try:
+        await handover_svc.assert_class_access(teacher_id, class_id, require_class_teacher=True)
+        return await handover_svc.get_class_readiness(class_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+
+
+@router.get("/learners/{learner_id}/availability")
+async def get_learner_evidence_availability(learner_id: str, request: Request) -> dict[str, Any]:
+    """Return system-computed evidence availability per permitted scope for learner_id."""
+    _, access = await _authorize_learner(request, learner_id)
+    store: SQLiteStore = request.app.state.store
+    handover_svc = _require_handover_service(request)
+
+    if access["is_class_teacher"]:
+        classes = await store.get_learner_classes(learner_id)
+        if classes:
+            scopes = await handover_svc.get_required_scopes_for_class(classes[0].class_id)
+        else:
+            scopes = ["student", "Mathematics", "English", "Science"]
+    else:
+        scopes = ["student"] + access["allowed_subjects"]
+
+    availability = {}
+    for scope in scopes:
+        availability[scope] = await handover_svc.compute_evidence_availability(learner_id, scope)
+    return {
+        "learner_id": learner_id,
+        "scopes": availability,
+    }
+
+
+@router.post("/classes/{class_id}/learners/{learner_id}/sections/{scope}")
+async def update_learner_section_review(
+    class_id: str,
+    learner_id: str,
+    scope: str,
+    payload: SectionReviewUpdateRequest,
+    request: Request,
+) -> dict[str, Any]:
+    """Create or update a Student Review or Subject Review readiness slot (class_teacher only)."""
+    teacher_id = _require_teacher(request)
+    handover_svc = _require_handover_service(request)
+    try:
+        return await handover_svc.update_section_review(
+            class_id=class_id,
+            learner_id=learner_id,
+            scope=scope,
+            teacher_id=teacher_id,
+            review_state=payload.review_state.value,
+            approved_summary=payload.approved_summary,
+            teacher_notes=payload.teacher_notes,
+            missing_evidence_disclosure=payload.missing_evidence_disclosure,
+            citations=payload.citations,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+
+@router.post("/classes/{class_id}/release", status_code=status.HTTP_201_CREATED)
+async def release_class_handover(
+    class_id: str,
+    request: Request,
+    payload: ClassReleaseRequest | None = None,
+) -> dict[str, Any]:
+    """Freeze and publish an immutable versioned class handover (class_teacher only)."""
+    teacher_id = _require_teacher(request)
+    handover_svc = _require_handover_service(request)
+    try:
+        return await handover_svc.release_class(
+            class_id=class_id,
+            teacher_id=teacher_id,
+            notes=payload.notes if payload else None,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.get("/classes/{class_id}/releases")
+async def list_class_releases_endpoint(class_id: str, request: Request) -> list[dict[str, Any]]:
+    """List immutable handover releases for class_id."""
+    teacher_id = _require_teacher(request)
+    store: SQLiteStore = request.app.state.store
+    handover_svc = _require_handover_service(request)
+    try:
+        await handover_svc.assert_class_access(teacher_id, class_id)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    releases = await store.list_class_releases(class_id)
+    return [r.model_dump(mode="json") for r in releases]
+
+
+@router.get("/learners/{learner_id}/published")
+async def get_learner_published_report(learner_id: str, request: Request) -> dict[str, Any]:
+    """Return role-scoped published sections, receipts, viewing history, responses, and updates."""
+    teacher_id, _ = await _authorize_learner(request, learner_id)
+    handover_svc = _require_handover_service(request)
+    return await handover_svc.get_learner_published_handover_view(learner_id, teacher_id)
+
+
+@router.post("/releases/{release_id}/learners/{learner_id}/view")
+async def record_released_report_view(
+    release_id: str,
+    learner_id: str,
+    request: Request,
+    payload: ReportViewRequest | None = None,
+) -> dict[str, Any]:
+    """Log an append-only viewing event for accountability without marking receipt acknowledged."""
+    teacher_id = _require_teacher(request)
+    handover_svc = _require_handover_service(request)
+    try:
+        return await handover_svc.record_report_view(
+            release_id=release_id,
+            learner_id=learner_id,
+            teacher_id=teacher_id,
+            scope=payload.scope if payload else None,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("/releases/{release_id}/learners/{learner_id}/acknowledge")
+async def acknowledge_released_report(
+    release_id: str,
+    learner_id: str,
+    request: Request,
+) -> dict[str, Any]:
+    """Explicitly record receipt acknowledgment separately from viewing."""
+    teacher_id = _require_teacher(request)
+    handover_svc = _require_handover_service(request)
+    try:
+        return await handover_svc.acknowledge_report(
+            release_id=release_id,
+            learner_id=learner_id,
+            teacher_id=teacher_id,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("/releases/{release_id}/learners/{learner_id}/responses", status_code=status.HTTP_201_CREATED)
+async def add_published_subject_response(
+    release_id: str,
+    learner_id: str,
+    payload: SubjectResponseRequest,
+    request: Request,
+) -> dict[str, Any]:
+    """Attach an attributed subject-teacher response beneath the unchanged approved Subject Review."""
+    teacher_id = _require_teacher(request)
+    handover_svc = _require_handover_service(request)
+    try:
+        return await handover_svc.add_subject_response(
+            release_id=release_id,
+            learner_id=learner_id,
+            subject=payload.subject,
+            teacher_id=teacher_id,
+            response_type=payload.response_type.value,
+            content=payload.content,
+            related_change_id=payload.related_change_id,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+
+@router.get("/classes/{class_id}/changes")
+async def list_class_post_release_changes(class_id: str, request: Request) -> list[dict[str, Any]]:
+    """List post-release updates (minor/major) for class_id scoped by teacher role."""
+    teacher_id = _require_teacher(request)
+    store: SQLiteStore = request.app.state.store
+    handover_svc = _require_handover_service(request)
+    try:
+        assignments = await handover_svc.assert_class_access(teacher_id, class_id)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+
+    learners = await store.get_class_learners(class_id)
+    for l in learners:
+        await handover_svc.evaluate_post_release_changes_for_learner(l.learner_id)
+
+    changes = await store.get_post_release_changes(class_id=class_id)
+    is_ct = any(a.role.value == "class_teacher" for a in assignments)
+    allowed_scopes = (
+        None
+        if is_ct
+        else ({"student"} | {a.subject for a in assignments if a.subject})
+    )
+    out = []
+    for ch in changes:
+        if allowed_scopes is not None and ch.scope not in allowed_scopes:
+            continue
+        out.append(handover_svc._serialize_change(ch))
+    return out
+
+
+@router.post("/classes/{class_id}/changes/{change_id}/review")
+async def review_post_release_change_endpoint(
+    class_id: str,
+    change_id: str,
+    request: Request,
+    payload: ChangeReviewRequest | None = None,
+) -> dict[str, Any]:
+    """Record class-teacher review of an active post-release change item."""
+    teacher_id = _require_teacher(request)
+    handover_svc = _require_handover_service(request)
+    try:
+        return await handover_svc.mark_change_reviewed(
+            class_id=class_id,
+            change_id=change_id,
+            teacher_id=teacher_id,
+            notes=payload.notes if payload else None,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc

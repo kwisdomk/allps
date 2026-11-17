@@ -646,8 +646,15 @@ def main() -> None:
     parser.add_argument("--db", default="data/allps_dev.db", help="Path to SQLite database")
     parser.add_argument("--model", default="allps-qwen35-base-4b", help="LM Studio model ID")
     parser.add_argument("--url", default="http://127.0.0.1:1234/v1", help="LM Studio endpoint")
-    parser.add_argument("--trace-out", default="data/trace_agentic_mcp_run.json", help="Path to save trace")
+    parser.add_argument(
+        "--trace-out",
+        default=None,
+        help="Path to save trace (defaults to a timestamped file under tmp/traces/)",
+    )
     args = parser.parse_args()
+
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    trace_out = args.trace_out or str(Path("tmp") / "traces" / f"trace_agentic_mcp_{ts}.json")
 
     config = AgentMCPConfig(
         lm_studio_url=args.url,
@@ -679,8 +686,8 @@ def main() -> None:
     print(f"Governance Verified (Human-only Acceptance): {trace.governance_verified}")
     print("=" * 70)
 
-    trace.save_json(args.trace_out)
-    print(f"\nTrace saved to: {args.trace_out}")
+    trace.save_json(trace_out)
+    print(f"\nTrace saved to: {trace_out}")
 
 
 if __name__ == "__main__":

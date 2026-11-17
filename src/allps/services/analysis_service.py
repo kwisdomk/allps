@@ -107,6 +107,7 @@ class AnalysisService:
         *,
         evidence_type: Optional[str] = None,
         subject: Optional[str] = None,
+        persist_findings: bool = True,
     ) -> List[Mapping[str, Any]]:
         """Determine longitudinal patterns for a learner.
 
@@ -742,7 +743,7 @@ class AnalysisService:
         dumped_patterns: list[dict[str, Any]] = []
         for p in patterns:
             p_dict = p.model_dump(mode="json")
-            if p.pattern_type != PatternType.INSUFFICIENT_EVIDENCE and self._store is not None:
+            if persist_findings and p.pattern_type != PatternType.INSUFFICIENT_EVIDENCE and self._store is not None:
                 # Deduplicate existing pattern by signature
                 existing = await self._store.get_pattern_by_signature(
                     p.learner_id, p.pattern_type.value, p.summary

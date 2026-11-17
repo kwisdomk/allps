@@ -157,6 +157,7 @@ class IntakeService:
         default_ingestion_method: str = "api",
         default_source_type: str = "system",
         default_source_reference: str | None = None,
+        default_class_id: str | None = None,
         record_audit: bool = True,
     ) -> IntakeBatchSummary:
         """Ingest a batch of structured evidence records via EvidenceService."""
@@ -178,6 +179,17 @@ class IntakeService:
             try:
                 if not learner_id or not isinstance(learner_id, str) or not learner_id.strip():
                     raise ValueError("Missing required non-empty 'learner_id'.")
+
+                raw_class_id = raw_rec.get("class_id") or default_class_id
+                target_class_id = (
+                    raw_class_id.strip()
+                    if isinstance(raw_class_id, str) and raw_class_id.strip()
+                    else None
+                )
+                if target_class_id is not None:
+                    school_cls = await self._store.get_class(target_class_id)
+                    if school_cls is None:
+                        raise ValueError(f"Unknown class '{target_class_id}'.")
 
                 evidence_type = raw_rec.get("evidence_type")
                 if not evidence_type or not isinstance(evidence_type, str):
@@ -231,6 +243,8 @@ class IntakeService:
                     ),
                     learner_display_name=learner_display_name,
                 )
+                if target_class_id is not None:
+                    await self._store.enroll_learner(target_class_id, ev.learner_id)
 
                 if outcome == "created":
                     accepted_count += 1
@@ -313,6 +327,8 @@ class IntakeService:
                 merged["term"] = meta["term"]
             if "source_reference" not in merged and meta.get("originating_teacher"):
                 merged["source_reference"] = meta["originating_teacher"]
+            if "class_id" not in merged and meta.get("class_id"):
+                merged["class_id"] = meta["class_id"]
             normalized.append(merged)
 
         return normalized, meta
@@ -366,6 +382,7 @@ class IntakeService:
             record: dict[str, Any] = {
                 "learner_id": clean.get("learner_id"),
                 "learner_display_name": clean.get("learner_display_name") or None,
+                "class_id": clean.get("class_id") or None,
                 "evidence_type": clean.get("evidence_type"),
                 "source_system": clean.get("source_system") or source_system,
                 "ingestion_method": clean.get("ingestion_method") or import_method,
@@ -391,6 +408,7 @@ class IntakeService:
         import_method: str = "csv_import",
         imported_by: str | None = None,
         notes: str | None = None,
+        default_class_id: str | None = None,
     ) -> FileImportSummary:
         """Import a CSV or JSON school export file with file-level SHA-256 manifest tracking."""
         if not file_bytes:
@@ -434,6 +452,7 @@ class IntakeService:
             default_ingestion_method=default_method,
             default_source_type="system",
             default_source_reference=default_ref,
+            default_class_id=default_class_id,
             record_audit=False,
         )
 
