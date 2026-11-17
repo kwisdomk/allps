@@ -2356,6 +2356,8 @@ dialog:modal {
 }
 
 dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
   background: rgba(27, 48, 45, 0.4);
   backdrop-filter: blur(3px);
 }
@@ -2420,10 +2422,97 @@ dialog p {
   gap: 10px;
 }
 
-#detail-dialog {
+#detail-dialog,
+#import-dialog {
   max-width: 620px;
   max-height: 90vh;
   overflow: auto;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.import-fieldset {
+  margin-top: 16px;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcf9;
+}
+
+.import-fieldset > legend {
+  font-weight: 600;
+  font-size: 12px;
+  padding: 0 6px;
+  color: var(--text);
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--green);
+}
+
+.checkbox-field label {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.inline-template-link {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11.5px;
+}
+
+.import-summary {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f4f8ef;
+  font-size: 12px;
+}
+
+.import-summary.has-errors {
+  background: #fdf6ef;
+  border-color: #e6c6a8;
+}
+
+.import-summary-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.import-errors-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  max-height: 140px;
+  overflow: auto;
+  font-size: 11.5px;
+  color: var(--red);
+}
+
+@media (max-width: 640px) {
+  .form-grid-3 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .detail-subtitle {

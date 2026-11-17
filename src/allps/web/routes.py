@@ -30,7 +30,7 @@ from allps.auth import (
     verify_pin,
 )
 from allps.models.evidence import Evidence, EvidenceType, IngestionMethod
-from allps.models.handover import SectionReviewState, SubjectResponseType
+from allps.models.handover import SectionReviewState, SubjectResponseType, TeacherRole
 from allps.models.learner import Learner
 from allps.models.review import ReviewItem, ReviewStatus
 from allps.policies.label_policy import check_for_prohibited_labels
@@ -928,22 +928,83 @@ async def ingest_external_records(
     return summary.model_dump(mode="json")
 
 
-@router.post("/ingest/file", status_code=status.HTTP_201_CREATED)
-async def ingest_external_file(
+_MAX_IMPORT_BYTES = 10 * 1024 * 1024  # 10 MiB
+
+
+def _parse_optional_int(raw: str | None, field_name: str, *, min_val: int, max_val: int) -> int | None:
+    if raw is None or not raw.strip():
+        return None
+    try:
+        val = int(raw.strip())
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"Invalid integer for '{field_name}': '{raw}'.",
+        ) from exc
+    if val < min_val or val > max_val:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"'{field_name}' must be between {min_val} and {max_val}.",
+        )
+    return val
+
+
+def _parse_optional_positive_float(raw: str | None, field_name: str) -> float | None:
+    if raw is None or not raw.strip():
+        return None
+    try:
+        val = float(raw.strip())
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"Invalid number for '{field_name}': '{raw}'.",
+        ) from exc
+    if val <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"'{field_name}' must be greater than 0.",
+        )
+    return val
+
+
+async def _execute_file_import(
     request: Request,
-    file: UploadFile = File(...),
-    source_system: str = Form(..., min_length=1, max_length=120),
-    import_method: str = Form("csv_import", max_length=60),
-    imported_by: str | None = Form(None, max_length=120),
-    notes: str | None = Form(None, max_length=2000),
-    class_id: str | None = Form(None, max_length=100),
+    *,
+    file: UploadFile,
+    source_system: str,
+    import_method: str,
+    imported_by: str | None,
+    notes: str | None,
+    default_class_id: str | None,
+    enforce_class_id: str | None = None,
+    allowed_subjects: set[str] | None = None,
+    default_source_reference: str | None = None,
+    academic_year: str | None = None,
+    term: str | None = None,
+    observed_at: str | None = None,
+    max_score: str | None = None,
+    grade: str | None = None,
+    assessment_stage: str | None = None,
+    form_name: str | None = None,
+    form_version: str | None = None,
+    language: str | None = None,
+    comparison_authorized: bool = False,
 ) -> dict[str, Any]:
-    """Ingest a CSV or JSON school export file with SHA-256 ImportManifest tracking."""
-    _require_ingest_api_key(request)
+    """Shared file-ingestion orchestration for SIS API-key uploads and teacher UI uploads."""
     intake_service: IntakeService = request.app.state.intake_service
     handover_svc = _require_handover_service(request)
 
+    parsed_year = _parse_optional_int(academic_year, "academic_year", min_val=2000, max_val=2100)
+    parsed_term = _parse_optional_int(term, "term", min_val=1, max_val=4)
+    parsed_max = _parse_optional_positive_float(max_score, "max_score")
+
     file_bytes = await file.read()
+    if len(file_bytes) > _MAX_IMPORT_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Uploaded file exceeds the 10 MiB size limit.",
+        )
+
     try:
         summary = await intake_service.ingest_file(
             file_bytes=file_bytes,
@@ -951,8 +1012,25 @@ async def ingest_external_file(
             source_system=source_system,
             import_method=import_method,
             imported_by=imported_by,
-            notes=notes,
-            default_class_id=class_id,
+            notes=notes.strip() if isinstance(notes, str) and notes.strip() else None,
+            default_class_id=default_class_id,
+            enforce_class_id=enforce_class_id,
+            allowed_subjects=allowed_subjects,
+            default_academic_year=parsed_year,
+            default_term=parsed_term,
+            default_observed_at=observed_at.strip() if isinstance(observed_at, str) and observed_at.strip() else None,
+            default_max_score=parsed_max,
+            default_grade=grade.strip() if isinstance(grade, str) and grade.strip() else None,
+            default_assessment_stage=(
+                assessment_stage.strip() if isinstance(assessment_stage, str) and assessment_stage.strip() else None
+            ),
+            default_form=form_name.strip() if isinstance(form_name, str) and form_name.strip() else None,
+            default_form_version=(
+                form_version.strip() if isinstance(form_version, str) and form_version.strip() else None
+            ),
+            default_language=language.strip() if isinstance(language, str) and language.strip() else None,
+            default_comparison_authorized=True if comparison_authorized else None,
+            default_source_reference=default_source_reference,
         )
     except DuplicateFileError as dup_err:
         raise HTTPException(
@@ -964,7 +1042,7 @@ async def ingest_external_file(
         )
     except ValueError as val_err:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(val_err),
         )
 
@@ -972,6 +1050,112 @@ async def ingest_external_file(
     for lid in sorted(touched_learners):
         await handover_svc.evaluate_post_release_changes_for_learner(lid)
     return summary.model_dump(mode="json")
+
+
+@router.post("/ingest/file", status_code=status.HTTP_201_CREATED)
+async def ingest_external_file(
+    request: Request,
+    file: UploadFile = File(...),
+    source_system: str = Form(..., min_length=1, max_length=120),
+    import_method: str = Form("csv_import", max_length=60),
+    imported_by: str | None = Form(None, max_length=120),
+    notes: str | None = Form(None, max_length=2000),
+    class_id: str | None = Form(None, max_length=100),
+    academic_year: str | None = Form(None, max_length=16),
+    term: str | None = Form(None, max_length=16),
+    observed_at: str | None = Form(None, max_length=64),
+    max_score: str | None = Form(None, max_length=32),
+    grade: str | None = Form(None, max_length=60),
+    assessment_stage: str | None = Form(None, max_length=40),
+    form: str | None = Form(None, max_length=120),
+    form_version: str | None = Form(None, max_length=60),
+    language: str | None = Form(None, max_length=60),
+    comparison_authorized: bool = Form(False),
+) -> dict[str, Any]:
+    """Ingest a CSV or JSON school export file with SHA-256 ImportManifest tracking."""
+    _require_ingest_api_key(request)
+    return await _execute_file_import(
+        request,
+        file=file,
+        source_system=source_system,
+        import_method=import_method,
+        imported_by=imported_by,
+        notes=notes,
+        default_class_id=class_id,
+        academic_year=academic_year,
+        term=term,
+        observed_at=observed_at,
+        max_score=max_score,
+        grade=grade,
+        assessment_stage=assessment_stage,
+        form_name=form,
+        form_version=form_version,
+        language=language,
+        comparison_authorized=comparison_authorized,
+    )
+
+
+@router.post("/classes/{class_id}/import", status_code=status.HTTP_201_CREATED)
+async def import_class_school_report(
+    class_id: str,
+    request: Request,
+    file: UploadFile = File(...),
+    source_system: str = Form("school_report_csv", min_length=1, max_length=120),
+    academic_year: str | None = Form(None, max_length=16),
+    term: str | None = Form(None, max_length=16),
+    observed_at: str | None = Form(None, max_length=64),
+    max_score: str | None = Form(None, max_length=32),
+    grade: str | None = Form(None, max_length=60),
+    assessment_stage: str | None = Form(None, max_length=40),
+    form: str | None = Form(None, max_length=120),
+    form_version: str | None = Form(None, max_length=60),
+    language: str | None = Form(None, max_length=60),
+    comparison_authorized: bool = Form(False),
+    notes: str | None = Form(None, max_length=2000),
+) -> dict[str, Any]:
+    """Teacher-authenticated endpoint to import a school mark-sheet CSV or ALLPS export JSON for an assigned class."""
+    teacher_id = _require_teacher(request)
+    store: SQLiteStore = request.app.state.store
+    school_cls = await store.get_class(class_id)
+    if school_cls is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Class '{class_id}' does not exist.",
+        )
+
+    handover_svc = _require_handover_service(request)
+    try:
+        assignments = await handover_svc.assert_class_access(teacher_id, class_id)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+
+    is_class_teacher = any(a.role == TeacherRole.CLASS_TEACHER for a in assignments)
+    allowed_subjects = None if is_class_teacher else {a.subject for a in assignments if a.subject}
+    teacher = await store.get_teacher(teacher_id)
+    teacher_name = teacher["display_name"] if teacher else teacher_id
+
+    return await _execute_file_import(
+        request,
+        file=file,
+        source_system=source_system,
+        import_method="csv_import",
+        imported_by=teacher_id,
+        notes=notes,
+        default_class_id=class_id,
+        enforce_class_id=class_id,
+        allowed_subjects=allowed_subjects,
+        default_source_reference=teacher_name,
+        academic_year=academic_year,
+        term=term,
+        observed_at=observed_at,
+        max_score=max_score,
+        grade=grade,
+        assessment_stage=assessment_stage,
+        form_name=form,
+        form_version=form_version,
+        language=language,
+        comparison_authorized=comparison_authorized,
+    )
 
 
 @router.get("/ingest/manifests")

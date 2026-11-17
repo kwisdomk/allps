@@ -21,7 +21,10 @@ class ApiClient {
 
   async _request(path, options = {}) {
     const url = `${this.baseUrl}${path}`;
-    const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+    const headers = isFormData
+      ? { ...(options.headers || {}) }
+      : { "Content-Type": "application/json", ...(options.headers || {}) };
     let response;
     try {
       response = await fetch(url, {
@@ -111,6 +114,13 @@ class ApiClient {
     return this._request(`/learners/${encodeURIComponent(learnerId)}/evidence`, {
       method: "POST",
       body: JSON.stringify(payload),
+    });
+  }
+
+  async importClassFile(classId, formData) {
+    return this._request(`/classes/${encodeURIComponent(classId)}/import`, {
+      method: "POST",
+      body: formData,
     });
   }
 
@@ -350,6 +360,29 @@ const el = {
   obsText: document.getElementById("obs-text"),
   obsContext: document.getElementById("obs-context"),
   obsErrorAlert: document.getElementById("obs-error-alert"),
+
+  // Import report modal
+  importDialog: document.getElementById("import-dialog"),
+  importForm: document.getElementById("import-form"),
+  btnCloseImport: document.getElementById("btn-close-import"),
+  btnCancelImport: document.getElementById("btn-cancel-import"),
+  btnSubmitImport: document.getElementById("btn-submit-import"),
+  importErrorAlert: document.getElementById("import-error-alert"),
+  importResultSummary: document.getElementById("import-result-summary"),
+  importClassContext: document.getElementById("import-class-context"),
+  importFile: document.getElementById("import-file"),
+  importSourceSystem: document.getElementById("import-source-system"),
+  importMaxScore: document.getElementById("import-max-score"),
+  importYear: document.getElementById("import-year"),
+  importTerm: document.getElementById("import-term"),
+  importObservedAt: document.getElementById("import-observed-at"),
+  importGrade: document.getElementById("import-grade"),
+  importStage: document.getElementById("import-stage"),
+  importFormName: document.getElementById("import-form-name"),
+  importFormVersion: document.getElementById("import-form-version"),
+  importLanguage: document.getElementById("import-language"),
+  importNotes: document.getElementById("import-notes"),
+  importComparisonAuthorized: document.getElementById("import-comparison-authorized"),
 };
 
 const api = new ApiClient("/api", handleSessionExpired);
@@ -1430,14 +1463,14 @@ function renderClassPage() {
       heading(
         `MY CLASSES / ${activeCls.display_name.toUpperCase()}`,
         `${activeCls.display_name}`,
-        `${activeCls.grade} · Term ${activeCls.term}, ${activeCls.academic_year} · ${activeCls.role_label}`
+        `${activeCls.grade} · Term ${activeCls.term}, ${activeCls.academic_year} · ${activeCls.role_label}`,
+        `<button type="button" class="button primary" data-action="open-import">↑ Import marks / report</button>`
       ) +
       `<div class="panel">${emptyState(
         `No learners enrolled in ${activeCls.display_name}`,
-        "This class currently has 0 enrolled learners. Once learners are enrolled in this class, they will appear here and in the Learner selector above.",
-        getUniqueClasses().length > 1
-          ? `<a class="button secondary" href="#home">View other classes</a>`
-          : ""
+        "This class currently has 0 enrolled learners. Import a class mark sheet CSV/JSON or enroll learners to populate this class.",
+        `<button type="button" class="button primary" data-action="open-import">↑ Import marks / report</button>` +
+          (getUniqueClasses().length > 1 ? ` <a class="button secondary" href="#home">View other classes</a>` : "")
       )}</div></div>`;
     return;
   }
@@ -1607,6 +1640,7 @@ function renderClassPage() {
 
   const releaseBtnLabel = rel ? `Release v${rel.version_number + 1}` : "Release class";
   const actionsHtml = `
+    <button type="button" class="button secondary" data-action="open-import">↑ Import marks / report</button>
     <button type="button" class="button primary" data-action="release" ${r.can_release ? "" : "disabled"}>
       ${html(releaseBtnLabel)} ↗
     </button>
@@ -1852,8 +1886,17 @@ async function renderRecordsPage() {
 
   if (state.learners.length === 0) {
     el.main.innerHTML =
-      heading("RECORDS", "Follow the source.", "Assessment results, attendance, observations, and learner reflections.") +
-      `<div class="panel">${emptyState("No learners in this class", "Enroll learners in this class before recording or browsing evidence.")}</div>`;
+      heading(
+        "RECORDS",
+        "Follow the source.",
+        "Assessment results, attendance, observations, and learner reflections.",
+        `<button type="button" class="button primary" data-action="open-import">↑ Import marks / report</button>`
+      ) +
+      `<div class="panel">${emptyState(
+        "No learners in this class",
+        "Import a class mark sheet or enroll learners before recording or browsing evidence.",
+        `<button type="button" class="button primary" data-action="open-import">↑ Import marks / report</button>`
+      )}</div>`;
     return;
   }
 
@@ -1862,7 +1905,7 @@ async function renderRecordsPage() {
       "RECORDS",
       "Follow the source.",
       "See what was recorded, when it was recorded, and where it came from.",
-      `<button type="button" class="button primary" data-action="open-observation">+ Record observation</button>`
+      `<button type="button" class="button secondary" data-action="open-import">↑ Import marks / report</button> <button type="button" class="button primary" data-action="open-observation">+ Record observation</button>`
     ) + `<div class="panel">${emptyState("Loading source records…", "Fetching role-scoped evidence from the ALLPS backend.")}</div>`;
 
   const reqSeq = ++state.recordsSeq;
@@ -1957,7 +2000,7 @@ function drawRecordsList(allRecords) {
       "RECORDS",
       "Follow the source.",
       "See what was recorded, when it was recorded, and where it came from.",
-      `<button type="button" class="button primary" data-action="open-observation">+ Record observation</button>`
+      `<button type="button" class="button secondary" data-action="open-import">↑ Import marks / report</button> <button type="button" class="button primary" data-action="open-observation">+ Record observation</button>`
     ) +
     chipsHtml +
     `<div class="panel">
@@ -3063,6 +3106,200 @@ async function handleSaveObservation() {
   }
 }
 
+// ── School Report / Marks Import Modal ───────────────────────────────────────
+
+function showImportError(msg) {
+  if (!el.importErrorAlert) return;
+  el.importErrorAlert.textContent = msg;
+  el.importErrorAlert.hidden = false;
+  el.importErrorAlert.focus();
+}
+
+function clearImportFeedback() {
+  if (el.importErrorAlert) {
+    el.importErrorAlert.hidden = true;
+    el.importErrorAlert.textContent = "";
+  }
+  if (el.importResultSummary) {
+    el.importResultSummary.hidden = true;
+    el.importResultSummary.innerHTML = "";
+    el.importResultSummary.classList.remove("has-errors");
+  }
+  if (el.importFile) el.importFile.removeAttribute("aria-invalid");
+  if (el.importSourceSystem) el.importSourceSystem.removeAttribute("aria-invalid");
+}
+
+function openImportDialog() {
+  const activeCls = getActiveClass();
+  if (!activeCls) {
+    toast("Select an assigned class before importing a report file.");
+    return;
+  }
+  clearImportFeedback();
+  if (el.importForm) el.importForm.reset();
+
+  const isCT = isClassTeacherInActiveClass();
+  const allowed = getAllowedSubjectsInActiveClass();
+  if (el.importClassContext) {
+    const scopeNote = isCT
+      ? "All subjects for this class (class teacher)."
+      : `Scoped to your assigned subject(s): ${allowed.join(", ") || "none"}.`;
+    el.importClassContext.textContent = `Target class: ${activeCls.display_name} (${activeCls.class_id}). ${scopeNote}`;
+  }
+
+  if (el.importSourceSystem) el.importSourceSystem.value = "school_report_csv";
+  if (el.importYear && activeCls.academic_year) el.importYear.value = String(activeCls.academic_year);
+  if (el.importTerm && activeCls.term) el.importTerm.value = String(activeCls.term);
+  if (el.importGrade && activeCls.grade) el.importGrade.value = activeCls.grade;
+  if (el.importObservedAt && !el.importObservedAt.value) {
+    el.importObservedAt.value = new Date().toISOString().slice(0, 10);
+  }
+  if (el.importMaxScore && !el.importMaxScore.value) el.importMaxScore.value = "100";
+
+  if (el.importDialog) el.importDialog.showModal();
+}
+
+function renderImportSummary(summary) {
+  if (!el.importResultSummary) return;
+  const manifest = summary.manifest || {};
+  const accepted = manifest.accepted_count ?? 0;
+  const dupes = manifest.duplicate_count ?? 0;
+  const rejected = manifest.rejected_count ?? 0;
+  const errors = Array.isArray(summary.errors) ? summary.errors : [];
+
+  el.importResultSummary.classList.toggle("has-errors", rejected > 0);
+  const errorItems = errors
+    .slice(0, 20)
+    .map((err) => {
+      const prefix = [err.learner_id, err.subject].filter(Boolean).join(" · ");
+      return `<li>${prefix ? `<strong>${html(prefix)}:</strong> ` : ""}${html(err.error)}</li>`;
+    })
+    .join("");
+  const extraCount = errors.length > 20 ? `<li>…and ${errors.length - 20} more row error(s).</li>` : "";
+
+  el.importResultSummary.innerHTML = `
+    <div><strong>Import completed</strong> (${html(manifest.file_name || "file")})</div>
+    <div class="import-summary-counts">
+      <span>Accepted: ${html(accepted)}</span>
+      <span>Duplicates skipped: ${html(dupes)}</span>
+      <span>Rejected: ${html(rejected)}</span>
+    </div>
+    ${errors.length ? `<ul class="import-errors-list">${errorItems}${extraCount}</ul>` : ""}
+  `;
+  el.importResultSummary.hidden = false;
+}
+
+async function handleImportSubmit(e) {
+  e.preventDefault();
+  clearImportFeedback();
+
+  const activeCls = getActiveClass();
+  if (!activeCls) {
+    showImportError("No active class selected.");
+    return;
+  }
+
+  const file = el.importFile?.files?.[0];
+  if (!file) {
+    if (el.importFile) {
+      el.importFile.setAttribute("aria-invalid", "true");
+      el.importFile.focus();
+    }
+    showImportError("Choose a .csv or .json report file to import.");
+    return;
+  }
+
+  const sourceSystem = el.importSourceSystem?.value.trim() || "";
+  if (!sourceSystem) {
+    if (el.importSourceSystem) {
+      el.importSourceSystem.setAttribute("aria-invalid", "true");
+      el.importSourceSystem.focus();
+    }
+    showImportError("Source system is required.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("source_system", sourceSystem);
+
+  const optionalFields = [
+    ["academic_year", el.importYear?.value],
+    ["term", el.importTerm?.value],
+    ["observed_at", el.importObservedAt?.value],
+    ["max_score", el.importMaxScore?.value],
+    ["grade", el.importGrade?.value],
+    ["assessment_stage", el.importStage?.value],
+    ["form", el.importFormName?.value],
+    ["form_version", el.importFormVersion?.value],
+    ["language", el.importLanguage?.value],
+    ["notes", el.importNotes?.value],
+  ];
+  for (const [key, rawVal] of optionalFields) {
+    const cleaned = typeof rawVal === "string" ? rawVal.trim() : "";
+    if (cleaned) formData.append(key, cleaned);
+  }
+  if (el.importComparisonAuthorized?.checked) {
+    formData.append("comparison_authorized", "true");
+  }
+
+  if (el.btnSubmitImport) {
+    el.btnSubmitImport.disabled = true;
+    el.btnSubmitImport.textContent = "Importing…";
+  }
+
+  try {
+    const summary = await api.importClassFile(activeCls.class_id, formData);
+    renderImportSummary(summary);
+    const accepted = summary.manifest?.accepted_count ?? 0;
+    const rejected = summary.manifest?.rejected_count ?? 0;
+    if (accepted > 0) {
+      await refreshWorkspaceFromServer();
+      toast(`Imported ${accepted} record${accepted === 1 ? "" : "s"} into ${activeCls.display_name}.`);
+    } else if (rejected > 0) {
+      showImportError("No records were imported. Review the row errors below and retry.");
+    } else {
+      toast("All rows in this file were already recorded (duplicates skipped).");
+    }
+  } catch (err) {
+    showImportError(err.message);
+  } finally {
+    if (el.btnSubmitImport) {
+      el.btnSubmitImport.disabled = false;
+      el.btnSubmitImport.textContent = "Import file";
+    }
+  }
+}
+
+function downloadWideCsvTemplate() {
+  const activeCls = getActiveClass();
+  const isCT = isClassTeacherInActiveClass();
+  const allowed = getAllowedSubjectsInActiveClass();
+  const subjects = isCT || allowed.length === 0 ? ["Mathematics", "English", "Science"] : allowed;
+  const subjHeaders = subjects.map((s) => `${s} (100)`).join(",");
+  const year = activeCls?.academic_year || 2026;
+  const term = activeCls?.term || 1;
+  const grade = activeCls?.grade || "Grade 3";
+  const today = new Date().toISOString().slice(0, 10);
+  const sampleScores = subjects.map((_, idx) => (idx === 0 ? "78" : idx === 1 ? "84" : "absent")).join(",");
+  const sampleScores2 = subjects.map((_, idx) => (idx === 0 ? "65/100" : "72")).join(",");
+  const csv = [
+    `learner_id,learner_name,grade,academic_year,term,observed_at,${subjHeaders}`,
+    `LRN-101,Amina Hassan,${grade},${year},${term},${today},${sampleScores}`,
+    `LRN-102,Brian Otieno,${grade},${year},${term},${today},${sampleScores2}`,
+  ].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `allps_marksheet_template_${activeCls?.class_id || "class"}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 // ── Class Switcher, DB Demo Sync & Global Event Bindings ─────────────────────
 
 async function switchActiveClass(classId) {
@@ -3211,7 +3448,12 @@ function bindStaticEvents() {
   }
   if (el.btnConfirmSaveObservation) el.btnConfirmSaveObservation.addEventListener("click", handleSaveObservation);
 
-  [el.detailDialog, el.releaseDialog, el.observationDialog, el.previewDialog, el.resetDbDialog].forEach(
+  if (el.btnCloseImport) el.btnCloseImport.addEventListener("click", () => el.importDialog.close());
+  if (el.btnCancelImport) el.btnCancelImport.addEventListener("click", () => el.importDialog.close());
+  if (el.importForm) el.importForm.addEventListener("submit", handleImportSubmit);
+  if (el.importFile) el.importFile.addEventListener("change", clearImportFeedback);
+
+  [el.detailDialog, el.releaseDialog, el.observationDialog, el.previewDialog, el.resetDbDialog, el.importDialog].forEach(
     setupDialogLightDismiss
   );
 
@@ -3268,6 +3510,10 @@ function bindStaticEvents() {
       await openSourceModal(id);
     } else if (action === "open-observation") {
       openObservationDialog();
+    } else if (action === "open-import") {
+      openImportDialog();
+    } else if (action === "download-wide-csv-template") {
+      downloadWideCsvTemplate();
     } else if (action === "release") {
       openReleaseModal();
     } else if (action === "edit-section") {
